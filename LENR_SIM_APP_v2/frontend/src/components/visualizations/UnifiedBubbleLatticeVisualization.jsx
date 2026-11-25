@@ -19,11 +19,16 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import {
   Box, Typography, Paper, FormGroup, FormControlLabel, Switch,
-  IconButton, Tooltip, Chip, Stack
+  IconButton, Tooltip, Chip, Stack, Collapse
 } from '@mui/material';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import HomeIcon from '@mui/icons-material/Home';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import LayersIcon from '@mui/icons-material/Layers';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 // CycloneIcon reserved for future vortex toggle UI
 import {
   clampBubbleRadiusFactor,
@@ -78,6 +83,7 @@ import {
   getAtomRadiusVisUnits,
   buildLatticeScaleDescriptor,
 } from '../../utils/materialScale';
+import { UBLV_OVERLAY_CHROME_DEFAULTS } from './ublvOverlayChromeDefaults';
 
 // Proton state definitions with visual properties
 const PROTON_STATES = {
@@ -440,7 +446,20 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showRydberg, setShowRydberg] = useState(false);
   const [showHalo, setShowHalo] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
-  const [legendCollapsed, setLegendCollapsed] = useState(() => isMobileDevice());
+  // First-visit defaults: legend / layers / Local Calc / Enhancement all minimized.
+  const [legendCollapsed, setLegendCollapsed] = useState(
+    UBLV_OVERLAY_CHROME_DEFAULTS.legendCollapsed
+  );
+  // Overlay chrome: layers drawer collapses right; Local Calc HUD collapses down.
+  const [layersCollapsed, setLayersCollapsed] = useState(
+    UBLV_OVERLAY_CHROME_DEFAULTS.layersCollapsed
+  );
+  const [metricsCollapsed, setMetricsCollapsed] = useState(
+    UBLV_OVERLAY_CHROME_DEFAULTS.metricsCollapsed
+  );
+  const [enhancementCollapsed, setEnhancementCollapsed] = useState(
+    UBLV_OVERLAY_CHROME_DEFAULTS.enhancementCollapsed
+  );
   
   // Animation parameters - use refs for values that change frequently to avoid re-renders
   // Default ~0.45x so a visual cycle is clearly moving (0.1x felt like a stuck video).
@@ -3435,7 +3454,7 @@ const UnifiedBubbleLatticeVisualization = ({
           />
         )}
 
-        {/* Right-side control stack: layer toggles + desktop zoom controls */}
+        {/* Right-side control stack: layer toggles (collapse right) + desktop zoom */}
         <Box
           sx={{
             position: 'absolute',
@@ -3448,58 +3467,122 @@ const UnifiedBubbleLatticeVisualization = ({
             zIndex: 5,
           }}
         >
-          {/* Layer toggles */}
-          <Paper
-            elevation={3}
+          {/* Layers / Boundary Plane debug drawer — collapses to the right */}
+          <Box
             sx={{
-              bgcolor: 'rgba(20, 20, 40, 0.9)',
-              borderRadius: 1,
-              p: 1,
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'stretch',
             }}
+            data-testid="ublv-layers-drawer"
           >
-            <FormGroup>
-              <FormControlLabel
-                control={<Switch checked={showLattice} onChange={(e) => setShowLattice(e.target.checked)} size="small" />}
-                label={<Typography variant="caption" color="white">Lattice</Typography>}
-              />
-              <FormControlLabel
-                control={<Switch checked={showBoundaryPlane} onChange={(e) => setShowBoundaryPlane(e.target.checked)} size="small" color="primary" />}
-                label={<Typography variant="caption" color="white">Boundary Plane (Debug)</Typography>}
-              />
-              <FormControlLabel
-                control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" />}
-                label={<Typography variant="caption" color="white">Double-layer bubble</Typography>}
-              />
-              <FormControlLabel
-                control={<Switch checked={showProtons} onChange={(e) => setShowProtons(e.target.checked)} size="small" color="warning" />}
-                label={<Typography variant="caption" color="white">Protons</Typography>}
-              />
-              <FormControlLabel
-                control={<Switch checked={showFieldLines} onChange={(e) => setShowFieldLines(e.target.checked)} size="small" color="secondary" />}
-                label={<Typography variant="caption" color="white">Fields</Typography>}
-              />
-              <FormControlLabel
-                control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" />}
-                label={<Typography variant="caption" color="white">MHD Flow</Typography>}
-              />
-              <FormControlLabel
-                control={<Switch checked={showCasimir} onChange={(e) => setShowCasimir(e.target.checked)} size="small" sx={{ color: '#ff8800' }} />}
-                label={<Typography variant="caption" color="white">Casimir Geometry</Typography>}
-              />
-              <FormControlLabel
-                control={<Switch checked={showRydberg} onChange={(e) => setShowRydberg(e.target.checked)} size="small" sx={{ color: '#8844ff' }} />}
-                label={<Typography variant="caption" color="white">Rydberg Orbitals</Typography>}
-              />
-              <FormControlLabel
-                control={<Switch checked={showHalo} onChange={(e) => setShowHalo(e.target.checked)} size="small" sx={{ color: '#00ffff' }} />}
-                label={<Typography variant="caption" color="white">Halo Electrons</Typography>}
-              />
-              <FormControlLabel
-                control={<Switch checked={showLegend} onChange={(e) => setShowLegend(e.target.checked)} size="small" sx={{ color: '#88ff88' }} />}
-                label={<Typography variant="caption" color="white">Legend</Typography>}
-              />
-            </FormGroup>
-          </Paper>
+            <Collapse in={!layersCollapsed} orientation="horizontal" timeout={280}>
+              <Paper
+                elevation={3}
+                id="ublv-layers-panel"
+                sx={{
+                  bgcolor: 'rgba(20, 20, 40, 0.9)',
+                  borderRadius: '8px 0 0 8px',
+                  p: 1,
+                  mr: 0,
+                }}
+                data-testid="ublv-layers-panel"
+              >
+                <FormGroup>
+                  <FormControlLabel
+                    control={<Switch checked={showLattice} onChange={(e) => setShowLattice(e.target.checked)} size="small" />}
+                    label={<Typography variant="caption" color="white">Lattice</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={showBoundaryPlane} onChange={(e) => setShowBoundaryPlane(e.target.checked)} size="small" color="primary" />}
+                    label={<Typography variant="caption" color="white">Boundary Plane (Debug)</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" />}
+                    label={<Typography variant="caption" color="white">Double-layer bubble</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={showProtons} onChange={(e) => setShowProtons(e.target.checked)} size="small" color="warning" />}
+                    label={<Typography variant="caption" color="white">Protons</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={showFieldLines} onChange={(e) => setShowFieldLines(e.target.checked)} size="small" color="secondary" />}
+                    label={<Typography variant="caption" color="white">Fields</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" />}
+                    label={<Typography variant="caption" color="white">MHD Flow</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={showCasimir} onChange={(e) => setShowCasimir(e.target.checked)} size="small" sx={{ color: '#ff8800' }} />}
+                    label={<Typography variant="caption" color="white">Casimir Geometry</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={showRydberg} onChange={(e) => setShowRydberg(e.target.checked)} size="small" sx={{ color: '#8844ff' }} />}
+                    label={<Typography variant="caption" color="white">Rydberg Orbitals</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={showHalo} onChange={(e) => setShowHalo(e.target.checked)} size="small" sx={{ color: '#00ffff' }} />}
+                    label={<Typography variant="caption" color="white">Halo Electrons</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={showLegend} onChange={(e) => setShowLegend(e.target.checked)} size="small" sx={{ color: '#88ff88' }} />}
+                    label={<Typography variant="caption" color="white">Legend</Typography>}
+                  />
+                </FormGroup>
+              </Paper>
+            </Collapse>
+            <Tooltip title={layersCollapsed ? 'Expand layers' : 'Collapse layers'} placement="left">
+              <Paper
+                elevation={3}
+                component="button"
+                type="button"
+                onClick={() => setLayersCollapsed((prev) => !prev)}
+                aria-expanded={!layersCollapsed}
+                aria-controls="ublv-layers-panel"
+                aria-label={layersCollapsed ? 'Expand layers panel' : 'Collapse layers panel'}
+                data-testid="ublv-layers-toggle"
+                sx={{
+                  bgcolor: 'rgba(25, 118, 210, 0.95)',
+                  color: 'white',
+                  cursor: 'pointer',
+                  border: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  py: 1.5,
+                  px: 0.5,
+                  borderRadius: layersCollapsed ? 1 : '0 8px 8px 0',
+                  minHeight: layersCollapsed ? 96 : 'auto',
+                  width: 32,
+                  '&:hover': { bgcolor: 'rgba(25, 118, 210, 1)' },
+                  transition: 'background-color 0.2s ease',
+                }}
+              >
+                <LayersIcon sx={{ fontSize: 18, mb: 0.5 }} />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    writingMode: 'vertical-rl',
+                    textOrientation: 'mixed',
+                    transform: 'rotate(180deg)',
+                    fontSize: '0.65rem',
+                    fontWeight: 'bold',
+                    letterSpacing: 1,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  LAYERS
+                </Typography>
+                <Box sx={{ mt: 0.5, display: 'flex' }}>
+                  {layersCollapsed
+                    ? <ChevronLeftIcon sx={{ fontSize: 16 }} />
+                    : <ChevronRightIcon sx={{ fontSize: 16 }} />}
+                </Box>
+              </Paper>
+            </Tooltip>
+          </Box>
 
           {/* Desktop zoom controls are intentionally grouped below legend toggles */}
           {!isMobile && (
@@ -3584,190 +3667,300 @@ const UnifiedBubbleLatticeVisualization = ({
           />
         )}
         
-        {/* Phase + claim-tier HUD — no bare quantitative numbers (VIZ-03) */}
-        <Paper
-          elevation={3}
+        {/* Phase + claim-tier HUD — collapses downward; no bare quantitative numbers (VIZ-03) */}
+        <Box
           sx={{
             position: 'absolute',
             bottom: 10,
             left: '50%',
             transform: 'translateX(-50%)',
-            bgcolor: 'rgba(20, 20, 40, 0.9)',
-            borderRadius: 1,
-            p: 1,
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            gap: 1.5,
-            flexWrap: 'wrap',
             maxWidth: '95%',
+            zIndex: 5,
           }}
+          data-testid="ublv-metrics-drawer"
         >
-          <Tooltip title={usingAPIData ? 'Playing engine samples / API timeline' : 'Local RAF fallback (schematic; limited accuracy)'}>
-            <Chip
-              label={usingAPIData ? 'Engine samples' : 'Local Calc'}
-              size="small"
+          <Collapse in={!metricsCollapsed} timeout={280}>
+            <Paper
+              elevation={3}
+              id="ublv-metrics-panel"
+              data-testid="ublv-metrics-panel"
               sx={{
-                bgcolor: usingAPIData ? 'rgba(46, 125, 50, 0.9)' : 'rgba(237, 108, 2, 0.9)',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '0.65rem'
+                bgcolor: 'rgba(20, 20, 40, 0.9)',
+                borderRadius: '8px 8px 0 0',
+                p: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                flexWrap: 'wrap',
+                maxWidth: '100%',
               }}
-            />
-          </Tooltip>
-          <Chip
-            label={currentPhase}
-            color={getPhaseColor(currentPhase)}
-            size="small"
-            data-testid="ublv-phase-chip"
-          />
-          <Tooltip title={hostMeltMeta.citeNote}>
-            <Chip
-              label={
-                hostMeltMeta.meltingPointK != null
-                  ? `${hostMeltMeta.displayName} T_m ${hostMeltMeta.meltingPointK} K`
-                  : 'Melt viz: Pd/Ni only'
-              }
-              size="small"
-              data-testid="ublv-host-tm-chip"
-              data-host-key={hostMeltMeta.hostKey}
-              sx={{
-                bgcolor: 'rgba(33, 150, 243, 0.75)',
-                color: 'white',
-                fontSize: '0.6rem',
-              }}
-            />
-          </Tooltip>
-          {pickedLatticeSite && (
-            <Tooltip title="VIZ-06 schematic pick — lattice index only; not nuclear proof">
+            >
+              <Tooltip title={usingAPIData ? 'Playing engine samples / API timeline' : 'Local RAF fallback (schematic; limited accuracy)'}>
+                <Chip
+                  label={usingAPIData ? 'Engine samples' : 'Local Calc'}
+                  size="small"
+                  sx={{
+                    bgcolor: usingAPIData ? 'rgba(46, 125, 50, 0.9)' : 'rgba(237, 108, 2, 0.9)',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: '0.65rem'
+                  }}
+                />
+              </Tooltip>
               <Chip
-                label={pickedLatticeSite.label}
+                label={currentPhase}
+                color={getPhaseColor(currentPhase)}
                 size="small"
-                data-testid="ublv-lattice-pick-chip"
-                data-instance-id={pickedLatticeSite.instanceId}
-                data-fidelity={pickedLatticeSite.fidelity}
-                onDelete={() => setPickedLatticeSite(null)}
-                sx={{
-                  bgcolor: 'rgba(120, 144, 156, 0.9)',
-                  color: 'white',
-                  fontSize: '0.6rem',
-                }}
+                data-testid="ublv-phase-chip"
               />
-            </Tooltip>
-          )}
-          <Typography variant="caption" color="white">
-            Cycle {collapseCount} · {(cycleProgress * 100).toFixed(0)}%
-          </Typography>
-          <VizHudReadouts
-            // Melt / P_* included in channels below (value or gap). Avoid
-            // showHeldGaps duplication with listGapChannels().
-            showHeldGaps={false}
-            collapseMeta={collapseHud.meta}
-            channels={[
-              {
-                channel_id: 'enhancement.claim_tier_display',
-                value: currentEnhancement,
-                source: physicsData.sampleSource,
-              },
-              {
-                channel_id: 'collapse.compression_ratio',
-                value: physicsData.compressionRatio,
-                source: physicsData.sampleSource,
-              },
-              {
-                // Live scrub R (VIZ-01/02); collapse peak R available via collapseHud when needed
-                channel_id: 'bubble.radius_um',
-                value: physicsData.radiusUm,
-                source: physicsData.sampleSource,
-              },
-              {
-                channel_id: 'collapse.temperature_k',
-                value: physicsData.temperature,
-                source: physicsData.sampleSource,
-              },
-              {
-                channel_id: 'collapse.electric_field_v_m',
-                value: physicsData.fieldStrength,
-                source: physicsData.sampleSource,
-              },
-              // VIZ-05 — Mach + solver mode from collapse_results (gap when absent)
-              ...collapseHud.channels.filter((ch) => (
-                ch.channel_id === 'collapse.peak_mach'
-                || ch.channel_id === 'collapse.solver'
-              )),
-              // VIZ-07 / VIZ-12 — engine values only; null → gap chips (no invent)
-              {
-                channel_id: 'host.phase_fraction_liquid',
-                value: liquidPhaseChannels.phaseFractionLiquid,
-                source: liquidPhaseChannels.phaseFractionLiquid == null ? undefined : 'solver',
-              },
-              {
-                channel_id: 'heat.P_joule',
-                value: liquidPhaseChannels.heat.P_joule,
-                source: liquidPhaseChannels.heat.P_joule == null ? undefined : 'solver',
-              },
-              {
-                channel_id: 'heat.P_resistive',
-                value: liquidPhaseChannels.heat.P_resistive,
-                source: liquidPhaseChannels.heat.P_resistive == null ? undefined : 'solver',
-              },
-              {
-                channel_id: 'heat.P_photonic',
-                value: liquidPhaseChannels.heat.P_photonic,
-                source: liquidPhaseChannels.heat.P_photonic == null ? undefined : 'solver',
-              },
-            ]}
-          />
-        </Paper>
+              <Tooltip title={hostMeltMeta.citeNote}>
+                <Chip
+                  label={
+                    hostMeltMeta.meltingPointK != null
+                      ? `${hostMeltMeta.displayName} T_m ${hostMeltMeta.meltingPointK} K`
+                      : 'Melt viz: Pd/Ni only'
+                  }
+                  size="small"
+                  data-testid="ublv-host-tm-chip"
+                  data-host-key={hostMeltMeta.hostKey}
+                  sx={{
+                    bgcolor: 'rgba(33, 150, 243, 0.75)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                  }}
+                />
+              </Tooltip>
+              {pickedLatticeSite && (
+                <Tooltip title="VIZ-06 schematic pick — lattice index only; not nuclear proof">
+                  <Chip
+                    label={pickedLatticeSite.label}
+                    size="small"
+                    data-testid="ublv-lattice-pick-chip"
+                    data-instance-id={pickedLatticeSite.instanceId}
+                    data-fidelity={pickedLatticeSite.fidelity}
+                    onDelete={() => setPickedLatticeSite(null)}
+                    sx={{
+                      bgcolor: 'rgba(120, 144, 156, 0.9)',
+                      color: 'white',
+                      fontSize: '0.6rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
+              <Typography variant="caption" color="white">
+                Cycle {collapseCount} · {(cycleProgress * 100).toFixed(0)}%
+              </Typography>
+              <VizHudReadouts
+                // Melt / P_* included in channels below (value or gap). Avoid
+                // showHeldGaps duplication with listGapChannels().
+                showHeldGaps={false}
+                collapseMeta={collapseHud.meta}
+                channels={[
+                  {
+                    channel_id: 'enhancement.claim_tier_display',
+                    value: currentEnhancement,
+                    source: physicsData.sampleSource,
+                  },
+                  {
+                    channel_id: 'collapse.compression_ratio',
+                    value: physicsData.compressionRatio,
+                    source: physicsData.sampleSource,
+                  },
+                  {
+                    // Live scrub R (VIZ-01/02); collapse peak R available via collapseHud when needed
+                    channel_id: 'bubble.radius_um',
+                    value: physicsData.radiusUm,
+                    source: physicsData.sampleSource,
+                  },
+                  {
+                    channel_id: 'collapse.temperature_k',
+                    value: physicsData.temperature,
+                    source: physicsData.sampleSource,
+                  },
+                  {
+                    channel_id: 'collapse.electric_field_v_m',
+                    value: physicsData.fieldStrength,
+                    source: physicsData.sampleSource,
+                  },
+                  // VIZ-05 — Mach + solver mode from collapse_results (gap when absent)
+                  ...collapseHud.channels.filter((ch) => (
+                    ch.channel_id === 'collapse.peak_mach'
+                    || ch.channel_id === 'collapse.solver'
+                  )),
+                  // VIZ-07 / VIZ-12 — engine values only; null → gap chips (no invent)
+                  {
+                    channel_id: 'host.phase_fraction_liquid',
+                    value: liquidPhaseChannels.phaseFractionLiquid,
+                    source: liquidPhaseChannels.phaseFractionLiquid == null ? undefined : 'solver',
+                  },
+                  {
+                    channel_id: 'heat.P_joule',
+                    value: liquidPhaseChannels.heat.P_joule,
+                    source: liquidPhaseChannels.heat.P_joule == null ? undefined : 'solver',
+                  },
+                  {
+                    channel_id: 'heat.P_resistive',
+                    value: liquidPhaseChannels.heat.P_resistive,
+                    source: liquidPhaseChannels.heat.P_resistive == null ? undefined : 'solver',
+                  },
+                  {
+                    channel_id: 'heat.P_photonic',
+                    value: liquidPhaseChannels.heat.P_photonic,
+                    source: liquidPhaseChannels.heat.P_photonic == null ? undefined : 'solver',
+                  },
+                ]}
+              />
+            </Paper>
+          </Collapse>
+          <Tooltip title={metricsCollapsed ? 'Expand metrics' : 'Collapse metrics'} placement="top">
+            <Paper
+              elevation={3}
+              component="button"
+              type="button"
+              onClick={() => setMetricsCollapsed((prev) => !prev)}
+              aria-expanded={!metricsCollapsed}
+              aria-controls="ublv-metrics-panel"
+              aria-label={metricsCollapsed ? 'Expand Local Calc metrics panel' : 'Collapse Local Calc metrics panel'}
+              data-testid="ublv-metrics-toggle"
+              sx={{
+                bgcolor: 'rgba(20, 20, 40, 0.95)',
+                color: 'white',
+                cursor: 'pointer',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: metricsCollapsed ? 1 : '0 0 8px 8px',
+                minWidth: 160,
+                '&:hover': { bgcolor: 'rgba(30, 30, 55, 1)' },
+                transition: 'background-color 0.2s ease',
+              }}
+            >
+              {metricsCollapsed ? (
+                <>
+                  <ExpandLessIcon sx={{ fontSize: 16 }} />
+                  <Typography variant="caption" sx={{ fontWeight: 'bold', fontSize: '0.65rem' }}>
+                    {usingAPIData ? 'Engine samples' : 'Local Calc'} · {currentPhase}
+                  </Typography>
+                  <ExpandLessIcon sx={{ fontSize: 16 }} />
+                </>
+              ) : (
+                <ExpandMoreIcon sx={{ fontSize: 18 }} />
+              )}
+            </Paper>
+          </Tooltip>
+        </Box>
         
-        {/* Enhancement breakdown - bottom right */}
-        <Paper
-          elevation={3}
+        {/* Enhancement breakdown - bottom right; collapses down, minimized by default */}
+        <Box
           sx={{
             position: 'absolute',
             bottom: 10,
             right: 10,
-            bgcolor: 'rgba(20, 20, 40, 0.9)',
-            borderRadius: 1,
-            p: 1,
-            minWidth: 200
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            zIndex: 5,
+            minWidth: enhancementCollapsed ? 160 : 200,
           }}
+          data-testid="ublv-enhancement-drawer"
         >
-          <Typography variant="caption" color="white" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
-            Enhancement Breakdown
-          </Typography>
-          <Stack spacing={0.3}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Screening:</Typography>
-              <Typography variant="caption" color="#00ffff" sx={{ fontSize: '0.65rem' }}>
-                {enhancementBreakdown.screening.toExponential(1)}
+          <Collapse in={!enhancementCollapsed} timeout={280}>
+            <Paper
+              elevation={3}
+              id="ublv-enhancement-panel"
+              data-testid="ublv-enhancement-panel"
+              sx={{
+                bgcolor: 'rgba(20, 20, 40, 0.9)',
+                borderRadius: '8px 8px 0 0',
+                p: 1,
+                minWidth: 200,
+              }}
+            >
+              <Typography variant="caption" color="white" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
+                Enhancement Breakdown
               </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>QED:</Typography>
-              <Typography variant="caption" color="#ffff00" sx={{ fontSize: '0.65rem' }}>
-                {enhancementBreakdown.qed.toExponential(1)}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Casimir:</Typography>
-              <Typography variant="caption" color="#ff8800" sx={{ fontSize: '0.65rem' }}>
-                {enhancementBreakdown.casimir.toExponential(1)}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Rydberg:</Typography>
-              <Typography variant="caption" color="#ff00ff" sx={{ fontSize: '0.65rem' }}>
-                {enhancementBreakdown.rydberg.toExponential(1)}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Compression:</Typography>
-              <Typography variant="caption" color="#00ff88" sx={{ fontSize: '0.65rem' }}>
-                {enhancementBreakdown.compression.toExponential(1)}
-              </Typography>
-            </Box>
-          </Stack>
-        </Paper>
+              <Stack spacing={0.3}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Screening:</Typography>
+                  <Typography variant="caption" color="#00ffff" sx={{ fontSize: '0.65rem' }}>
+                    {enhancementBreakdown.screening.toExponential(1)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>QED:</Typography>
+                  <Typography variant="caption" color="#ffff00" sx={{ fontSize: '0.65rem' }}>
+                    {enhancementBreakdown.qed.toExponential(1)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Casimir:</Typography>
+                  <Typography variant="caption" color="#ff8800" sx={{ fontSize: '0.65rem' }}>
+                    {enhancementBreakdown.casimir.toExponential(1)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Rydberg:</Typography>
+                  <Typography variant="caption" color="#ff00ff" sx={{ fontSize: '0.65rem' }}>
+                    {enhancementBreakdown.rydberg.toExponential(1)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Compression:</Typography>
+                  <Typography variant="caption" color="#00ff88" sx={{ fontSize: '0.65rem' }}>
+                    {enhancementBreakdown.compression.toExponential(1)}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Paper>
+          </Collapse>
+          <Tooltip title={enhancementCollapsed ? 'Expand enhancement breakdown' : 'Collapse enhancement breakdown'} placement="top">
+            <Paper
+              elevation={3}
+              component="button"
+              type="button"
+              onClick={() => setEnhancementCollapsed((prev) => !prev)}
+              aria-expanded={!enhancementCollapsed}
+              aria-controls="ublv-enhancement-panel"
+              aria-label={enhancementCollapsed ? 'Expand Enhancement Breakdown panel' : 'Collapse Enhancement Breakdown panel'}
+              data-testid="ublv-enhancement-toggle"
+              sx={{
+                bgcolor: 'rgba(20, 20, 40, 0.95)',
+                color: 'white',
+                cursor: 'pointer',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: enhancementCollapsed ? 1 : '0 0 8px 8px',
+                minWidth: 160,
+                '&:hover': { bgcolor: 'rgba(30, 30, 55, 1)' },
+                transition: 'background-color 0.2s ease',
+              }}
+            >
+              {enhancementCollapsed ? (
+                <>
+                  <ExpandLessIcon sx={{ fontSize: 16 }} />
+                  <Typography variant="caption" sx={{ fontWeight: 'bold', fontSize: '0.65rem' }}>
+                    Enhancement
+                  </Typography>
+                  <ExpandLessIcon sx={{ fontSize: 16 }} />
+                </>
+              ) : (
+                <ExpandMoreIcon sx={{ fontSize: 18 }} />
+              )}
+            </Paper>
+          </Tooltip>
+        </Box>
       </Box>
       
       {/* Scrubbable dual-clock timeline (VIZ-01) + engine-sample player (VIZ-02) */}
