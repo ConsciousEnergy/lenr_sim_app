@@ -31,6 +31,26 @@ describe('EnhancementBreakdownDrawer', () => {
     expect(screen.getByTestId('ublv-enhancement-value-enhancement.phonon')).toBeInTheDocument();
   });
 
+  test('renders primary screening · phonon · loading radar/stack', () => {
+    render(
+      <EnhancementBreakdownDrawer
+        breakdown={BREAKDOWN}
+        sampleSource="solver"
+        collapsed={false}
+        onToggle={() => {}}
+      />,
+    );
+    expect(screen.getByTestId('ublv-enhancement-primary-stack')).toBeInTheDocument();
+    expect(screen.getByTestId('ublv-enhancement-radar')).toBeInTheDocument();
+    expect(screen.getByTestId('ublv-enhancement-bar-stack')).toBeInTheDocument();
+    expect(screen.getByTestId('ublv-enhancement-bar-fill-screening')).toHaveAttribute('data-norm');
+    expect(screen.getByTestId('ublv-enhancement-bar-fill-phonon')).toBeInTheDocument();
+    expect(screen.getByTestId('ublv-enhancement-bar-fill-loading')).toBeInTheDocument();
+    expect(screen.getByTestId('ublv-enhancement-primary-label')).toHaveTextContent(
+      /screening · phonon · loading/i,
+    );
+  });
+
   test('marks Local Calc when no engine samples', () => {
     render(
       <EnhancementBreakdownDrawer
