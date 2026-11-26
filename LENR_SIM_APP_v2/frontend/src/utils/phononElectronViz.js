@@ -23,6 +23,11 @@ export const PHONON_ELECTRON_FIDELITY = 'schematic';
 export const PHONON_ELECTRON_SOURCE = 'schematic_visualization';
 export const PHONON_CLAIM_TAG = 'schematic / contested';
 
+/** HUD chip copy — keep in sync with UnifiedBubbleLatticeVisualization. */
+export const PHONON_STANDING_CHIP = 'Phonon · acoustic+optical standing (contested)';
+export const PHONON_WAVEGUIDE_CHIP = 'Waveguide · catalyst schematic';
+export const PHONON_MELT_CHIP = 'Near T_m · schematic (not f_L)';
+
 function clamp01(value) {
   return Math.min(1, Math.max(0, value));
 }
@@ -67,6 +72,18 @@ export function phononModeMix({ phononFactor = 1 } = {}) {
 }
 
 /**
+ * Presentation frequencies (rad-ish units in viz time) from phonon factor.
+ * Acoustic stays lower (long-λ); optical rises faster with enhancement.
+ */
+export function phononModeFrequencies({ phononFactor = 1 } = {}) {
+  const logP = Math.log10(Math.max(finiteOr(phononFactor, 1), 1));
+  return {
+    acousticFreq: 2.4 + Math.min(1.2, logP * 0.35),
+    opticalFreq: 6.5 + Math.min(2.5, logP * 0.55),
+  };
+}
+
+/**
  * Literature T_m proximity (0..1) — softening cue only.
  * Does NOT invent phase_fraction_liquid / melt morph.
  */
@@ -97,6 +114,48 @@ export function waveguideEnvelopeNorm({
 }
 
 /**
+ * Single engine-sample → standing-wave viz param resolver.
+ * Keeps UBLV tick path from inventing ad-hoc mixes; never invents f_L.
+ */
+export function resolvePhononStandingWaveParams({
+  phononFactor = 1,
+  temperatureK = 300,
+  compressionRatio = 1,
+  loadingRatio = 0.5,
+  meltingPointK = null,
+  phononScale = 1,
+  amplitudeFloor = 0.14,
+} = {}) {
+  const phonon = Math.max(1, finiteOr(phononFactor, 1));
+  const mix = phononModeMix({ phononFactor: phonon });
+  const freqs = phononModeFrequencies({ phononFactor: phonon });
+  const meltSoftening = meltProximityNorm({ temperatureK, meltingPointK });
+  const waveguideNorm = waveguideEnvelopeNorm({ loadingRatio, phononFactor: phonon });
+  const rawAmp = phononJitterAmplitude({
+    phononFactor: phonon,
+    temperatureK,
+    compressionRatio,
+  }) * Math.max(0, finiteOr(phononScale, 1));
+  // Presentation floor so material-size modes stay readable at low samples.
+  const amplitude = Math.max(amplitudeFloor, rawAmp);
+
+  return {
+    phononFactor: phonon,
+    amplitude,
+    acousticWeight: mix.acousticWeight,
+    opticalWeight: mix.opticalWeight,
+    acousticFreq: freqs.acousticFreq,
+    opticalFreq: freqs.opticalFreq,
+    waveguideNorm,
+    meltSoftening,
+    inventsLiquidFraction: false,
+    fidelity: PHONON_ELECTRON_FIDELITY,
+    source: PHONON_ELECTRON_SOURCE,
+    claimTag: PHONON_CLAIM_TAG,
+  };
+}
+
+/**
  * Infer lattice index extents from rest sites (material-size standing wave).
  */
 export function latticeIndexExtents(sites) {
@@ -119,12 +178,25 @@ export function latticeIndexExtents(sites) {
 }
 
 /**
+ * Neighbor phase product for one axis-adjacent pair (test / HUD helper).
+ * Acoustic-dominated → typically ≥ 0 (in-phase); optical → typically < 0.
+ */
+export function neighborDisplacementPhaseProduct(dispA, dispB, axis = 'x') {
+  const a = finiteOr(dispA?.[axis], 0);
+  const b = finiteOr(dispB?.[axis], 0);
+  return a * b;
+}
+
+/**
  * Material-size standing-wave displacements (acoustic + optical).
  *
- * Acoustic: long-λ — neighbors largely in phase across the lattice span.
- * Optical: short-λ — nearest neighbors out of phase ((-1)^(ix+iy+iz)).
+ * Acoustic: long-λ — neighbors largely in phase across the lattice span
+ *   u_a ∝ sin(π ix/N_x) sin(π iy/N_y) sin(ω_a t)
+ * Optical: short-λ — nearest neighbors out of phase
+ *   u_o ∝ (-1)^(ix+iy+iz) sin(ω_o t)
  *
- * Returns { displacements, modeEnergy } where modeEnergy[i] ∈ [0,1] for tint.
+ * Returns displacements + modeEnergy plus per-mode energies for dual tint.
+ * Schematic / contested — not MD eigenvectors.
  */
 export function buildPhononStandingWaveDisplacements(sites, {
   time = 0,
@@ -136,7 +208,14 @@ export function buildPhononStandingWaveDisplacements(sites, {
   waveguideNorm = 0.4,
   meltSoftening = 0,
 } = {}) {
-  if (!sites?.length) return { displacements: [], modeEnergy: [] };
+  if (!sites?.length) {
+    return {
+      displacements: [],
+      modeEnergy: [],
+      acousticEnergy: [],
+      opticalEnergy: [],
+    };
+  }
 
   const amp = Math.max(0, finiteOr(amplitude, 0.08)) * (1 + meltSoftening * 0.55);
   const aw = Math.max(0, finiteOr(acousticWeight, 0.55));
@@ -145,13 +224,18 @@ export function buildPhononStandingWaveDisplacements(sites, {
   const wg = clamp01(finiteOr(waveguideNorm, 0.4));
   const { maxIx, maxIy, maxIz } = latticeIndexExtents(sites);
 
-  // Fundamental standing wave across material span (k = π / N).
+  // Fundamental standing wave across material span (k = π / N) — long-λ acoustic.
   const kx = Math.PI / maxIx;
   const ky = Math.PI / maxIy;
   const kz = Math.PI / Math.max(maxIz, 1);
 
   const displacements = [];
   const modeEnergy = [];
+  const acousticEnergy = [];
+  const opticalEnergy = [];
+
+  const acousticOsc = Math.sin(t * acousticFreq);
+  const acousticOscY = Math.cos(t * acousticFreq * 0.92);
 
   for (let i = 0; i < sites.length; i += 1) {
     const site = sites[i];
@@ -159,13 +243,13 @@ export function buildPhononStandingWaveDisplacements(sites, {
     const iy = site.iy || 0;
     const iz = site.iz || 0;
 
-    // Acoustic standing wave — in-phase envelope on lattice axes
-    const acousticEnv = Math.sin(kx * ix) * Math.sin(ky * iy + 0.15)
+    // Acoustic envelope — smooth long-λ; neighbors share sign over most of span.
+    const acousticEnv = Math.sin(kx * ix)
+      * Math.sin(ky * iy + 0.15)
       * (maxIz > 0 ? Math.sin(kz * iz + 0.08) : 1);
-    const acousticOsc = Math.sin(t * acousticFreq);
     const acoustic = acousticEnv * acousticOsc;
 
-    // Optical — staggered nearest-neighbor antiphase
+    // Optical — staggered nearest-neighbor antiphase (zone-boundary cue).
     const stagger = ((ix + iy + iz) % 2 === 0) ? 1 : -1;
     const opticalOsc = Math.sin(t * opticalFreq + ix * 0.2);
     const optical = stagger * opticalOsc
@@ -178,16 +262,20 @@ export function buildPhononStandingWaveDisplacements(sites, {
     const zAmp = amp * (0.75 + wg * 0.2);
 
     const dx = xAmp * mix;
-    const dy = yAmp * (aw * acousticEnv * Math.cos(t * acousticFreq * 0.92)
-      + ow * optical * 0.7);
-    const dz = zAmp * (aw * Math.sin(kz * iz) * acousticOsc * 0.65
-      + ow * optical * 0.55);
+    const dy = yAmp * (aw * acousticEnv * acousticOscY + ow * optical * 0.7);
+    const dz = zAmp * (aw * Math.sin(kz * iz) * acousticOsc * 0.65 + ow * optical * 0.55);
 
     displacements.push({ x: dx, y: dy, z: dz });
-    modeEnergy.push(clamp01(Math.abs(mix) * 0.65 + Math.abs(optical) * ow * 0.45));
+
+    const aE = clamp01(Math.abs(acoustic) * aw);
+    const oE = clamp01(Math.abs(optical) * ow);
+    acousticEnergy.push(aE);
+    opticalEnergy.push(oE);
+    // Combined tint energy — optical share biases warm channel in phononModeTintRgb.
+    modeEnergy.push(clamp01(aE * 0.55 + oE * 0.85 + Math.abs(mix) * 0.35));
   }
 
-  return { displacements, modeEnergy };
+  return { displacements, modeEnergy, acousticEnergy, opticalEnergy };
 }
 
 /**
@@ -217,16 +305,34 @@ export function buildPhononJitterDisplacements(sites, {
 }
 
 /**
- * Blend occupancy RGB with phonon mode energy (warm optical pulse).
+ * Blend occupancy RGB with phonon mode energy.
+ * Acoustic-leaning → cooler cyan lift; optical-leaning → warmer amber pulse.
  */
 export function phononModeTintRgb(baseRgb, modeEnergy = 0, opticalWeight = 0.4) {
   const e = clamp01(modeEnergy);
   const ow = clamp01(opticalWeight);
+  const acousticLift = 1 - ow;
   return {
-    r: Math.min(1, baseRgb.r * (1 - e * 0.25) + e * (0.55 + ow * 0.35)),
-    g: Math.min(1, baseRgb.g * (1 - e * 0.15) + e * (0.35 + (1 - ow) * 0.25)),
-    b: Math.min(1, baseRgb.b * (1 - e * 0.2) + e * (0.75 - ow * 0.35)),
+    r: Math.min(1, baseRgb.r * (1 - e * 0.25) + e * (0.35 * acousticLift + 0.85 * ow)),
+    g: Math.min(1, baseRgb.g * (1 - e * 0.15) + e * (0.55 * acousticLift + 0.4 * ow)),
+    b: Math.min(1, baseRgb.b * (1 - e * 0.2) + e * (0.9 * acousticLift + 0.35 * ow)),
   };
+}
+
+/**
+ * Dual-channel tint from separate acoustic / optical mode energies.
+ * Readable mode separation without claiming MD eigenvectors.
+ */
+export function phononDualModeTintRgb(
+  baseRgb,
+  acousticEnergy = 0,
+  opticalEnergy = 0,
+) {
+  const aE = clamp01(acousticEnergy);
+  const oE = clamp01(opticalEnergy);
+  const total = Math.max(aE + oE, 1e-6);
+  const ow = oE / total;
+  return phononModeTintRgb(baseRgb, clamp01(aE * 0.55 + oE * 0.9), ow);
 }
 
 /**
