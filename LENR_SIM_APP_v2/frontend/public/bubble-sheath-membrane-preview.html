@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>UBLV bubble membrane + sheath surface flow (schematic)</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #050812; overflow: hidden; font-family: system-ui, sans-serif; }
+    #c { width: 100%; height: 100%; display: block; }
+    #badge {
+      position: absolute; left: 12px; bottom: 12px; color: #cfefff;
+      background: rgba(10,20,40,0.78); padding: 8px 12px; border-radius: 8px;
+      font-size: 12px; max-width: 520px; line-height: 1.4;
+    }
+    #phase {
+      position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      color: #fff; background: rgba(20,40,70,0.85); padding: 6px 14px;
+      border-radius: 16px; font-size: 13px; letter-spacing: 0.04em;
+    }
+    #chip {
+      position: absolute; top: 52px; left: 50%; transform: translateX(-50%);
+      color: #e8f7ff; background: rgba(50,100,130,0.92); padding: 4px 10px;
+      border-radius: 12px; font-size: 11px; display: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="phase">EXPANSION · membrane primary (no wire cage)</div>
+  <div id="chip">schematic surface flow · not measured bubble spin</div>
+  <div id="badge">
+    Soft translucent membrane = primary bubble read (BDS-504)<br/>
+    Wire rim demoted · optional sheath Points/ribbons OFF→ON demo · not measured bubble spin<br/>
+    Local Calc schematic · lenr_proved false · EQ-OPEN OPEN · 0.4.1-beta
+  </div>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.187.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.187.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    const canvas = document.getElementById('c');
+    const phaseEl = document.getElementById('phase');
+    const chipEl = document.getElementById('chip');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setClearColor(0x050812);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(3.2, 2.1, 4.2);
+    const controls = new OrbitControls(camera, canvas);
+    controls.target.set(0, 0.15, 0);
+    controls.update();
+
+    scene.add(new THREE.HemisphereLight(0x88aacc, 0x2a1810, 0.5));
+    scene.add(new THREE.AmbientLight(0xdde8ff, 0.35));
+    const key = new THREE.DirectionalLight(0xfff5e8, 1.0);
+    key.position.set(4, 6, 3);
+    scene.add(key);
+
+    const hostMat = new THREE.MeshStandardMaterial({ color: 0x8a8a8a, metalness: 0.7, roughness: 0.35 });
+    const hostGeo = new THREE.SphereGeometry(0.14, 20, 20);
+    for (let x = -1; x <= 1; x++) {
+      for (let z = -1; z <= 1; z++) {
+        const m = new THREE.Mesh(hostGeo, hostMat);
+        m.position.set(x * 0.55, -1.05, z * 0.55);
+        scene.add(m);
+      }
+    }
+
+    const group = new THREE.Group();
+    group.position.set(0, -0.35, 0);
+    scene.add(group);
+
+    function gasMat(op = 0.32) {
+      return new THREE.MeshPhysicalMaterial({
+        color: 0xb8e8ff, metalness: 0.02, roughness: 0.14, clearcoat: 1,
+        clearcoatRoughness: 0.05, transparent: true, opacity: op, depthWrite: false,
+        emissive: new THREE.Color(0x3388aa), emissiveIntensity: 0.28,
+      });
+    }
+    function shellMat(color, op, em, ei = 0.48) {
+      return new THREE.MeshPhysicalMaterial({
+        color, metalness: 0.04, roughness: 0.18, clearcoat: 0.9, transparent: true,
+        opacity: op, depthWrite: false, side: THREE.DoubleSide,
+        emissive: new THREE.Color(em), emissiveIntensity: ei,
+      });
+    }
+
+    const bubble = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), gasMat(0.32));
+    group.add(bubble);
+    const outer = new THREE.Mesh(new THREE.SphereGeometry(1.12, 64, 48), shellMat(0x66f0ff, 0.52, 0x00ccee, 0.48));
+    group.add(outer);
+    const inner = new THREE.Mesh(new THREE.SphereGeometry(0.92, 48, 36), shellMat(0xff8844, 0.34, 0xff6622, 0.45));
+    group.add(inner);
+    // Faint wire only (demoted — was the cage look)
+    const wire = new THREE.Mesh(
+      new THREE.SphereGeometry(1.135, 32, 20),
+      new THREE.MeshBasicMaterial({ color: 0xaaffff, transparent: true, opacity: 0.08, wireframe: true, depthWrite: false }),
+    );
+    group.add(wire);
+
+    // Soft disc texture for sheath Points
+    const disc = document.createElement('canvas');
+    disc.width = 48; disc.height = 48;
+    const dctx = disc.getContext('2d');
+    const g = dctx.createRadialGradient(24, 24, 0, 24, 24, 24);
+    g.addColorStop(0, 'rgba(255,255,255,0.7)');
+    g.addColorStop(0.5, 'rgba(255,255,255,0.15)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    dctx.fillStyle = g; dctx.fillRect(0, 0, 48, 48);
+    const discTex = new THREE.CanvasTexture(disc);
+
+    const N = 36;
+    const seeds = [];
+    const positions = new Float32Array(N * 3);
+    const colors = new Float32Array(N * 3);
+    const ion = new THREE.Color(0x66e8ff);
+    const elec = new THREE.Color(0xff9966);
+    for (let i = 0; i < N; i++) {
+      const phi = Math.acos(0.75 * (1 - 2 * Math.random()));
+      const theta = Math.random() * Math.PI * 2;
+      const ionLike = Math.random() < 0.55;
+      seeds.push({ theta, phi, speed: 0.4 + Math.random() * 0.8, ionLike, phase: Math.random() * 6.28 });
+      const c = ionLike ? ion : elec;
+      colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+    }
+    const pGeom = new THREE.BufferGeometry();
+    pGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    pGeom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const points = new THREE.Points(pGeom, new THREE.PointsMaterial({
+      color: 0xffffff, size: 0.14, transparent: true, opacity: 0.42,
+      map: discTex, depthWrite: false, blending: THREE.AdditiveBlending,
+      sizeAttenuation: true, vertexColors: true,
+    }));
+    points.visible = false;
+    group.add(points);
+
+    const ribbons = [];
+    for (let r = 0; r < 6; r++) {
+      const hist = new Float32Array(8 * 3);
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(hist, 3));
+      const line = new THREE.Line(geom, new THREE.LineBasicMaterial({
+        color: r % 2 === 0 ? 0x66e8ff : 0xff9966,
+        transparent: true, opacity: 0.28, depthWrite: false, blending: THREE.AdditiveBlending,
+      }));
+      line.visible = false;
+      line.userData = { seedIdx: Math.floor((r / 6) * N), histArr: [] };
+      group.add(line);
+      ribbons.push(line);
+    }
+
+    group.add(new THREE.PointLight(0xb8e8ff, 0.9, 10, 2).translateX(0.6).translateY(0.8).translateZ(1.2));
+    group.add(new THREE.PointLight(0xff9966, 0.35, 8, 2).translateX(-0.8).translateY(0.4).translateZ(-0.6));
+
+    let t0 = performance.now();
+    const CYCLE = 10.0;
+
+    function frame(now) {
+      const elapsed = (now - t0) / 1000;
+      const u = (elapsed % CYCLE) / CYCLE;
+      // 0–0.45 membrane only; 0.45–1 membrane + sheath flow ON
+      const flowOn = u >= 0.45;
+      points.visible = flowOn;
+      ribbons.forEach((l) => { l.visible = flowOn; });
+      chipEl.style.display = flowOn ? 'block' : 'none';
+
+      const scale = 0.55 + 0.55 * Math.sin(u * Math.PI);
+      const shellR = scale * 1.14;
+      const dt = 0.016;
+      for (let i = 0; i < N; i++) {
+        const s = seeds[i];
+        s.theta += s.speed * dt * (s.ionLike ? 1 : -0.85);
+        const sinP = Math.sin(s.phi);
+        positions[i * 3] = shellR * sinP * Math.cos(s.theta);
+        positions[i * 3 + 1] = shellR * Math.cos(s.phi);
+        positions[i * 3 + 2] = shellR * sinP * Math.sin(s.theta);
+      }
+      pGeom.attributes.position.needsUpdate = true;
+
+      if (flowOn) {
+        for (const line of ribbons) {
+          const idx = line.userData.seedIdx;
+          const h = line.userData.histArr;
+          h.push(positions[idx * 3], positions[idx * 3 + 1], positions[idx * 3 + 2]);
+          while (h.length > 24) h.shift();
+          const out = line.geometry.attributes.position.array;
+          out.fill(0);
+          for (let k = 0; k < h.length; k++) out[k] = h[k];
+          if (h.length >= 3) {
+            const lx = h[h.length - 3], ly = h[h.length - 2], lz = h[h.length - 1];
+            for (let k = h.length; k < out.length; k += 3) { out[k] = lx; out[k + 1] = ly; out[k + 2] = lz; }
+          }
+          line.geometry.attributes.position.needsUpdate = true;
+        }
+      }
+
+      bubble.scale.setScalar(scale);
+      outer.scale.setScalar(scale * 1.12);
+      inner.scale.setScalar(scale * 0.92);
+      wire.scale.setScalar(scale * 1.13);
+      wire.material.opacity = 0.08;
+
+      phaseEl.textContent = flowOn
+        ? 'EXPANSION · membrane + sheath surface flow ON (schematic)'
+        : 'EXPANSION · soft membrane primary (wire demoted)';
+
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+  </script>
+</body>
+</html>
