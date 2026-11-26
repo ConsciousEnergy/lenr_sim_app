@@ -1092,7 +1092,7 @@ const UnifiedBubbleLatticeVisualization = ({
     jet.userData = { baseRadius: 0.32, baseHeight: 3.8 };
     bubbleGroup.add(jet);
 
-    // Counter-rotating shed tori + micro-bubbles → lattice (post maser-like jet)
+    // Counter-rotating shed tori + micro-bubbles rise/fade away from lattice
     const shedDebris = createShedPlasmaDebrisGroup({
       torusCount: 3,
       bubbleCount: 5,
@@ -3187,7 +3187,7 @@ const UnifiedBubbleLatticeVisualization = ({
           }
           jet.position.set(0, -jetHeight * 0.18, 0);
         }
-        // Counter-rotating shed tori + bubbles land on lattice surface
+        // Counter-rotating shed rises away from lattice and fades in the flow
         if (shedDebrisApi) {
           shedDebrisApi.update(deltaTime, showBubble ? shedProg : 0, { primarySpin: 1 });
         } else if (shedDebrisGroup) {

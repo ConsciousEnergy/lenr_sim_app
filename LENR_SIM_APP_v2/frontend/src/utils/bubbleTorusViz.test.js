@@ -66,19 +66,25 @@ describe('bubbleTorusViz (presentation materials)', () => {
     Object.values(geos).forEach((g) => g.dispose());
   });
 
-  test('shed debris counter-rotates and lands toward lattice', () => {
+  test('shed debris counter-rotates, rises away from lattice, and fades', () => {
     const debris = createShedPlasmaDebrisGroup({ torusCount: 2, bubbleCount: 3 });
     expect(debris.group.name).toBe('ShedPlasmaDebris');
     expect(debris.group.children.length).toBe(5);
     debris.update(0.016, 0);
     expect(debris.group.visible).toBe(false);
-    debris.update(0.016, 0.9, { primarySpin: 1 });
+    debris.update(0.016, 0.55, { primarySpin: 1 });
     expect(debris.group.visible).toBe(true);
-    const visible = debris.group.children.filter((c) => c.visible);
-    expect(visible.length).toBeGreaterThan(0);
-    // Debris should have moved downward (negative local Y) toward lattice
-    const landed = visible.some((c) => c.position.y < -0.2);
-    expect(landed).toBe(true);
+    const mid = debris.group.children.filter((c) => c.visible);
+    expect(mid.length).toBeGreaterThan(0);
+    // Rise away from lattice (+Y), not settle onto surface
+    expect(mid.some((c) => c.position.y > 0.3)).toBe(true);
+    const midOpacity = Math.max(...mid.map((c) => c.material.opacity));
+    debris.update(0.016, 1.0, { primarySpin: 1 });
+    const late = debris.group.children.filter((c) => c.visible);
+    const lateOpacity = late.length
+      ? Math.max(...late.map((c) => c.material.opacity))
+      : 0;
+    expect(lateOpacity).toBeLessThan(midOpacity);
     debris.dispose();
   });
 });

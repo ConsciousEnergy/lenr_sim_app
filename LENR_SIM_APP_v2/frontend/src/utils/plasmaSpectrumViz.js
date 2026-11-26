@@ -287,7 +287,7 @@ export function shedDebrisProgress({
   const name = String(phase || '').toUpperCase();
   if (name === 'MINIMUM') {
     const p = clamp01(phaseProgress);
-    // Rise then hold — debris lands on lattice during MINIMUM
+    // Rise and fade through MINIMUM (debris drifts up, not onto lattice)
     return clamp01(0.35 + p * 0.65);
   }
   if (name === 'REBOUND') {
@@ -305,8 +305,8 @@ export const MASER_JET_CHIP_TOOLTIP =
 export const SHED_DEBRIS_CHIP = 'Counter-rotating shed · schematic';
 export const SHED_DEBRIS_CHIP_TOOLTIP =
   'After the maser-like jet punch, secondary turbulent tori + micro-bubbles '
-  + 'shed with opposite spin and settle toward the lattice surface. Hydro / '
-  + 'optical morphology peer only — not continuum CFD / not fusion.';
+  + 'shed with opposite spin, rise away from the lattice, and fade out in the '
+  + 'fluid flow. Hydro / optical morphology peer only — not continuum CFD / not fusion.';
 
 /**
  * Apply spectrum tint to TorusFormation / FocusedJet / TorusPlasmaCloud.

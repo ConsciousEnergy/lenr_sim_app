@@ -37,8 +37,9 @@
     <span class="chip alt">Counter-rotating shed · schematic</span>
   </div>
   <div id="badge">
-    Torus window scrub <b>90.7% → 95.7%</b> → collapses onto maser-like jet → counter-rotating shed onto lattice<br/>
+    Torus window scrub <b>90.7% → 95.7%</b> → collapses onto maser-like jet → counter-rotating shed rises &amp; fades<br/>
     Spectrum binds host / solute / electrolyte (Pd·D·K demo). Jet = transparent light.<br/>
+    Shed rises away from lattice and fades in the flow (not surface landing).<br/>
     Peer: Flannigan–Suslick optical / EMP chem · plasma ≠ fusion · EQ-OPEN untouched
   </div>
   <script type="importmap">
@@ -196,7 +197,7 @@
       m.userData = {
         kind: 'torus', azimuth: (i / 3) * Math.PI * 2 + 0.4,
         radialStart: 0.15 + i * 0.08, radialEnd: 0.9 + i * 0.3,
-        yStart: 0.05, yEnd: -1.05 - i * 0.12, delay: i * 0.12, scale0: 0.55 + i * 0.12, spinRate: 2.4 + i * 0.5,
+        yStart: 0.05, yEnd: 1.35 + i * 0.35, delay: i * 0.12, scale0: 0.55 + i * 0.12, spinRate: 2.4 + i * 0.5,
       };
       shedGroup.add(m);
       shedItems.push(m);
@@ -207,7 +208,7 @@
       m.userData = {
         kind: 'bubble', azimuth: (i / 5) * Math.PI * 2 + 1.1,
         radialStart: 0.1, radialEnd: 0.55 + (i % 3) * 0.28,
-        yStart: 0.1, yEnd: -0.95 - (i % 3) * 0.15, delay: 0.08 + i * 0.09,
+        yStart: 0.1, yEnd: 1.15 + (i % 3) * 0.4, delay: 0.08 + i * 0.09,
         scale0: 0.35 + (i % 3) * 0.12, spinRate: 1.5 + i * 0.3,
       };
       shedGroup.add(m);
@@ -231,7 +232,9 @@
         if (d.kind === 'torus') child.scale.set(sc, sc * 0.75, sc);
         else child.scale.setScalar(sc * (1 - ease * 0.25));
         child.rotation.z -= 0.04 * d.spinRate; // counter-rotate vs primary +Z
-        child.material.opacity = 0.14 + (1 - ease) * 0.22 + s * 0.08;
+        const peak = d.kind === 'torus' ? 0.38 : 0.32;
+        child.material.opacity = peak * (1 - ease) * (0.55 + 0.45 * s);
+        if (child.material.opacity < 0.02) child.visible = false;
       });
     }
 

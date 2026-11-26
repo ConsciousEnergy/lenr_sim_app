@@ -371,7 +371,8 @@ export function createBubbleTorusGeometries() {
 
 /**
  * Secondary turbulent tori + micro-bubbles that shed after the maser-like jet.
- * Counter-rotate relative to the primary torus and settle toward the lattice.
+ * Counter-rotate relative to the primary torus, rise away from the lattice,
+ * and fade out in the fluid flow (not landing on the surface).
  *
  * Honesty: schematic hydro / optical morphology — not CFD, not fusion.
  *
@@ -415,10 +416,10 @@ export function createShedPlasmaDebrisGroup({
       spinRate: 2.2 + i * 0.55,
       azimuth,
       radialStart: 0.15 + i * 0.08,
-      radialEnd: 0.85 + i * 0.35,
-      // Local Y falls toward lattice (bubble group nest sits above surface)
+      radialEnd: 1.05 + i * 0.4,
+      // Rise away from lattice (+Y) and fade in the fluid flow
       yStart: 0.05,
-      yEnd: -1.05 - i * 0.12,
+      yEnd: 1.35 + i * 0.35,
       delay: i * 0.12,
       scale0: 0.55 + i * 0.12,
     };
@@ -445,9 +446,9 @@ export function createShedPlasmaDebrisGroup({
       spinRate: 1.4 + i * 0.35,
       azimuth,
       radialStart: 0.1,
-      radialEnd: 0.55 + (i % 3) * 0.28,
+      radialEnd: 0.75 + (i % 3) * 0.35,
       yStart: 0.1,
-      yEnd: -0.95 - (i % 3) * 0.15,
+      yEnd: 1.15 + (i % 3) * 0.4,
       delay: 0.08 + i * 0.09,
       scale0: 0.35 + (i % 3) * 0.12,
     };
@@ -492,10 +493,14 @@ export function createShedPlasmaDebrisGroup({
       const spinDir = -primarySpin * (d.spinSign || -1);
       child.rotation.z += deltaTime * d.spinRate * spinDir * (0.7 + s);
       if (child.material) {
-        child.material.opacity = (d.kind === 'torus' ? 0.18 : 0.14)
-          + (1 - ease) * 0.22
-          + s * 0.08;
+        // Peak mid-flight, fade out as debris rises away from the lattice
+        const peak = d.kind === 'torus' ? 0.38 : 0.32;
+        child.material.opacity = peak * (1 - ease) * (0.55 + 0.45 * s);
+        if (child.material.emissiveIntensity !== undefined) {
+          child.material.emissiveIntensity = (d.kind === 'torus' ? 1.0 : 0.7) * (1 - ease);
+        }
       }
+      if ((child.material?.opacity ?? 0) < 0.02) child.visible = false;
     });
   };
 
