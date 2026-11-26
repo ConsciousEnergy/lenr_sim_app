@@ -13,7 +13,11 @@ import * as THREE from 'three';
 export const PLASMA_FLUID_LOOK_FIDELITY = 'schematic';
 export const PLASMA_FLUID_LOOK_SOURCE = 'schematic_visualization';
 export const PLASMA_FLUID_LOOK_CHIP =
-  'fluid look · schematic · not CFD';
+  'fluid look · turb↔laminar · not CFD';
+export const PLASMA_FLUID_LOOK_CHIP_TOOLTIP =
+  'Main plasma uses a turbulent mottled look; shed / quieter surfaces use a '
+  + 'smoother laminar advection cue. Presentation only — not continuum CFD / PIC; '
+  + 'plasma ≠ fusion; EQ-OPEN untouched.';
 
 /** Deterministic value-noise (presentation; not a turbulence solver). */
 export function valueNoise2D(x, y, seed = 0) {
@@ -53,20 +57,45 @@ function fillTurbulentRgba(data, size, seed, warm) {
     for (let x = 0; x < size; x += 1) {
       const u = x / size;
       const v = y / size;
-      const n = fbmNoise2D(u * 6.5, v * 6.5, { seed, octaves: 5 });
-      const filament = fbmNoise2D(u * 14 + 2.1, v * 3.2, { seed: seed + 9, octaves: 3 });
-      const t = Math.min(1, Math.max(0, n * 0.72 + filament * 0.28));
+      const n = fbmNoise2D(u * 7.5, v * 7.5, { seed, octaves: 6 });
+      const filament = fbmNoise2D(u * 18 + 2.1, v * 3.4, { seed: seed + 9, octaves: 4 });
+      const swirl = fbmNoise2D(u * 22 + v * 9, v * 11, { seed: seed + 21, octaves: 3 });
+      const t = Math.min(1, Math.max(0, n * 0.55 + filament * 0.28 + swirl * 0.17));
       const i = (y * size + x) * 4;
       if (warm) {
-        data[i] = Math.floor(140 + t * 115);
-        data[i + 1] = Math.floor(70 + t * 90);
-        data[i + 2] = Math.floor(40 + t * 50);
+        data[i] = Math.floor(130 + t * 125);
+        data[i + 1] = Math.floor(55 + t * 100);
+        data[i + 2] = Math.floor(30 + t * 55);
       } else {
-        data[i] = Math.floor(60 + t * 90);
-        data[i + 1] = Math.floor(140 + t * 100);
-        data[i + 2] = Math.floor(180 + t * 75);
+        data[i] = Math.floor(50 + t * 100);
+        data[i + 1] = Math.floor(130 + t * 110);
+        data[i + 2] = Math.floor(170 + t * 85);
       }
-      data[i + 3] = Math.floor(90 + t * 165);
+      data[i + 3] = Math.floor(85 + t * 170);
+    }
+  }
+}
+
+/** Smooth anisotropic bands — laminar advection cue (not NS laminar flow). */
+function fillLaminarRgba(data, size, seed, warm) {
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const u = x / size;
+      const v = y / size;
+      const band = 0.5 + 0.5 * Math.sin((v * 9 + u * 0.6) * Math.PI * 2 + seed * 0.1);
+      const soft = fbmNoise2D(u * 2.2, v * 3.5, { seed, octaves: 2, gain: 0.45 });
+      const t = Math.min(1, Math.max(0, band * 0.72 + soft * 0.28));
+      const i = (y * size + x) * 4;
+      if (warm) {
+        data[i] = Math.floor(160 + t * 70);
+        data[i + 1] = Math.floor(120 + t * 60);
+        data[i + 2] = Math.floor(90 + t * 40);
+      } else {
+        data[i] = Math.floor(150 + t * 70);
+        data[i + 1] = Math.floor(160 + t * 60);
+        data[i + 2] = Math.floor(175 + t * 55);
+      }
+      data[i + 3] = Math.floor(70 + t * 110);
     }
   }
 }
@@ -97,6 +126,34 @@ export function createTurbulentNoiseTexture({
   const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
   tex.colorSpace = THREE.SRGBColorSpace;
   return wrapFluidTexture(tex, 'turbulentNoise');
+}
+
+/**
+ * Laminar / smooth-band albedo (schematic advection cue).
+ * @returns {THREE.Texture}
+ */
+export function createLaminarNoiseTexture({
+  size = 128,
+  seed = 5,
+  warm = false,
+} = {}) {
+  if (typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (ctx?.createImageData) {
+      const img = ctx.createImageData(size, size);
+      fillLaminarRgba(img.data, size, seed, warm);
+      ctx.putImageData(img, 0, 0);
+      return wrapFluidTexture(new THREE.CanvasTexture(canvas), 'laminarNoise');
+    }
+  }
+  const data = new Uint8Array(size * size * 4);
+  fillLaminarRgba(data, size, seed, warm);
+  const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return wrapFluidTexture(tex, 'laminarNoise');
 }
 
 function fillNormalRgba(data, size, seed) {
@@ -188,20 +245,34 @@ export function createAdvectiveStreakTexture({ size = 128, seed = 21 } = {}) {
 
 /**
  * Attach schematic fluid maps to a plasma material (torus / jet / shed).
+ * mode: 'turbulent' (main plasma) | 'laminar' (quieter shed / shell cue).
  * Mutates material; stores disposables on material.userData.plasmaFluidLook.
  */
 export function applyPlasmaFluidLook(material, {
   kind = 'torus',
+  mode = null,
   shared = null,
 } = {}) {
   if (!material) return null;
+  const resolvedMode = mode
+    || (kind === 'shed' ? 'laminar' : kind === 'jet' ? 'laminar' : 'turbulent');
+  const isLaminar = resolvedMode === 'laminar';
   const pack = shared || {
-    noise: createTurbulentNoiseTexture({
-      size: 128,
-      seed: kind === 'shed' ? 7 : 3,
-      warm: kind === 'torus',
+    noise: isLaminar
+      ? createLaminarNoiseTexture({
+        size: 128,
+        seed: kind === 'shed' ? 7 : 5,
+        warm: kind === 'torus',
+      })
+      : createTurbulentNoiseTexture({
+        size: 128,
+        seed: kind === 'bubble' ? 4 : 3,
+        warm: kind === 'torus',
+      }),
+    normal: createSoftRefractionNormalMap({
+      size: 96,
+      seed: isLaminar ? 19 : kind === 'jet' ? 15 : 11,
     }),
-    normal: createSoftRefractionNormalMap({ size: 96, seed: kind === 'jet' ? 15 : 11 }),
     streak: kind === 'jet' ? createAdvectiveStreakTexture({ size: 128 }) : null,
   };
   if (!pack.noise && !pack.streak) return null;
@@ -209,19 +280,19 @@ export function applyPlasmaFluidLook(material, {
   if (map) {
     material.map = map;
     material.emissiveMap = map;
-    if (kind === 'torus') map.repeat.set(4.5, 2.2);
-    if (kind === 'shed') map.repeat.set(3.2, 3.2);
-    if (kind === 'bubble') map.repeat.set(2.8, 2.8);
+    if (kind === 'torus') map.repeat.set(isLaminar ? 2.4 : 5.2, isLaminar ? 1.4 : 2.6);
+    if (kind === 'shed') map.repeat.set(isLaminar ? 2.0 : 3.2, isLaminar ? 3.6 : 3.2);
+    if (kind === 'bubble') map.repeat.set(isLaminar ? 1.8 : 3.4, isLaminar ? 1.8 : 3.4);
   }
   if (material.roughnessMap !== undefined && pack.noise) {
     material.roughnessMap = pack.noise;
   }
   if (material.normalMap !== undefined && kind !== 'jet' && pack.normal) {
     material.normalMap = pack.normal;
-    material.normalScale = new THREE.Vector2(
-      kind === 'bubble' ? 0.55 : 0.48,
-      kind === 'bubble' ? 0.55 : 0.48,
-    );
+    const n = isLaminar
+      ? (kind === 'bubble' ? 0.22 : 0.18)
+      : (kind === 'bubble' ? 0.62 : 0.55);
+    material.normalScale = new THREE.Vector2(n, n);
   }
   material.needsUpdate = true;
   material.userData = material.userData || {};
@@ -229,10 +300,15 @@ export function applyPlasmaFluidLook(material, {
     fidelity: PLASMA_FLUID_LOOK_FIDELITY,
     source: PLASMA_FLUID_LOOK_SOURCE,
     kind,
+    mode: resolvedMode,
     pack,
-    // Stronger advection read on bubbles/rings (schematic flow, not CFD)
-    scrollU: kind === 'jet' ? 0.07 : kind === 'bubble' ? 0.14 : 0.16,
-    scrollV: kind === 'jet' ? 0.38 : kind === 'bubble' ? 0.11 : 0.12,
+    // Turbulent: chaotic UV drift; laminar: slower, anisotropic stream
+    scrollU: isLaminar
+      ? (kind === 'jet' ? 0.04 : 0.05)
+      : (kind === 'jet' ? 0.09 : kind === 'bubble' ? 0.18 : 0.22),
+    scrollV: isLaminar
+      ? (kind === 'jet' ? 0.42 : 0.16)
+      : (kind === 'jet' ? 0.28 : kind === 'bubble' ? 0.15 : 0.19),
   };
   return pack;
 }

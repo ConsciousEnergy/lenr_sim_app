@@ -34,18 +34,21 @@
     <span class="chip">Schematic excited plasma · not fusion</span>
     <span class="chip alt" id="specChip">Plasma tint · D/Pd/K (schematic)</span>
     <span class="chip" style="background:rgba(90,70,150,0.9)">Schematic maser-like jet · not fusion</span>
-    <span class="chip alt">Counter-rotating shed · schematic</span>
-    <span class="chip alt">fluid look · schematic · not CFD</span>
+    <span class="chip alt">uncolored shed · schematic</span>
+    <span class="chip alt">fluid look · turb↔laminar · not CFD</span>
     <span class="chip" style="background:rgba(100,50,120,0.92)">fold-in torus · puncture · schematic</span>
     <span class="chip" style="background:rgba(120,55,75,0.92)">pin focus · H+e/ions · schematic</span>
     <span class="chip" style="background:rgba(90,70,40,0.9)">Schwinger hint · exploratory · not proved</span>
+    <span class="chip" style="background:rgba(80,95,70,0.9)">aspherical collapse · schematic</span>
+    <span class="chip" style="background:rgba(120,110,70,0.9)">SL flash · schematic · lab peer</span>
   </div>
   <div id="badge">
     Torus window scrub <b>90.7% → 95.7%</b> → collapses onto maser-like jet → counter-rotating shed rises &amp; fades<br/>
     Spectrum binds host / solute / electrolyte (Pd·D·K demo). Jet = transparent light + advective streaks.<br/>
-    Shed: rising world +Y (latched) + lattice-plane travelers; ejected tori ~90° to main
-    (main spins inward); opacity fade — no reverse / bounce.<br/>
-    Fluid look: procedural noise / soft refraction / UV advection · schematic · not CFD · plasma ≠ fusion<br/>
+    Shed: uncolored (no spectrum tint); rising world +Y + lattice travelers; tori ~90°;
+    main spins inward; opacity fade — no reverse / bounce.<br/>
+    Fluid look: turbulent main plasma ↔ laminar shed/jet · schematic · not CFD · plasma ≠ fusion<br/>
+    Lab cues: aspherical squish + brief SL flash (Flannigan–Suslick peer · not proved).<br/>
     Fold-in: rear→front dimple → walls meet → puncture → Clifford R/a≈√2 torus → jet
     (genus change needs puncture — not flatten+spawn; PoF/CMC peers · not CFD).<br/>
     Dimple pin = collapse focus: H + e⁻/ions condensation → extreme-field cue; Schwinger-limit
@@ -150,24 +153,29 @@
       tex.needsUpdate = true;
       return tex;
     }
-    const fluidNoise = makeNoiseTex(96, 3, true, false);
+    const fluidNoise = makeNoiseTex(96, 3, true, false); // turbulent warm
+    const fluidLaminar = makeNoiseTex(96, 7, false, false); // cooler quieter
     const fluidStreak = makeNoiseTex(96, 21, false, true);
-    fluidNoise.repeat.set(3, 1.5);
+    fluidNoise.repeat.set(5.2, 2.6);
+    fluidLaminar.repeat.set(2.0, 3.6);
     fluidStreak.repeat.set(2, 3);
     const fluidMats = [];
+    const SHED_NEUTRAL = 0xc5ccd4;
 
     function plasmaMat(color, opacity = 0.4, kind = 'torus') {
-      const map = kind === 'jet' ? fluidStreak : fluidNoise;
+      const map = kind === 'jet' ? fluidStreak
+        : (kind === 'shed' ? fluidLaminar : fluidNoise);
       const mat = new THREE.MeshStandardMaterial({
         color, metalness: 0.02, roughness: kind === 'jet' ? 0.45 : 0.72, transparent: true, opacity,
         depthWrite: false, side: THREE.DoubleSide,
-        emissive: new THREE.Color(color), emissiveIntensity: kind === 'jet' ? 1.35 : 0.95,
+        emissive: new THREE.Color(color), emissiveIntensity: kind === 'jet' ? 1.35 : kind === 'shed' ? 0.55 : 0.95,
         blending: THREE.AdditiveBlending,
         map, emissiveMap: map,
       });
       mat.userData.fluidScroll = kind === 'jet'
-        ? { u: 0.07, v: 0.38 }
-        : kind === 'bubble' ? { u: 0.14, v: 0.11 } : { u: 0.16, v: 0.12 };
+        ? { u: 0.04, v: 0.42 }
+        : kind === 'shed' ? { u: 0.05, v: 0.16 }
+          : kind === 'bubble' ? { u: 0.18, v: 0.15 } : { u: 0.22, v: 0.19 };
       fluidMats.push(mat);
       return mat;
     }
@@ -419,7 +427,7 @@
       return { x: 0, y: az + Math.PI / 2, z: 0 };
     }
     for (let i = 0; i < 5; i++) {
-      const m = new THREE.Mesh(shedTorusGeo, plasmaMat(i % 2 ? spectrum.secondary : spectrum.primary, 0.42, 'shed'));
+      const m = new THREE.Mesh(shedTorusGeo, plasmaMat(SHED_NEUTRAL, 0.38, 'shed'));
       const az = (i / 5) * Math.PI * 2 + 0.4;
       const rest = shedTorusRest(az);
       m.rotation.set(rest.x, rest.y, rest.z);
@@ -429,27 +437,27 @@
         radialStart: 0.35 + (i % 4) * 0.1, radialEnd: 0.95 + (i % 4) * 0.22,
         spawnLocalY: 0.7 + (i % 3) * 0.1, riseDistance: 1.85 + (i % 4) * 0.28,
         delay: i * 0.07, scale0: 0.5 + (i % 3) * 0.1, spinRate: 2.4 + i * 0.4,
-        peakOpacity: 0.42, worldYLatched: null, spawnWorldY: null,
+        peakOpacity: 0.38, worldYLatched: null, spawnWorldY: null,
       };
       shedGroup.add(m);
       shedItems.push(m);
     }
     for (let i = 0; i < 8; i++) {
-      const m = new THREE.Mesh(shedBubbleGeo, plasmaMat(i % 2 ? spectrum.primary : spectrum.secondary, 0.36, 'shed'));
+      const m = new THREE.Mesh(shedBubbleGeo, plasmaMat(SHED_NEUTRAL, 0.32, 'shed'));
       m.visible = false;
       m.userData = {
         kind: 'bubble', path: 'rise', azimuth: (i / 8) * Math.PI * 2 + 1.1,
         radialStart: 0.25 + (i % 4) * 0.07, radialEnd: 0.75 + (i % 4) * 0.18,
         spawnLocalY: 0.72 + (i % 3) * 0.08, riseDistance: 1.65 + (i % 3) * 0.28,
         delay: 0.04 + i * 0.055, scale0: 0.32 + (i % 3) * 0.1,
-        spinRate: 1.5 + i * 0.25, peakOpacity: 0.36,
+        spinRate: 1.5 + i * 0.25, peakOpacity: 0.32,
         worldYLatched: null, spawnWorldY: null,
       };
       shedGroup.add(m);
       shedItems.push(m);
     }
     for (let i = 0; i < 4; i++) {
-      const m = new THREE.Mesh(latticeTorusGeo, plasmaMat(i % 2 ? spectrum.secondary : spectrum.primary, 0.38, 'shed'));
+      const m = new THREE.Mesh(latticeTorusGeo, plasmaMat(SHED_NEUTRAL, 0.34, 'shed'));
       const az = (i / 4) * Math.PI * 2 + 0.2;
       const rest = shedTorusRest(az);
       m.rotation.set(rest.x, rest.y, rest.z);
@@ -459,24 +467,35 @@
         radialStart: 0.55 + (i % 3) * 0.12, radialEnd: 1.55 + (i % 4) * 0.35,
         spawnLocalY: -0.15 + (i % 3) * 0.04, riseDistance: 0.08 + (i % 3) * 0.04,
         delay: 0.02 + i * 0.05, scale0: 0.4 + (i % 3) * 0.08, spinRate: 1.8 + i * 0.22,
-        peakOpacity: 0.38, worldYLatched: null, spawnWorldY: null,
+        peakOpacity: 0.34, worldYLatched: null, spawnWorldY: null,
       };
       shedGroup.add(m);
       shedItems.push(m);
     }
     for (let i = 0; i < 6; i++) {
-      const m = new THREE.Mesh(smallBubbleGeo, plasmaMat(i % 2 ? spectrum.primary : spectrum.secondary, 0.34, 'shed'));
+      const m = new THREE.Mesh(smallBubbleGeo, plasmaMat(SHED_NEUTRAL, 0.3, 'shed'));
       m.visible = false;
       m.userData = {
         kind: 'latticeBubble', path: 'lattice', azimuth: (i / 6) * Math.PI * 2 + 0.9,
         radialStart: 0.55 + (i % 3) * 0.12, radialEnd: 1.55 + (i % 4) * 0.35,
         spawnLocalY: -0.15 + (i % 3) * 0.04, riseDistance: 0.08 + (i % 3) * 0.04,
         delay: 0.03 + i * 0.05, scale0: 0.28 + (i % 3) * 0.07, spinRate: 1.1 + i * 0.22,
-        peakOpacity: 0.34, worldYLatched: null, spawnWorldY: null,
+        peakOpacity: 0.3, worldYLatched: null, spawnWorldY: null,
       };
       shedGroup.add(m);
       shedItems.push(m);
     }
+
+    // Brief SL flash (lab peer)
+    const slFlash = new THREE.Mesh(
+      new THREE.SphereGeometry(0.35, 20, 16),
+      new THREE.MeshBasicMaterial({
+        color: 0xfff8e8, transparent: true, opacity: 0,
+        depthWrite: false, blending: THREE.AdditiveBlending,
+      }),
+    );
+    slFlash.visible = false;
+    group.add(slFlash);
 
     function updateShed(progress) {
       const raw = Math.min(1, Math.max(0, progress));
@@ -541,10 +560,10 @@
       jet.material.color.setHex(spectrum.jet);
       jet.material.emissive.setHex(spectrum.jet);
       glow.color.setHex(spectrum.primary);
-      shedItems.forEach((m, i) => {
-        const hex = i % 2 ? spectrum.secondary : spectrum.primary;
-        m.material.color.setHex(hex);
-        m.material.emissive.setHex(hex);
+      // Shed stays uncolored (neutral) — main plasma keeps spectrum honesty
+      shedItems.forEach((m) => {
+        m.material.color.setHex(SHED_NEUTRAL);
+        m.material.emissive.setHex(SHED_NEUTRAL);
       });
       specChip.textContent = spectrum.label;
     }
@@ -611,6 +630,8 @@
         const scale = 0.35 + p * 1.15;
         bubble.scale.setScalar(scale);
         bubble.material.opacity = 0.28;
+        slFlash.visible = false;
+        slFlash.material.opacity = 0;
         updateFocusPin({}, 0, elapsed);
         updateShed(0);
       } else if (u < 0.78) {
@@ -619,17 +640,27 @@
         scrubPct = (TORUS_START + p * (TORUS_END - TORUS_START)) * 100;
         const morph = morphFromCollapse(p);
         const tighten = Math.max(0, (p - 0.55) / 0.45);
+        const smooth = (a, b, x) => {
+          const t = Math.min(1, Math.max(0, (x - a) / Math.max(1e-6, b - a)));
+          return t * t * (3 - 2 * t);
+        };
+        const aspheric = smooth(0.05, 0.55, p) * (1 - smooth(0.7, 0.95, p) * 0.35);
+        const slAmt = smooth(0.58, 0.72, p) * (1 - smooth(0.78, 0.92, p));
         // Fold-in: rear→front dimple → walls meet → puncture → Clifford torus
         applyFoldInDimple(morph.dimple, morph.wallsMeet);
         const baseScale = 1.35 * (1 - p * 0.28);
         bubble.visible = morph.bubbleVisible && morph.torusBirth < 0.98;
         bubble.scale.set(
-          baseScale * morph.bubbleScaleXY,
-          Math.max(0.12, baseScale * morph.bubbleScaleY),
-          baseScale * morph.bubbleScaleXY,
+          baseScale * morph.bubbleScaleXY * (1 + aspheric * 0.12),
+          Math.max(0.12, baseScale * morph.bubbleScaleY * (1 - aspheric * 0.28)),
+          baseScale * morph.bubbleScaleXY * (1 + aspheric * 0.12),
         );
         bubble.material.opacity = 0.28 * morph.bubbleOpacityMul;
         bubble.rotation.y += 0.015 + morph.dimple * 0.03;
+        slFlash.visible = slAmt > 0.04;
+        slFlash.position.set(0, (morph.pinAxisY || 0) * 0.35, 0);
+        slFlash.scale.setScalar(0.6 + slAmt * 2.2);
+        slFlash.material.opacity = slAmt * 0.85;
         const shedEarly = p > 0.88 ? ((p - 0.88) / 0.12) * 0.22 : 0;
         torus.visible = morph.torusVisible && tighten < 0.98 && shedEarly < 0.08;
         filament.visible = morph.torusBirth > 0.25 && tighten < 0.95 && shedEarly < 0.08;
@@ -675,6 +706,10 @@
         bubble.visible = p > 0.65;
         bubble.scale.setScalar(0.4 + Math.max(0, p - 0.65) * 0.8);
         bubble.material.opacity = 0.28 * Math.min(1, Math.max(0, (p - 0.65) / 0.35));
+        const trail = Math.max(0, 0.35 * (1 - p));
+        slFlash.visible = trail > 0.04 && p < 0.7;
+        slFlash.scale.setScalar(0.8 + trail);
+        slFlash.material.opacity = trail * 0.45;
         jet.visible = p < 0.88;
         jet.scale.set(1 - p * 0.3, 1 + p * 1.8, 1 - p * 0.3);
         jet.material.opacity = 0.2 + (1 - p) * 0.35;

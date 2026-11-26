@@ -305,14 +305,16 @@ export const MASER_JET_CHIP_TOOLTIP =
   + '(optical / Flannigan–Suslick peer). "Maser-like" is presentation language '
   + 'only — not a verified LENR maser step; plasma ≠ fusion; EQ-OPEN untouched.';
 
-export const SHED_DEBRIS_CHIP = 'Counter-rotating shed · schematic';
+export const SHED_DEBRIS_CHIP = 'uncolored shed · schematic';
 export const SHED_DEBRIS_CHIP_TOOLTIP =
-  'After the maser-like jet punch, secondary turbulent tori + micro-bubbles '
-  + 'shed with opposite spin, rise away from the lattice, and fade out in the '
-  + 'fluid flow. Hydro / optical morphology peer only — not continuum CFD / not fusion.';
+  'After the maser-like jet punch, secondary tori + micro-bubbles shed with '
+  + 'opposite spin, rise / travel the lattice plane, and fade. Debris stay '
+  + 'uncolored (no species spectrum tint) — main plasma keeps spectrum honesty. '
+  + 'Hydro / optical morphology peer only — not continuum CFD / not fusion.';
 
 /**
  * Apply spectrum tint to TorusFormation / FocusedJet / TorusPlasmaCloud.
+ * Shed debris intentionally skipped (uncolored / neutral).
  * Safe no-op when meshes missing.
  */
 export function applyPlasmaSpectrumTint(group, spectrum) {
@@ -361,17 +363,7 @@ export function applyPlasmaSpectrumTint(group, spectrum) {
     }
   }
 
-  const shed = group.getObjectByName('ShedPlasmaDebris');
-  if (shed) {
-    shed.children.forEach((child, idx) => {
-      const mat = child?.material;
-      if (!mat) return;
-      const useSecondary = idx % 2 === 1;
-      const tint = useSecondary ? secondary : primary;
-      if (mat.color) mat.color.copy(tint);
-      if (mat.emissive) mat.emissive.copy(emissive);
-    });
-  }
+  // ShedPlasmaDebris: intentionally NOT spectrum-tinted (uncolored debris).
 
   return spectrum;
 }

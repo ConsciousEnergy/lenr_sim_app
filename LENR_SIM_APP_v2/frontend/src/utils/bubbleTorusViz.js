@@ -111,7 +111,7 @@ export function createBubbleGasMaterial({
     emissive: new THREE.Color(0x3388aa),
     emissiveIntensity: 0.28,
   });
-  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'bubble' });
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'bubble', mode: 'turbulent' });
   return mat;
 }
 
@@ -182,7 +182,7 @@ export function createTorusPlasmaMaterial({
     emissiveIntensity: 0.95,
     blending: THREE.AdditiveBlending,
   });
-  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'torus' });
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'torus', mode: 'turbulent' });
   return mat;
 }
 
@@ -204,7 +204,7 @@ export function createTorusFilamentMaterial({
     emissiveIntensity: 1.1,
     blending: THREE.AdditiveBlending,
   });
-  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'torus' });
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'torus', mode: 'turbulent' });
   return mat;
 }
 
@@ -229,8 +229,37 @@ export function createJetMaterial({
     emissiveIntensity: 1.45,
     blending: THREE.AdditiveBlending,
   });
-  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'jet' });
+  // Jet uses laminar streak advection (contrast vs turbulent torus)
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'jet', mode: 'laminar' });
   return mat;
+}
+
+/** Stage-1 lab-honest cues — schematic chips only; not EQ-OPEN closure. */
+export const LAB_ASPHERIC_CHIP = 'aspherical collapse · schematic';
+export const LAB_ASPHERIC_CHIP_TOOLTIP =
+  'Brief aspherical collapse cue (oblate squish toward lattice) — hydro morphology '
+  + 'peer only. Not Benjamin–Feir confirmation; EQ-OPEN / lenr_proved untouched.';
+export const LAB_SL_FLASH_CHIP = 'SL flash · schematic · lab peer';
+export const LAB_SL_FLASH_CHIP_TOOLTIP =
+  'Brief sonoluminescence-like optical flash near min-R (Flannigan–Suslick SBSL '
+  + 'peer). Schematic / lab-honest cue only — plasma ≠ fusion; does not close '
+  + 'EQ-OPEN or flip lenr_proved.';
+
+/**
+ * Lab-honest collapse cues across torus scrub / late collapse.
+ * @returns {{ aspheric: number, slFlash: number }}
+ */
+export function computeLabHonestCollapseCue(collapseProgress = 0) {
+  const p = Math.min(1, Math.max(0, Number(collapseProgress) || 0));
+  const smooth = (a, b, x) => {
+    const t = Math.min(1, Math.max(0, (x - a) / Math.max(1e-6, b - a)));
+    return t * t * (3 - 2 * t);
+  };
+  // Oblate squish builds through mid-collapse
+  const aspheric = smooth(0.05, 0.55, p) * (1 - smooth(0.7, 0.95, p) * 0.35);
+  // Brief SL flash near puncture / min-R handoff
+  const slFlash = smooth(0.58, 0.72, p) * (1 - smooth(0.78, 0.92, p));
+  return { aspheric, slFlash };
 }
 
 /**
@@ -792,6 +821,10 @@ export function computeShedRiseSample({
  */
 export const MAIN_TORUS_INWARD_SPIN = -1;
 
+/** Neutral (uncolored) shed debris — no species spectrum tint. */
+export const SHED_NEUTRAL_COLOR = 0xc5ccd4;
+export const SHED_NEUTRAL_EMISSIVE = 0x9aa3ad;
+
 /**
  * Rest orientation for an ejected shed torus ~90° to the main (XZ) ring.
  * Vertical "wheel" whose axis points along travel azimuth (radial outward).
@@ -821,8 +854,9 @@ export function createShedPlasmaDebrisGroup({
   bubbleCount = 8,
   latticeTorusCount = 4,
   latticeBubbleCount = 6,
-  primaryColor = 0x5ce1ff,
-  secondaryColor = 0xc77dff,
+  // Ignored for tint — shed stays neutral / uncolored (kept for API compat)
+  primaryColor = SHED_NEUTRAL_COLOR,
+  secondaryColor = SHED_NEUTRAL_COLOR,
 } = {}) {
   const group = new THREE.Group();
   group.name = 'ShedPlasmaDebris';
@@ -832,6 +866,7 @@ export function createShedPlasmaDebrisGroup({
     fidelity: BUBBLE_TORUS_FIDELITY,
     source: BUBBLE_TORUS_SOURCE,
     shedProgressMax: 0,
+    uncolored: true,
   };
 
   const torusGeo = new THREE.TorusGeometry(0.42, 0.12, 12, 48);
@@ -839,14 +874,19 @@ export function createShedPlasmaDebrisGroup({
   const bubbleGeo = new THREE.SphereGeometry(0.18, 16, 12);
   const smallBubbleGeo = new THREE.SphereGeometry(0.12, 12, 10);
   const disposables = [torusGeo, latticeTorusGeo, bubbleGeo, smallBubbleGeo];
+  // Quiet unused-compat args (callers may still pass spectrum hexes)
+  void primaryColor;
+  void secondaryColor;
 
   const addRisingTorus = (i, nT) => {
     const mat = createTorusPlasmaMaterial({
-      color: i % 2 === 0 ? primaryColor : secondaryColor,
-      opacity: 0.42,
+      color: SHED_NEUTRAL_COLOR,
+      opacity: 0.38,
       fluidLook: false,
     });
-    applyPlasmaFluidLook(mat, { kind: 'shed' });
+    if (mat.emissive) mat.emissive.setHex(SHED_NEUTRAL_EMISSIVE);
+    // Laminar look on shed rings — contrast vs turbulent main plasma
+    applyPlasmaFluidLook(mat, { kind: 'shed', mode: 'laminar' });
     disposables.push(mat);
     const mesh = new THREE.Mesh(torusGeo, mat);
     mesh.name = `ShedTorus${i}`;
@@ -866,7 +906,7 @@ export function createShedPlasmaDebrisGroup({
       riseDistance: 1.85 + (i % 4) * 0.28,
       delay: i * 0.07,
       scale0: 0.5 + (i % 3) * 0.1,
-      peakOpacity: 0.42,
+      peakOpacity: 0.38,
       worldYLatched: null,
       spawnWorldY: null,
     };
@@ -875,13 +915,13 @@ export function createShedPlasmaDebrisGroup({
 
   const addRisingBubble = (i, nB) => {
     const mat = createBubbleGasMaterial({
-      color: i % 2 === 0 ? secondaryColor : primaryColor,
-      opacity: 0.36,
+      color: SHED_NEUTRAL_COLOR,
+      opacity: 0.32,
     });
     mat.blending = THREE.AdditiveBlending;
-    mat.emissive = new THREE.Color(i % 2 === 0 ? secondaryColor : primaryColor);
-    mat.emissiveIntensity = 0.65;
-    applyPlasmaFluidLook(mat, { kind: 'shed' });
+    mat.emissive = new THREE.Color(SHED_NEUTRAL_EMISSIVE);
+    mat.emissiveIntensity = 0.45;
+    applyPlasmaFluidLook(mat, { kind: 'shed', mode: 'laminar' });
     disposables.push(mat);
     const mesh = new THREE.Mesh(bubbleGeo, mat);
     mesh.name = `ShedBubble${i}`;
@@ -899,7 +939,7 @@ export function createShedPlasmaDebrisGroup({
       riseDistance: 1.65 + (i % 3) * 0.28,
       delay: 0.04 + i * 0.055,
       scale0: 0.32 + (i % 3) * 0.1,
-      peakOpacity: 0.36,
+      peakOpacity: 0.32,
       worldYLatched: null,
       spawnWorldY: null,
     };
@@ -910,17 +950,21 @@ export function createShedPlasmaDebrisGroup({
     i, n, kind, geo, namePrefix, delayBase, scale0,
   }) => {
     const isTorus = kind === 'latticeTorus';
-    const color = i % 2 === 0 ? primaryColor : secondaryColor;
     let mat;
     if (isTorus) {
-      mat = createTorusPlasmaMaterial({ color, opacity: 0.38, fluidLook: false });
+      mat = createTorusPlasmaMaterial({
+        color: SHED_NEUTRAL_COLOR,
+        opacity: 0.34,
+        fluidLook: false,
+      });
+      if (mat.emissive) mat.emissive.setHex(SHED_NEUTRAL_EMISSIVE);
     } else {
-      mat = createBubbleGasMaterial({ color, opacity: 0.34 });
+      mat = createBubbleGasMaterial({ color: SHED_NEUTRAL_COLOR, opacity: 0.3 });
       mat.blending = THREE.AdditiveBlending;
-      mat.emissive = new THREE.Color(color);
-      mat.emissiveIntensity = 0.55;
+      mat.emissive = new THREE.Color(SHED_NEUTRAL_EMISSIVE);
+      mat.emissiveIntensity = 0.4;
     }
-    applyPlasmaFluidLook(mat, { kind: 'shed' });
+    applyPlasmaFluidLook(mat, { kind: 'shed', mode: 'laminar' });
     disposables.push(mat);
     const mesh = new THREE.Mesh(geo, mat);
     mesh.name = `${namePrefix}${i}`;

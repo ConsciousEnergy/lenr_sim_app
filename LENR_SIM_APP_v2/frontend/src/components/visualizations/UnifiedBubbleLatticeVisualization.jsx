@@ -120,7 +120,12 @@ import {
   SCHWINGER_HINT_CHIP_TOOLTIP,
   applySphereFoldInDimple,
   computeBubbleTorusMorph,
+  LAB_ASPHERIC_CHIP,
+  LAB_ASPHERIC_CHIP_TOOLTIP,
+  LAB_SL_FLASH_CHIP,
+  LAB_SL_FLASH_CHIP_TOOLTIP,
   MAIN_TORUS_INWARD_SPIN,
+  computeLabHonestCollapseCue,
   createCollapseFocusPinGroup,
   createJetMaterial,
   createShedPlasmaDebrisGroup,
@@ -149,6 +154,7 @@ import {
 } from '../../utils/plasmaSpectrumViz';
 import {
   PLASMA_FLUID_LOOK_CHIP,
+  PLASMA_FLUID_LOOK_CHIP_TOOLTIP,
   advancePlasmaFluidLook,
 } from '../../utils/plasmaFluidLook';
 import {
@@ -1126,14 +1132,26 @@ const UnifiedBubbleLatticeVisualization = ({
     bubbleGroup.add(collapseFocus.group);
     bubbleGroup.userData.collapseFocusPin = collapseFocus;
 
-    // Shed: rising (world +Y) + lattice-plane travelers; tori ~90° to main
+    // Brief SL flash (lab peer) — schematic optical cue near min-R
+    const slFlashMat = new THREE.MeshBasicMaterial({
+      color: 0xfff8e8,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const slFlash = new THREE.Mesh(new THREE.SphereGeometry(0.35, 20, 16), slFlashMat);
+    slFlash.name = 'LabSlFlash';
+    slFlash.visible = false;
+    slFlash.renderOrder = 7;
+    bubbleGroup.add(slFlash);
+
+    // Shed: rising (world +Y) + lattice-plane travelers; uncolored; tori ~90° to main
     const shedDebris = createShedPlasmaDebrisGroup({
       torusCount: 5,
       bubbleCount: 8,
       latticeTorusCount: 4,
       latticeBubbleCount: 6,
-      primaryColor: spectrum?.primaryHex ?? 0x5ce1ff,
-      secondaryColor: spectrum?.secondaryHex ?? 0xc77dff,
     });
     bubbleGroup.add(shedDebris.group);
     bubbleGroup.userData.shedPlasmaDebris = shedDebris;
@@ -3038,6 +3056,7 @@ const UnifiedBubbleLatticeVisualization = ({
       const collapseFocusApi = bubbleGroupRef.current.userData?.collapseFocusPin;
       const collapseFocusGroup = collapseFocusApi?.group
         || bubbleGroupRef.current.getObjectByName('CollapseFocusPin');
+      const slFlashMesh = bubbleGroupRef.current.getObjectByName('LabSlFlash');
 
       // Phase progress for nucleation storytelling + scene-safe display scale.
       // Prefer timeline segment progress when API data is driving the mesh.
@@ -3102,26 +3121,47 @@ const UnifiedBubbleLatticeVisualization = ({
         else if (shedDebrisGroup) shedDebrisGroup.visible = false;
         if (collapseFocusApi) collapseFocusApi.update({}, deltaTime, 0);
         else if (collapseFocusGroup) collapseFocusGroup.visible = false;
+        if (slFlashMesh) {
+          slFlashMesh.visible = false;
+          if (slFlashMesh.material) slFlashMesh.material.opacity = 0;
+        }
       } else if (phase === 'COLLAPSE' || inTorusWindow) {
         // Fold-in: rear→front dimple → walls meet → puncture → through-hole torus
         const collapseProgress = inTorusWindow ? scrubTorus : phaseProgress;
         const morph = computeBubbleTorusMorph(collapseProgress);
+        const labCue = computeLabHonestCollapseCue(collapseProgress);
         const tighten = maserTighten;
         
         if (bubble && showBubble) {
           bubble.visible = morph.bubbleVisible;
           const s = displayScale * (0.95 + morph.bubbleScaleXY * 0.05);
+          // Lab-honest aspherical squish (oblate toward lattice) on top of fold-in
+          const asp = labCue.aspheric;
           bubble.scale.set(
-            s * morph.bubbleScaleXY,
-            Math.max(0.12, s * morph.bubbleScaleY),
-            s * morph.bubbleScaleXY,
+            s * morph.bubbleScaleXY * (1 + asp * 0.12),
+            Math.max(0.12, s * morph.bubbleScaleY * (1 - asp * 0.28)),
+            s * morph.bubbleScaleXY * (1 + asp * 0.12),
           );
           applySphereFoldInDimple(bubble.geometry, morph.dimple, morph.wallsMeet);
           const baseOpacity = bubble.userData.baseOpacity ?? 0.1;
           bubble.material.opacity = baseOpacity * morph.bubbleOpacityMul;
           bubble.rotation.y += deltaTime * (0.5 + collapseProgress * 1.4 + morph.dimple * 1.2);
+          if (bubble.material.emissiveIntensity !== undefined) {
+            bubble.material.emissiveIntensity = (bubble.userData.baseEmissive ?? 0.28)
+              + labCue.slFlash * 1.4;
+          }
         } else if (bubble) {
           bubble.visible = false;
+        }
+        // Brief SL flash (Flannigan–Suslick peer) — schematic only
+        if (slFlashMesh && showBubble) {
+          const flash = labCue.slFlash;
+          slFlashMesh.visible = flash > 0.04;
+          slFlashMesh.position.set(0, morph.pinAxisY * 0.35, 0);
+          slFlashMesh.scale.setScalar(0.6 + flash * 2.2);
+          if (slFlashMesh.material) slFlashMesh.material.opacity = flash * 0.85;
+        } else if (slFlashMesh) {
+          slFlashMesh.visible = false;
         }
         
         if (torus) {
@@ -3221,6 +3261,15 @@ const UnifiedBubbleLatticeVisualization = ({
         });
         
         if (bubble) bubble.visible = false;
+        if (slFlashMesh) {
+          // Trailing SL flash fades as jet takes over
+          const trail = Math.max(0, 0.35 * (1 - jetProgress));
+          slFlashMesh.visible = showBubble && trail > 0.04;
+          if (slFlashMesh.visible) {
+            slFlashMesh.scale.setScalar(0.8 + trail);
+            if (slFlashMesh.material) slFlashMesh.material.opacity = trail * 0.45;
+          }
+        }
         // Primary maser-collapse is separate from shed: hide primary as soon as
         // debris starts so the ring shrink is never read as shed falling.
         const primaryStillCollapsing = phase === 'MINIMUM'
@@ -3305,6 +3354,10 @@ const UnifiedBubbleLatticeVisualization = ({
         if (jet) jet.visible = false;
         if (collapseFocusApi) collapseFocusApi.update({}, deltaTime, 0);
         else if (collapseFocusGroup) collapseFocusGroup.visible = false;
+        if (slFlashMesh) {
+          slFlashMesh.visible = false;
+          if (slFlashMesh.material) slFlashMesh.material.opacity = 0;
+        }
         if (shedDebrisApi) shedDebrisApi.update(deltaTime, 0, shedUpdateOpts);
         else if (shedDebrisGroup) shedDebrisGroup.visible = false;
       }
@@ -5174,13 +5227,37 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
-              <Tooltip title="Procedural noise + soft refraction cue + advective UV scroll on torus / shed / jet. Presentation fluid look only — not continuum CFD / PIC; plasma ≠ fusion.">
+              <Tooltip title={PLASMA_FLUID_LOOK_CHIP_TOOLTIP}>
                 <Chip
                   label={PLASMA_FLUID_LOOK_CHIP}
                   size="small"
                   data-testid="ublv-plasma-fluid-look-chip"
                   sx={{
                     bgcolor: 'rgba(70, 90, 110, 0.92)',
+                    color: 'white',
+                    fontSize: '0.58rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title={LAB_ASPHERIC_CHIP_TOOLTIP}>
+                <Chip
+                  label={LAB_ASPHERIC_CHIP}
+                  size="small"
+                  data-testid="ublv-lab-aspheric-chip"
+                  sx={{
+                    bgcolor: 'rgba(80, 95, 70, 0.9)',
+                    color: 'white',
+                    fontSize: '0.58rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title={LAB_SL_FLASH_CHIP_TOOLTIP}>
+                <Chip
+                  label={LAB_SL_FLASH_CHIP}
+                  size="small"
+                  data-testid="ublv-lab-sl-flash-chip"
+                  sx={{
+                    bgcolor: 'rgba(120, 110, 70, 0.9)',
                     color: 'white',
                     fontSize: '0.58rem',
                   }}

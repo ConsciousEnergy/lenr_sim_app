@@ -12,10 +12,14 @@ import {
   COLLAPSE_FOCUS_CHIP,
   FOLD_IN_TORUS_MAJOR,
   FOLD_IN_TORUS_TUBE,
+  LAB_ASPHERIC_CHIP,
+  LAB_SL_FLASH_CHIP,
   MAIN_TORUS_INWARD_SPIN,
   SCHWINGER_HINT_CHIP,
+  SHED_NEUTRAL_COLOR,
   applySphereFoldInDimple,
   computeBubbleTorusMorph,
+  computeLabHonestCollapseCue,
   computeShedRiseSample,
   createCollapseFocusPinGroup,
   createTorusPlasmaMaterial,
@@ -195,6 +199,16 @@ describe('bubbleTorusViz (presentation materials)', () => {
     expect(rest.y).toBeCloseTo(0.4 + Math.PI / 2, 5);
   });
 
+  test('lab-honest collapse cue: aspheric then brief SL flash', () => {
+    const early = computeLabHonestCollapseCue(0.2);
+    expect(early.aspheric).toBeGreaterThan(0.1);
+    expect(early.slFlash).toBeLessThan(0.05);
+    const flash = computeLabHonestCollapseCue(0.68);
+    expect(flash.slFlash).toBeGreaterThan(0.4);
+    expect(LAB_ASPHERIC_CHIP.toLowerCase()).toContain('aspherical');
+    expect(LAB_SL_FLASH_CHIP.toLowerCase()).toContain('sl flash');
+  });
+
   test('shed debris group: world Y rises even when parent nest drops; fades; never reverses', () => {
     const debris = createShedPlasmaDebrisGroup({
       torusCount: 2,
@@ -203,10 +217,13 @@ describe('bubbleTorusViz (presentation materials)', () => {
       latticeBubbleCount: 2,
     });
     expect(debris.group.name).toBe('ShedPlasmaDebris');
+    expect(debris.group.userData.uncolored).toBe(true);
     const risingTori = debris.group.children.filter((c) => c.userData?.kind === 'torus');
     expect(risingTori.length).toBe(2);
     risingTori.forEach((t) => {
       expect(Math.abs(t.rotation.x)).toBeLessThan(0.05);
+      expect(t.material.color.getHex()).toBe(SHED_NEUTRAL_COLOR);
+      expect(t.material.userData.plasmaFluidLook.mode).toBe('laminar');
     });
     const latticeKids = debris.group.children.filter((c) => c.userData?.path === 'lattice');
     expect(latticeKids.length).toBe(4);

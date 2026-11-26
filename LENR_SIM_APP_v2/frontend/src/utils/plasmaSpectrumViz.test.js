@@ -117,10 +117,10 @@ describe('plasmaSpectrumViz (schematic excited plasma)', () => {
       expect(samples[i]).toBeGreaterThanOrEqual(samples[i - 1]);
     }
     expect(samples[samples.length - 1]).toBe(1);
-    expect(SHED_DEBRIS_CHIP.toLowerCase()).toContain('counter-rotating');
+    expect(SHED_DEBRIS_CHIP.toLowerCase()).toContain('uncolored');
   });
 
-  test('applyPlasmaSpectrumTint updates torus and jet materials', () => {
+  test('applyPlasmaSpectrumTint updates torus/jet but skips shed debris', () => {
     const group = new THREE.Group();
     const torus = new THREE.Mesh(
       new THREE.TorusGeometry(1, 0.3, 8, 16),
@@ -134,6 +134,13 @@ describe('plasmaSpectrumViz (schematic excited plasma)', () => {
     );
     jet.name = 'FocusedJet';
     group.add(jet);
+    const shed = new THREE.Group();
+    shed.name = 'ShedPlasmaDebris';
+    const shedMat = createTorusPlasmaMaterial({ color: 0xc5ccd4, fluidLook: false });
+    const shedMesh = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.1, 6, 12), shedMat);
+    shed.add(shedMesh);
+    group.add(shed);
+    const shedHexBefore = shedMat.color.getHex();
 
     const spectrum = resolveExcitedPlasmaSpectrum({
       hostMaterial: 'nickel',
@@ -143,10 +150,14 @@ describe('plasmaSpectrumViz (schematic excited plasma)', () => {
     expect(torus.material.color.getHex()).toBe(spectrum.primaryHex);
     expect(jet.material.color.getHex()).toBe(spectrum.jetHex);
     expect(jet.material.opacity).toBeLessThanOrEqual(0.45);
+    expect(shedMat.color.getHex()).toBe(shedHexBefore);
+    expect(shedMat.color.getHex()).not.toBe(spectrum.primaryHex);
 
     torus.geometry.dispose();
     torus.material.dispose();
     jet.geometry.dispose();
     jet.material.dispose();
+    shedMesh.geometry.dispose();
+    shedMat.dispose();
   });
 });
