@@ -323,22 +323,22 @@ class TestBubbleLatticeInteraction:
         assert not conditions['is_critical']
     
     def test_get_collapse_phases_collapse(self, model: BubbleLatticeInteraction):
-        """Test COLLAPSE phase in flash window (PHASE_SCHEDULE 0.90–0.955)."""
-        phase, conditions = model.get_collapse_phases(0.92)
+        """Test COLLAPSE phase in torus window (PHASE_SCHEDULE 0.907–0.957)."""
+        phase, conditions = model.get_collapse_phases(0.93)
         
-        assert phase == 'COLLAPSE', f"Expected COLLAPSE at t=0.92, got {phase}"
+        assert phase == 'COLLAPSE', f"Expected COLLAPSE at t=0.93, got {phase}"
         assert conditions['is_critical']
     
     def test_get_collapse_phases_minimum(self, model: BubbleLatticeInteraction):
-        """Test MINIMUM phase at flash min-R (PHASE_SCHEDULE 0.955–0.975)."""
-        phase, conditions = model.get_collapse_phases(0.965)
+        """Test MINIMUM phase at flash min-R (PHASE_SCHEDULE 0.957–0.977)."""
+        phase, conditions = model.get_collapse_phases(0.967)
         
-        assert phase == 'MINIMUM', f"Expected MINIMUM at t=0.965, got {phase}"
+        assert phase == 'MINIMUM', f"Expected MINIMUM at t=0.967, got {phase}"
         assert conditions['is_critical']
         assert conditions['radius_factor'] < 0.5
     
     def test_get_collapse_phases_rebound(self, model: BubbleLatticeInteraction):
-        """Test REBOUND phase after flash minimum (PHASE_SCHEDULE 0.975–1.00)."""
+        """Test REBOUND phase after flash minimum (PHASE_SCHEDULE 0.977–1.00)."""
         phase, conditions = model.get_collapse_phases(0.985)
         
         assert phase == 'REBOUND', f"Expected REBOUND at t=0.985, got {phase}"
