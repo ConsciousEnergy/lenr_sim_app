@@ -652,16 +652,17 @@ const UnifiedBubbleLatticeVisualization = ({
     // Phong (not high-metalness Standard): Standard@metalness≈0.85 with no envMap
     // paints near-black on the dark HSE canvas even when instanceColor matches
     // exclusive Pd/Ni legend hexes. Per-instance colors via InstancedMesh.instanceColor.
-    // Keep emissive modest so Tier-1 instanceColor modes stay readable
-    // (high shared emissive washed Loading/T/Phonon contrast into uniform grey).
-    const hostEmissive = new THREE.Color(hostColor).multiplyScalar(0.06);
+    // Modest emissive + white diffuse. Do NOT set vertexColors:true without a
+    // geometry color attribute — that enables USE_COLOR with missing attrs and
+    // zeroes diffuse, leaving only shared emissive (Tier-1 modes looked identical).
+    // InstancedMesh.instanceColor alone enables USE_INSTANCING_COLOR.
+    const hostEmissive = new THREE.Color(hostColor).multiplyScalar(0.1);
     const hostMaterial3D = new THREE.MeshPhongMaterial({
       color: 0xffffff,
       shininess: 72,
       specular: 0x445566,
       emissive: hostEmissive,
-      // InstanceColor / phonon tint path (three r152+ USE_INSTANCING_COLOR)
-      vertexColors: true,
+      vertexColors: false,
     });
 
     // Solute beads: shared palette SOT (Pd run → D teal; else H green).
