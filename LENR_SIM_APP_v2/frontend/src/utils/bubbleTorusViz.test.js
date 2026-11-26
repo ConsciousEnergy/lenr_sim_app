@@ -7,6 +7,7 @@ import {
   createBubbleGasMaterial,
   createDoubleLayerMaterial,
   createShedPlasmaDebrisGroup,
+  computeBubbleTorusMorph,
   computeShedRiseSample,
   createTorusPlasmaMaterial,
   applyBubbleTemperatureTint,
@@ -56,6 +57,21 @@ describe('bubbleTorusViz (presentation materials)', () => {
     const tint = applyBubbleTemperatureTint(group, 4000);
     expect(tint.heatNorm).toBeGreaterThan(0.3);
     expect(bubble.material.emissiveIntensity).toBeGreaterThan(0.12);
+  });
+
+  test('computeBubbleTorusMorph: torus births mid-collapse, not at window open', () => {
+    const early = computeBubbleTorusMorph(0.05);
+    expect(early.bubbleVisible).toBe(true);
+    expect(early.torusVisible).toBe(false);
+    expect(early.torusBirth).toBeLessThan(0.05);
+    const mid = computeBubbleTorusMorph(0.4);
+    expect(mid.bubbleVisible).toBe(true);
+    expect(mid.torusBirth).toBeGreaterThan(0.2);
+    expect(mid.bubbleScaleY).toBeLessThan(mid.bubbleScaleXY);
+    const late = computeBubbleTorusMorph(0.85);
+    expect(late.torusBirth).toBeGreaterThan(0.9);
+    expect(late.bubbleOpacityMul).toBeLessThan(0.25);
+    expect(late.torusTubeMul).toBeLessThan(early.torusTubeMul || 1.55);
   });
 
   test('geometries expose high-segment bubble, torus, filament, and jet', () => {

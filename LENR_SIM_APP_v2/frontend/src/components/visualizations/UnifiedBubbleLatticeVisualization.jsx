@@ -110,6 +110,7 @@ import {
   createBubbleTorusGeometries,
   createDoubleLayerMaterial,
   createInnerLayerMaterial,
+  computeBubbleTorusMorph,
   createJetMaterial,
   createShedPlasmaDebrisGroup,
   createTorusFilamentMaterial,
@@ -1032,7 +1033,8 @@ const UnifiedBubbleLatticeVisualization = ({
     const geos = createBubbleTorusGeometries();
     
     // Soft translucent gas membrane — primary bubble fill (BDS-504: not wireframe)
-    const bubbleMaterial = createBubbleGasMaterial({ opacity: 0.32 });
+    // fluidLook: stronger schematic surface advection during collapse→torus morph
+    const bubbleMaterial = createBubbleGasMaterial({ opacity: 0.32, fluidLook: true });
     const bubble = new THREE.Mesh(geos.gas, bubbleMaterial);
     bubble.name = 'MainBubble';
     bubble.renderOrder = 1;
@@ -3062,63 +3064,76 @@ const UnifiedBubbleLatticeVisualization = ({
         if (shedDebrisApi) shedDebrisApi.update(deltaTime, 0, shedUpdateOpts);
         else if (shedDebrisGroup) shedDebrisGroup.visible = false;
       } else if (phase === 'COLLAPSE' || inTorusWindow) {
-        // Turbulent rotating gaseous plasma torus — full 90.7–95.7% scrub dwell
+        // Bubble → torus morph across scrub window, then ring tightens onto jet
         const collapseProgress = inTorusWindow ? scrubTorus : phaseProgress;
-        // Soft morph envelope across the whole window (not a brief flash)
-        const torusProgress = Math.min(1, 0.12 + collapseProgress * 0.88);
-        // Late window: ring tightens onto maser-like jet axis
+        const morph = computeBubbleTorusMorph(collapseProgress);
         const tighten = maserTighten;
         
         if (bubble && showBubble) {
-          bubble.visible = torusProgress < 0.55;
-          bubble.scale.setScalar(displayScale * (1 - torusProgress * 0.72));
+          // Flatten sphere into equatorial belt as torus births (not a cut-to-ring)
+          bubble.visible = morph.bubbleVisible && morph.torusBirth < 0.98;
+          const s = displayScale * (0.92 + morph.bubbleScaleXY * 0.08);
+          bubble.scale.set(
+            s * morph.bubbleScaleXY,
+            Math.max(0.08, s * morph.bubbleScaleY),
+            s * morph.bubbleScaleXY,
+          );
           const baseOpacity = bubble.userData.baseOpacity ?? 0.1;
-          bubble.material.opacity = baseOpacity * (1 - torusProgress);
+          bubble.material.opacity = baseOpacity * morph.bubbleOpacityMul;
+          // Mild spin so collapse reads as flowing fluid, not a static ball
+          bubble.rotation.y += deltaTime * (0.6 + collapseProgress * 1.8);
         } else if (bubble) {
           bubble.visible = false;
         }
         
         if (torus) {
-          // Bound to Double-layer bubble layer toggle (dies when Layers → Bubble off)
-          torus.visible = showBubble && torusProgress > 0.02 && tighten < 0.98;
-          // Collapse onto jet: major radius shrinks hard as maser tighten rises
-          const torusRadius = torus.userData.baseRadius
-            * (1 - collapseProgress * 0.35)
-            * (1 - tighten * 0.78);
-          const tubeRadius = torus.userData.baseTubeRadius
-            * (0.85 - collapseProgress * 0.25)
-            * (1 - tighten * 0.45);
-          const scaleFactor = Math.max(0.08, torusRadius / torus.userData.baseRadius);
-          torus.scale.setScalar(scaleFactor);
-          torus.scale.y = Math.max(0.12, tubeRadius / torus.userData.baseTubeRadius);
-          // Turbulent spin about torus axis (gaseous plasma, not glass)
-          torus.rotation.z += deltaTime * (2.8 + collapseProgress * 4.2 + tighten * 3.5);
-          torus.userData.spinSign = 1;
-          // Mesh is a faint guide; soft Points cloud carries the gaseous plasma read
-          torus.material.opacity = (0.12 + collapseProgress * 0.16) * (1 - tighten * 0.55);
-          if (torus.material.emissiveIntensity !== undefined) {
-            torus.material.emissiveIntensity = 0.45 + collapseProgress * 0.35 + tighten * 0.4;
+          // Torus forms from bubble waist mid-collapse — not present at window open
+          torus.visible = showBubble && morph.torusVisible && tighten < 0.98;
+          if (torus.visible) {
+            const torusRadius = torus.userData.baseRadius
+              * morph.torusMajorMul
+              * (1 - collapseProgress * 0.2)
+              * (1 - tighten * 0.78);
+            const tubeRadius = torus.userData.baseTubeRadius
+              * morph.torusTubeMul
+              * (1 - tighten * 0.45);
+            const scaleFactor = Math.max(0.08, torusRadius / torus.userData.baseRadius);
+            torus.scale.setScalar(scaleFactor);
+            torus.scale.y = Math.max(0.12, tubeRadius / torus.userData.baseTubeRadius);
+            // Stronger turbulent spin (fluid advection cue)
+            torus.rotation.z += deltaTime * (4.2 + collapseProgress * 5.5 + tighten * 4.5
+              + morph.torusBirth * 2.5);
+            torus.userData.spinSign = 1;
+            torus.material.opacity = (0.1 + morph.torusOpacityMul * 0.28)
+              * (1 - tighten * 0.55);
+            if (torus.material.emissiveIntensity !== undefined) {
+              torus.material.emissiveIntensity = 0.4 + morph.torusBirth * 0.55
+                + tighten * 0.35;
+            }
           }
         }
         if (filament) {
-          filament.visible = showBubble && torusProgress > 0.05 && tighten < 0.95;
-          const fScale = (torus?.scale.x ?? 1) * (1.02 + 0.04 * Math.sin(clockForPhase * Math.PI * 40));
-          filament.scale.setScalar(fScale);
-          filament.scale.y = (torus?.scale.y ?? 1) * 0.55;
-          filament.rotation.z -= deltaTime * (3.6 + collapseProgress * 5.0 + tighten * 4.0);
-          filament.material.opacity = (0.22 + collapseProgress * 0.28) * (1 - tighten * 0.6);
+          filament.visible = showBubble && morph.torusBirth > 0.25 && tighten < 0.95;
+          if (filament.visible) {
+            const fScale = (torus?.scale.x ?? 1)
+              * (1.02 + 0.06 * Math.sin(clockForPhase * Math.PI * 48));
+            filament.scale.setScalar(fScale);
+            filament.scale.y = (torus?.scale.y ?? 1) * 0.55;
+            filament.rotation.z -= deltaTime * (5.2 + collapseProgress * 6.5 + tighten * 5.0);
+            filament.material.opacity = (0.12 + morph.torusBirth * 0.32) * (1 - tighten * 0.6);
+          }
         }
         if (plasmaCloudApi) {
-          plasmaCloud.visible = showBubble && tighten < 0.97;
-          const cloudStr = (0.45 + collapseProgress * 0.55) * (1 - tighten * 0.7);
+          plasmaCloud.visible = showBubble && morph.torusVisible && tighten < 0.97;
+          const cloudStr = morph.cloudStrength * (1 - tighten * 0.7);
           plasmaCloudApi.update(deltaTime, cloudStr);
-          if (plasmaCloud.scale && torus) {
+          if (plasmaCloud.scale && torus?.visible) {
             plasmaCloud.scale.copy(torus.scale);
           }
           plasmaCloud.rotation.x = Math.PI / 2;
-          plasmaCloud.rotation.z += deltaTime * (1.6 + collapseProgress * 2.4);
+          plasmaCloud.rotation.z += deltaTime * (2.4 + collapseProgress * 3.6 + morph.torusBirth * 2);
         } else if (plasmaCloud) {
-          plasmaCloud.visible = showBubble;
+          plasmaCloud.visible = showBubble && morph.torusVisible;
         }
         // Late window: transparent light jet ("maser-like" optical peer)
         const jetGate = jetLightEnvelope({

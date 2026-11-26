@@ -95,8 +95,9 @@ export function temperatureToBubbleTint(temperatureK, {
 export function createBubbleGasMaterial({
   color = 0xb8e8ff,
   opacity = 0.32,
+  fluidLook = false,
 } = {}) {
-  return new THREE.MeshPhysicalMaterial({
+  const mat = new THREE.MeshPhysicalMaterial({
     color,
     metalness: 0.02,
     roughness: 0.14,
@@ -110,6 +111,8 @@ export function createBubbleGasMaterial({
     emissive: new THREE.Color(0x3388aa),
     emissiveIntensity: 0.28,
   });
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'bubble' });
+  return mat;
 }
 
 /**
@@ -311,12 +314,14 @@ export function createTorusPlasmaCloud({
       const speed = seeds[i * 4 + 3];
       const theta = theta0 + t * speed * 0.85;
       const phi = phi0 + t * (1.1 + speed * 0.4);
-      const turb = 1 + 0.18 * Math.sin(t * 3.1 + i) * s;
-      const r = tubeRadius * jitter * turb * (0.75 + 0.35 * s);
-      const R = majorRadius * (0.92 + 0.08 * s);
-      pos[i * 3] = (R + r * Math.cos(phi)) * Math.cos(theta);
-      pos[i * 3 + 1] = r * Math.sin(phi) * (0.85 + 0.25 * Math.sin(t * 2.2 + i * 0.07));
-      pos[i * 3 + 2] = (R + r * Math.cos(phi)) * Math.sin(theta);
+      const turb = 1 + 0.32 * Math.sin(t * 3.8 + i) * s
+        + 0.12 * Math.sin(t * 7.1 + i * 0.37) * s;
+      const r = tubeRadius * jitter * turb * (0.7 + 0.45 * s);
+      const R = majorRadius * (0.9 + 0.12 * s);
+      const swirl = 0.08 * Math.sin(t * 2.6 + theta) * s;
+      pos[i * 3] = (R + r * Math.cos(phi) + swirl) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * (0.8 + 0.35 * Math.sin(t * 2.8 + i * 0.07));
+      pos[i * 3 + 2] = (R + r * Math.cos(phi) - swirl) * Math.sin(theta);
       const pulse = 0.55 + 0.45 * Math.sin(t * 4.0 + i * 0.13);
       col[i * 3] = Math.min(1, base.r * (0.7 + pulse * 0.5));
       col[i * 3 + 1] = Math.min(1, base.g * (0.55 + pulse * 0.4));
@@ -324,8 +329,8 @@ export function createTorusPlasmaCloud({
     }
     geometry.attributes.position.needsUpdate = true;
     geometry.attributes.color.needsUpdate = true;
-    material.opacity = 0.18 + s * 0.42;
-    material.size = 0.1 + s * 0.14;
+    material.opacity = 0.2 + s * 0.5;
+    material.size = 0.11 + s * 0.18;
   };
 
   const dispose = () => {
@@ -362,6 +367,57 @@ export function applyBubbleTemperatureTint(group, temperatureK) {
     }
   }
   return tint;
+}
+
+/**
+ * Bubble → torus morph across the scrub window (presentation).
+ * Torus must *form* as the bubble collapses — not appear as a ready-made ring.
+ *
+ * @param {number} collapseProgress 0..1 across torus scrub window
+ * @returns {{
+ *   bubbleVisible: boolean,
+ *   bubbleOpacityMul: number,
+ *   bubbleScaleXY: number,
+ *   bubbleScaleY: number,
+ *   torusVisible: boolean,
+ *   torusBirth: number,
+ *   torusMajorMul: number,
+ *   torusTubeMul: number,
+ *   torusOpacityMul: number,
+ *   cloudStrength: number,
+ * }}
+ */
+export function computeBubbleTorusMorph(collapseProgress = 0) {
+  const p = Math.min(1, Math.max(0, Number(collapseProgress) || 0));
+  const smooth = (a, b, x) => {
+    const t = Math.min(1, Math.max(0, (x - a) / Math.max(1e-6, b - a)));
+    return t * t * (3 - 2 * t);
+  };
+  // Sphere stays dominant early; flattens into an equatorial belt
+  const bubbleOpacityMul = 1 - smooth(0.12, 0.72, p);
+  const bubbleVisible = bubbleOpacityMul > 0.04;
+  const flatten = smooth(0.05, 0.65, p);
+  const bubbleScaleXY = 1 - flatten * 0.22;
+  const bubbleScaleY = 1 - flatten * 0.72;
+  // Torus births mid-collapse from the flattened equator (fat → ring)
+  const torusBirth = smooth(0.22, 0.62, p);
+  const torusVisible = torusBirth > 0.04;
+  const torusMajorMul = 0.42 + torusBirth * 0.58; // grows out of bubble waist
+  const torusTubeMul = 1.55 - torusBirth * 0.7; // thick blob → thinner tube
+  const torusOpacityMul = torusBirth;
+  const cloudStrength = torusBirth * (0.35 + p * 0.65);
+  return {
+    bubbleVisible,
+    bubbleOpacityMul,
+    bubbleScaleXY,
+    bubbleScaleY,
+    torusVisible,
+    torusBirth,
+    torusMajorMul,
+    torusTubeMul,
+    torusOpacityMul,
+    cloudStrength,
+  };
 }
 
 /**

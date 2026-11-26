@@ -209,15 +209,19 @@ export function applyPlasmaFluidLook(material, {
   if (map) {
     material.map = map;
     material.emissiveMap = map;
-    if (kind === 'torus') map.repeat.set(3, 1.5);
-    if (kind === 'shed') map.repeat.set(2.2, 2.2);
+    if (kind === 'torus') map.repeat.set(4.5, 2.2);
+    if (kind === 'shed') map.repeat.set(3.2, 3.2);
+    if (kind === 'bubble') map.repeat.set(2.8, 2.8);
   }
   if (material.roughnessMap !== undefined && pack.noise) {
     material.roughnessMap = pack.noise;
   }
   if (material.normalMap !== undefined && kind !== 'jet' && pack.normal) {
     material.normalMap = pack.normal;
-    material.normalScale = new THREE.Vector2(0.35, 0.35);
+    material.normalScale = new THREE.Vector2(
+      kind === 'bubble' ? 0.55 : 0.48,
+      kind === 'bubble' ? 0.55 : 0.48,
+    );
   }
   material.needsUpdate = true;
   material.userData = material.userData || {};
@@ -226,8 +230,9 @@ export function applyPlasmaFluidLook(material, {
     source: PLASMA_FLUID_LOOK_SOURCE,
     kind,
     pack,
-    scrollU: kind === 'jet' ? 0.04 : 0.08,
-    scrollV: kind === 'jet' ? 0.22 : 0.05,
+    // Stronger advection read on bubbles/rings (schematic flow, not CFD)
+    scrollU: kind === 'jet' ? 0.07 : kind === 'bubble' ? 0.14 : 0.16,
+    scrollV: kind === 'jet' ? 0.38 : kind === 'bubble' ? 0.11 : 0.12,
   };
   return pack;
 }

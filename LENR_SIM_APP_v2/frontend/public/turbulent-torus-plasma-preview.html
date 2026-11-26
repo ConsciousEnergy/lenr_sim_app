@@ -41,7 +41,8 @@
     Torus window scrub <b>90.7% → 95.7%</b> → collapses onto maser-like jet → counter-rotating shed rises &amp; fades<br/>
     Spectrum binds host / solute / electrolyte (Pd·D·K demo). Jet = transparent light + advective streaks.<br/>
     Shed: monotonic world +Y rise (lattice below) + opacity fade — no reverse / bounce.<br/>
-    Fluid look: procedural noise / soft refraction / UV advection · schematic · not CFD · plasma ≠ fusion
+    Fluid look: procedural noise / soft refraction / UV advection · schematic · not CFD · plasma ≠ fusion<br/>
+    Bubble flattens → torus births mid-collapse → jet (morph, not a cut-to-ring).
   </div>
   <script type="importmap">
   {
@@ -157,7 +158,9 @@
         blending: THREE.AdditiveBlending,
         map, emissiveMap: map,
       });
-      mat.userData.fluidScroll = kind === 'jet' ? { u: 0.04, v: 0.22 } : { u: 0.08, v: 0.05 };
+      mat.userData.fluidScroll = kind === 'jet'
+        ? { u: 0.07, v: 0.38 }
+        : kind === 'bubble' ? { u: 0.14, v: 0.11 } : { u: 0.16, v: 0.12 };
       fluidMats.push(mat);
       return mat;
     }
@@ -189,13 +192,33 @@
 
     const bubble = new THREE.Mesh(
       new THREE.SphereGeometry(1, 48, 36),
-      new THREE.MeshPhysicalMaterial({
-        color: 0xb8e8ff, metalness: 0.02, roughness: 0.14, clearcoat: 1,
-        transparent: true, opacity: 0.28, depthWrite: false,
-        emissive: new THREE.Color(0x226688), emissiveIntensity: 0.2,
-      }),
+      plasmaMat(0xb8e8ff, 0.28, 'bubble'),
     );
+    // MeshPhysical-like softness via standard + fluid map (preview)
+    bubble.material.roughness = 0.2;
     group.add(bubble);
+
+    function morphFromCollapse(p) {
+      const smooth = (a, b, x) => {
+        const t = Math.min(1, Math.max(0, (x - a) / Math.max(1e-6, b - a)));
+        return t * t * (3 - 2 * t);
+      };
+      const bubbleOpacityMul = 1 - smooth(0.12, 0.72, p);
+      const flatten = smooth(0.05, 0.65, p);
+      const torusBirth = smooth(0.22, 0.62, p);
+      return {
+        bubbleVisible: bubbleOpacityMul > 0.04,
+        bubbleOpacityMul,
+        bubbleScaleXY: 1 - flatten * 0.22,
+        bubbleScaleY: 1 - flatten * 0.72,
+        torusVisible: torusBirth > 0.04,
+        torusBirth,
+        torusMajorMul: 0.42 + torusBirth * 0.58,
+        torusTubeMul: 1.55 - torusBirth * 0.7,
+        torusOpacityMul: torusBirth,
+        cloudStrength: torusBirth * (0.35 + p * 0.65),
+      };
+    }
 
     const torus = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.38, 48, 128), plasmaMat(spectrum.primary, 0.22, 'torus'));
     torus.rotation.x = Math.PI / 2;
@@ -406,25 +429,33 @@
         phase = 'COLLAPSE';
         const p = (u - 0.50) / 0.28;
         scrubPct = (TORUS_START + p * (TORUS_END - TORUS_START)) * 100;
-        // Late window: tighten onto maser-like jet
+        const morph = morphFromCollapse(p);
         const tighten = Math.max(0, (p - 0.55) / 0.45);
-        const scale = 1.35 * (1 - p * 0.65);
-        bubble.visible = p < 0.55;
-        bubble.scale.setScalar(scale);
-        bubble.material.opacity = 0.28 * (1 - p);
-        // Hide primary before shed so collapse shrink ≠ falling debris
+        // Bubble flattens into equator; torus births mid-collapse (not a cut-to-ring)
+        const baseScale = 1.35 * (1 - p * 0.35);
+        bubble.visible = morph.bubbleVisible && morph.torusBirth < 0.98;
+        bubble.scale.set(
+          baseScale * morph.bubbleScaleXY,
+          Math.max(0.08, baseScale * morph.bubbleScaleY),
+          baseScale * morph.bubbleScaleXY,
+        );
+        bubble.material.opacity = 0.28 * morph.bubbleOpacityMul;
+        bubble.rotation.y += 0.02 + p * 0.03;
         const shedEarly = p > 0.88 ? ((p - 0.88) / 0.12) * 0.22 : 0;
-        torus.visible = tighten < 0.98 && shedEarly < 0.08;
-        filament.visible = tighten < 0.95 && shedEarly < 0.08;
-        cloud.visible = tighten < 0.97 && shedEarly < 0.08;
-        const ts = (1 - p * 0.35) * (1 - tighten * 0.78);
-        torus.scale.set(Math.max(0.08, ts), Math.max(0.12, 0.55 * (1 - tighten * 0.45)), Math.max(0.08, ts));
+        torus.visible = morph.torusVisible && tighten < 0.98 && shedEarly < 0.08;
+        filament.visible = morph.torusBirth > 0.25 && tighten < 0.95 && shedEarly < 0.08;
+        cloud.visible = morph.torusVisible && tighten < 0.97 && shedEarly < 0.08;
+        const major = morph.torusMajorMul * (1 - p * 0.2) * (1 - tighten * 0.78);
+        const tube = morph.torusTubeMul * (1 - tighten * 0.45);
+        const ts = Math.max(0.08, major);
+        torus.scale.set(ts, Math.max(0.12, 0.35 * tube), ts);
         filament.scale.set(ts * 1.02, ts * 0.55, ts * 1.02);
-        torus.rotation.z += 0.045 + tighten * 0.04;
-        filament.rotation.z -= 0.055;
-        updateCloud(elapsed, (0.45 + p * 0.55) * (1 - tighten * 0.7), 1.15 * (1 - tighten * 0.7), 0.42);
+        torus.rotation.z += 0.07 + tighten * 0.06 + morph.torusBirth * 0.04;
+        filament.rotation.z -= 0.08;
+        torus.material.opacity = (0.1 + morph.torusOpacityMul * 0.28) * (1 - tighten * 0.55);
+        updateCloud(elapsed, morph.cloudStrength * (1 - tighten * 0.7), 1.15 * major, 0.42 * tube);
         cloud.scale.copy(torus.scale);
-        cloud.rotation.z += 0.03;
+        cloud.rotation.z += 0.05;
         glow.intensity = 0.6 + p * 0.7 + tighten * 0.4;
         if (p > 0.65) {
           const jg = (p - 0.65) / 0.35;
