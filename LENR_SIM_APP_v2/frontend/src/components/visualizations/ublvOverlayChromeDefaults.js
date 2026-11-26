@@ -5,8 +5,8 @@
  */
 export const UBLV_OVERLAY_CHROME_DEFAULTS = Object.freeze({
   legendCollapsed: true,
-  // Open so MHD / phonon / e⁻ mig toggles are discoverable on first visit
-  layersCollapsed: false,
+  // Closed on first visit — tap Layers tab to expand (Diadon HSE)
+  layersCollapsed: true,
   metricsCollapsed: true,
   enhancementCollapsed: true,
 });

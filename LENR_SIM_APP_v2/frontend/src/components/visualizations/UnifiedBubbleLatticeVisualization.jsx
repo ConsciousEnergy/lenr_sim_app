@@ -19,7 +19,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import {
   Box, Typography, Paper, FormGroup, FormControlLabel, Switch,
-  IconButton, Tooltip, Chip, Stack, Collapse
+  IconButton, Tooltip, Chip, Stack, Collapse, ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
@@ -72,10 +72,30 @@ import {
   applyDynamicLatticeInstances,
   buildLatticeRestSites,
   interstitialOffsetFromSite,
-  occupancyTintRgb,
   resolveExclusiveHostColor,
   resolveLatticePick,
 } from '../../utils/dynamicLattice';
+import {
+  LATTICE_COLOR_MODE_META,
+  LATTICE_COLOR_MODES,
+  normalizeLatticeColorMode,
+  resolveLatticeHostInstanceRgb,
+} from '../../utils/latticeColorModes';
+import { resolveSolutePaletteEntry } from '../../utils/lenrParticlePalette';
+import {
+  buildCollapseRibbonPositions,
+  collapseRibbonPlayheadIndex,
+} from '../../utils/collapseTrajectoryRibbon';
+import {
+  occupancyGlowRgb,
+  occupancyGlowSiteStrength,
+  resolveOccupancyGlowPlan,
+} from '../../utils/occupancyGlow';
+import {
+  SCHEMATIC_SHELL_LABEL,
+  resolveSchematicShellSpec,
+  schematicShellSiteOpacity,
+} from '../../utils/schematicShells';
 import {
   ProtonWaveCompanion,
   enhancementGlowFactor,
@@ -83,6 +103,8 @@ import {
   createSoftPointsMaterial,
 } from '../../utils/waveParticleViz';
 import {
+  DOUBLE_LAYER_WIRE_OPACITY_COLLAPSE,
+  DOUBLE_LAYER_WIRE_OPACITY_EXPANSION,
   applyBubbleTemperatureTint,
   createBubbleGasMaterial,
   createBubbleTorusGeometries,
@@ -94,13 +116,17 @@ import {
   temperatureToBubbleTint,
 } from '../../utils/bubbleTorusViz';
 import {
+  SHEATH_SURFACE_FLOW_CHIP,
+  createSheathSurfaceFlowGroup,
+  updateSheathSurfaceFlow,
+} from '../../utils/bubbleSheathSurfaceFlow';
+import {
   ElectronMigrationCloud,
   buildPhononStandingWaveDisplacements,
   createPhononWaveguideRibbon,
   meltProximityNorm,
   phononJitterAmplitude,
   phononModeMix,
-  phononModeTintRgb,
   waveguideEnvelopeNorm,
 } from '../../utils/phononElectronViz';
 import {
@@ -468,6 +494,8 @@ const UnifiedBubbleLatticeVisualization = ({
   // Visualization toggles
   const [showLattice, setShowLattice] = useState(true);
   const [showBubble, setShowBubble] = useState(true);
+  /** Optional sheath tangential Points/ribbons — OFF default; not measured bubble spin. */
+  const [showSheathSurfaceFlow, setShowSheathSurfaceFlow] = useState(false);
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
   // Schematic phonon jitter + e⁻ soft-flow — dedicated layer toggles
@@ -485,6 +513,23 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showRydberg, setShowRydberg] = useState(false);
   const [showHalo, setShowHalo] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
+  /** Tier-1 mutually exclusive host instanceColor mode (Species default). */
+  const [latticeColorMode, setLatticeColorMode] = useState('species');
+  const latticeColorModeRef = useRef('species');
+  useEffect(() => {
+    latticeColorModeRef.current = normalizeLatticeColorMode(latticeColorMode);
+  }, [latticeColorMode]);
+  /** Collapse R(t) ribbon — OFF by default (Diadon: ribbon work not needed). */
+  const [showCollapseRibbon, setShowCollapseRibbon] = useState(false);
+  const [showOccupancyGlow, setShowOccupancyGlow] = useState(true);
+  const [occupancyGlowMeta, setOccupancyGlowMeta] = useState(null);
+  /** Bumps when scene/lattice is (re)created so overlay effects rebuild. */
+  const [latticeSceneEpoch, setLatticeSceneEpoch] = useState(0);
+  const [collapseRibbonMeta, setCollapseRibbonMeta] = useState(null);
+  const collapseRibbonMetaRef = useRef(null);
+  /** Tier-2 soft additive shells — OFF by default; schematic · not QM orbitals. */
+  const [showSchematicShells, setShowSchematicShells] = useState(false);
+  const [schematicShellMeta, setSchematicShellMeta] = useState(null);
   // First-visit defaults: legend / layers / Local Calc / Enhancement all minimized.
   const [legendCollapsed, setLegendCollapsed] = useState(
     UBLV_OVERLAY_CHROME_DEFAULTS.legendCollapsed
@@ -638,26 +683,33 @@ const UnifiedBubbleLatticeVisualization = ({
     });
     
     const hostGeometry = new THREE.SphereGeometry(hostAtomRadiusVisUnits, 20, 20);
-    // vertexColors off — per-instance colors via InstancedMesh.instanceColor
-    // Metallic host look (presentation; Pd/Ni exclusive colors still via setColorAt)
-    const hostMaterial3D = new THREE.MeshStandardMaterial({
+    // Phong (not high-metalness Standard): Standard@metalness≈0.85 with no envMap
+    // paints near-black on the dark HSE canvas even when instanceColor matches
+    // exclusive Pd/Ni legend hexes. Per-instance colors via InstancedMesh.instanceColor.
+    // Modest emissive + white diffuse. Do NOT set vertexColors:true without a
+    // geometry color attribute — that enables USE_COLOR with missing attrs and
+    // zeroes diffuse, leaving only shared emissive (Tier-1 modes looked identical).
+    // InstancedMesh.instanceColor alone enables USE_INSTANCING_COLOR.
+    const hostEmissive = new THREE.Color(hostColor).multiplyScalar(0.1);
+    const hostMaterial3D = new THREE.MeshPhongMaterial({
       color: 0xffffff,
-      metalness: 0.85,
-      roughness: 0.28,
-      envMapIntensity: 1.0,
-      // Required for InstancedMesh.instanceColor / phonon mode tint
-      vertexColors: true,
+      shininess: 72,
+      specular: 0x445566,
+      emissive: hostEmissive,
+      vertexColors: false,
     });
-    
-    // Hydrogen / solute atoms — slightly softer emissive beads
+
+    // Solute beads: shared palette SOT (Pd run → D teal; else H green).
+    // Schematic species label only — not isotopic proof / not QM orbitals.
+    const solutePalette = resolveSolutePaletteEntry(hostMaterial);
+    const soluteHex = solutePalette.hex;
+    const soluteIsDeuterium = solutePalette.key === 'deuterium';
     const hydrogenRadius = Math.max(0.06, hostAtomRadiusVisUnits * 0.5);
     const hydrogenGeometry = new THREE.SphereGeometry(hydrogenRadius, 14, 14);
-    const hydrogenMaterial = new THREE.MeshStandardMaterial({
-      color: 0x5ee0a0,
-      emissive: 0x0a3a1a,
-      emissiveIntensity: 0.35,
-      metalness: 0.15,
-      roughness: 0.35,
+    const hydrogenMaterial = new THREE.MeshPhongMaterial({
+      color: soluteHex,
+      emissive: new THREE.Color(soluteHex).multiplyScalar(0.22),
+      shininess: 80,
     });
     
     // Bond material
@@ -691,6 +743,7 @@ const UnifiedBubbleLatticeVisualization = ({
     applyDynamicLatticeInstances({
       sites: restSites,
       hostHex: hostColor,
+      colorMode: latticeColorModeRef.current,
       markMatrixDynamic: () => {
         hostAtoms.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       },
@@ -758,10 +811,11 @@ const UnifiedBubbleLatticeVisualization = ({
       hydrogenAtoms.instanceMatrix.needsUpdate = true;
       hydrogenAtoms.computeBoundingSphere();
       hydrogenAtoms.userData = {
-        type: 'hydrogen',
+        type: soluteIsDeuterium ? 'deuterium' : 'hydrogen',
+        legendHex: soluteHex,
         state: 'FREE',
         fidelity: DYNAMIC_LATTICE_FIDELITY,
-        note: 'Schematic interstitial from loading mask (not flux trajectories)',
+        note: 'Schematic interstitial from loading mask (not flux trajectories; not QM orbitals)',
       };
       latticeGroup.add(hydrogenAtoms);
     }
@@ -909,15 +963,15 @@ const UnifiedBubbleLatticeVisualization = ({
     bubbleGroup.position.set(0, initialY, 0);
     const geos = createBubbleTorusGeometries();
     
-    // Interior gas volume — clearcoat glass-like, kept translucent so shells read
-    const bubbleMaterial = createBubbleGasMaterial({ opacity: 0.2 });
+    // Soft translucent gas membrane — primary bubble fill (BDS-504: not wireframe)
+    const bubbleMaterial = createBubbleGasMaterial({ opacity: 0.32 });
     const bubble = new THREE.Mesh(geos.gas, bubbleMaterial);
     bubble.name = 'MainBubble';
     bubble.renderOrder = 1;
     bubble.userData = { 
       geometryType: 'sphere', // 'sphere', 'torus', 'jet'
       baseGeometry: geos.gas,
-      baseOpacity: 0.2,
+      baseOpacity: 0.32,
     };
     bubble.scale.setScalar(initialScale);
     bubbleGroup.add(bubble);
@@ -942,21 +996,21 @@ const UnifiedBubbleLatticeVisualization = ({
     jet.userData = { baseRadius: 0.28, baseHeight: 3.6 };
     bubbleGroup.add(jet);
     
-    // Ionic double-layer shell (outer) — primary bubble visual
-    const doubleLayer = new THREE.Mesh(geos.doubleLayer, createDoubleLayerMaterial({ opacity: 0.38 }));
+    // Ionic double-layer membrane (outer) — primary readable bubble silhouette
+    const doubleLayer = new THREE.Mesh(geos.doubleLayer, createDoubleLayerMaterial({ opacity: 0.52 }));
     doubleLayer.name = 'DoubleLayer';
     doubleLayer.renderOrder = 2;
     doubleLayer.scale.setScalar(initialScale);
-    doubleLayer.userData = { baseOpacity: 0.38 };
+    doubleLayer.userData = { baseOpacity: 0.52 };
     bubbleGroup.add(doubleLayer);
 
-    // Subtle wire rim for silhouette readability
+    // Faint wire rim only — never primary (was boosted to 0.75 → cage look)
     const doubleLayerWire = new THREE.Mesh(
       geos.doubleLayerWire,
       new THREE.MeshBasicMaterial({
         color: 0xaaffff,
         transparent: true,
-        opacity: 0.28,
+        opacity: DOUBLE_LAYER_WIRE_OPACITY_EXPANSION,
         wireframe: true,
         depthWrite: false,
       }),
@@ -967,12 +1021,17 @@ const UnifiedBubbleLatticeVisualization = ({
     bubbleGroup.add(doubleLayerWire);
     
     // Inner charge layer
-    const innerLayer = new THREE.Mesh(geos.innerLayer, createInnerLayerMaterial({ opacity: 0.26 }));
+    const innerLayer = new THREE.Mesh(geos.innerLayer, createInnerLayerMaterial({ opacity: 0.34 }));
     innerLayer.name = 'InnerLayer';
     innerLayer.renderOrder = 2;
     innerLayer.scale.setScalar(initialScale);
-    innerLayer.userData = { baseOpacity: 0.26 };
+    innerLayer.userData = { baseOpacity: 0.34 };
     bubbleGroup.add(innerLayer);
+
+    // Optional sheath surface-flow Points/ribbons — OFF until Layers toggle
+    const sheathFlow = createSheathSurfaceFlowGroup();
+    sheathFlow.visible = false;
+    bubbleGroup.add(sheathFlow);
 
     // Soft local light so clearcoat shells catch highlights (presentation)
     const bubbleLight = new THREE.PointLight(0xb8e8ff, 0.85, 10, 2);
@@ -1021,7 +1080,7 @@ const UnifiedBubbleLatticeVisualization = ({
     histLine.name = 'RadiusHistoryTrail';
     histLine.frustumCulled = false;
     bubbleGroup.add(histLine);
-    
+
     scene.add(bubbleGroup);
     bubbleGroupRef.current = bubbleGroup;
     
@@ -2118,16 +2177,18 @@ const UnifiedBubbleLatticeVisualization = ({
       sites: restSites,
       displacements,
       hostHex,
+      colorMode: latticeColorModeRef.current,
+      temperatureK,
+      modeEnergies: modeEnergy,
+      opticalWeight: mix.opticalWeight,
       setMatrixAt: (index, elements) => {
         const m = new THREE.Matrix4();
         m.fromArray(elements);
         hostAtoms.setMatrixAt(index, m);
       },
       setColorAt: hostAtoms.instanceColor
-        ? (index) => {
-          const base = occupancyTintRgb(hostHex, restSites[index]?.occupied);
-          const tinted = phononModeTintRgb(base, modeEnergy[index] || 0, mix.opticalWeight);
-          scratchColor.setRGB(tinted.r, tinted.g, tinted.b);
+        ? (index, rgb) => {
+          scratchColor.setRGB(rgb.r, rgb.g, rgb.b);
           hostAtoms.setColorAt(index, scratchColor);
         }
         : undefined,
@@ -2168,8 +2229,373 @@ const UnifiedBubbleLatticeVisualization = ({
       canvasRef.current.dataset.phononAmp = amp.toFixed(3);
       const meanE = modeEnergy.reduce((s, e) => s + e, 0) / Math.max(modeEnergy.length, 1);
       canvasRef.current.dataset.phononEnergy = meanE.toFixed(3);
+      canvasRef.current.dataset.latticeColorMode = latticeColorModeRef.current;
     }
   }, [showLattice, showPhonon, hostMeltMeta, loadingRatio]);
+
+  // Immediate host recolor when Tier-1 color mode changes (colors only — keep phonon pose).
+  useEffect(() => {
+    if (!showLattice || !latticeGroupRef.current) return;
+    const hostAtoms = latticeGroupRef.current.getObjectByName('LatticeHostAtoms');
+    const restSites = hostAtoms?.userData?.restSites;
+    if (!hostAtoms?.instanceColor || !restSites?.length) return;
+    const scratchColor = new THREE.Color();
+    const hostHex = hostAtoms.userData?.hostHex ?? 0x8b8b8b;
+    const temperatureK = physicsData?.temperature ?? 300;
+    const mode = normalizeLatticeColorMode(latticeColorMode);
+    for (let i = 0; i < restSites.length; i += 1) {
+      const rgb = resolveLatticeHostInstanceRgb({
+        mode,
+        hostHex,
+        occupied: restSites[i]?.occupied,
+        temperatureK,
+        modeEnergy: 0,
+        opticalWeight: 0.4,
+      });
+      scratchColor.setRGB(rgb.r, rgb.g, rgb.b);
+      hostAtoms.setColorAt(i, scratchColor);
+    }
+    hostAtoms.instanceColor.needsUpdate = true;
+    if (canvasRef.current?.dataset) {
+      canvasRef.current.dataset.latticeColorMode = mode;
+    }
+  }, [latticeColorMode, showLattice, physicsData?.temperature]);
+
+  // Rebuild collapse ODE ribbon on scene root (not bubble-scaled) when trajectory present.
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    let group = scene.getObjectByName('CollapseRibbonGroup');
+    if (group) {
+      scene.remove(group);
+      group.traverse((obj) => {
+        obj.geometry?.dispose?.();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose?.());
+          else obj.material.dispose?.();
+        }
+      });
+      group = null;
+    }
+    const built = buildCollapseRibbonPositions({
+      trajectory: simulationData?.collapse_trajectory,
+      initialRadiusUm: initialBubbleRadius,
+      nestY: PHYSICS_CONFIG.LATTICE_Y_OFFSET + 0.35,
+    });
+    if (!built || !showCollapseRibbon || !showBubble) {
+      setCollapseRibbonMeta(null);
+      collapseRibbonMetaRef.current = null;
+      return undefined;
+    }
+    group = new THREE.Group();
+    group.name = 'CollapseRibbonGroup';
+    // Fat tube so the ODE path reads at HSE zoom (LineBasic is too thin).
+    const curvePts = [];
+    for (let i = 0; i < built.sampleCount; i += 1) {
+      curvePts.push(new THREE.Vector3(
+        built.positions[i * 3],
+        built.positions[i * 3 + 1],
+        built.positions[i * 3 + 2],
+      ));
+    }
+    const curve = new THREE.CatmullRomCurve3(curvePts);
+    const tubeGeom = new THREE.TubeGeometry(
+      curve,
+      Math.min(160, Math.max(32, built.sampleCount * 2)),
+      0.055,
+      8,
+      false,
+    );
+    const ribbonTube = new THREE.Mesh(
+      tubeGeom,
+      new THREE.MeshBasicMaterial({
+        color: 0xffb84d,
+        transparent: true,
+        opacity: 0.9,
+        depthWrite: false,
+      }),
+    );
+    ribbonTube.name = 'CollapseTrajectoryRibbon';
+    ribbonTube.frustumCulled = false;
+    ribbonTube.userData = {
+      sampleCount: built.sampleCount,
+      minIndex: built.minIndex,
+      source: built.source,
+      fidelity: built.fidelity,
+      positions: built.positions,
+    };
+    group.add(ribbonTube);
+
+    const playhead = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 14, 14),
+      new THREE.MeshBasicMaterial({
+        color: 0xfff3a0,
+        transparent: true,
+        opacity: 1,
+        depthWrite: false,
+      }),
+    );
+    playhead.name = 'CollapseRibbonPlayhead';
+    playhead.position.set(built.positions[0], built.positions[1], built.positions[2]);
+    group.add(playhead);
+
+    const minMark = new THREE.Mesh(
+      new THREE.SphereGeometry(0.14, 14, 14),
+      new THREE.MeshBasicMaterial({
+        color: 0xff5533,
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: false,
+      }),
+    );
+    minMark.name = 'CollapseRibbonMinMark';
+    const mi = built.minIndex;
+    minMark.position.set(
+      built.positions[mi * 3],
+      built.positions[mi * 3 + 1],
+      built.positions[mi * 3 + 2],
+    );
+    group.add(minMark);
+    scene.add(group);
+
+    const meta = {
+      sampleCount: built.sampleCount,
+      source: built.source,
+      fidelity: built.fidelity,
+    };
+    setCollapseRibbonMeta(meta);
+    collapseRibbonMetaRef.current = meta;
+    if (canvasRef.current?.dataset) {
+      canvasRef.current.dataset.collapseRibbon = built.source;
+    }
+    return () => {
+      scene.remove(group);
+      group.traverse((obj) => {
+        obj.geometry?.dispose?.();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose?.());
+          else obj.material.dispose?.();
+        }
+      });
+    };
+  }, [
+    simulationData?.collapse_trajectory,
+    initialBubbleRadius,
+    showCollapseRibbon,
+    showBubble,
+  ]);
+
+  // VIZ-08 occupancy glow — engine site loading when exported; else schematic + chip.
+  // Soft glow on ALL hosts; occupancy modulates intensity (no "dead" empty sites).
+  useEffect(() => {
+    const lattice = latticeGroupRef.current;
+    if (!lattice) return;
+    const prev = lattice.getObjectByName('OccupancyGlowHosts');
+    if (prev) {
+      lattice.remove(prev);
+      prev.geometry?.dispose?.();
+      prev.material?.dispose?.();
+    }
+    if (!showLattice || !showOccupancyGlow) {
+      setOccupancyGlowMeta(null);
+      return;
+    }
+    const hostAtoms = lattice.getObjectByName('LatticeHostAtoms');
+    const restSites = hostAtoms?.userData?.restSites;
+    if (!restSites?.length) {
+      setOccupancyGlowMeta(null);
+      return;
+    }
+    const plan = resolveOccupancyGlowPlan({
+      siteCount: restSites.length,
+      loadingRatio,
+      seed: latticeSize * 17 + Math.round(loadingRatio * 1000),
+      simulationData,
+    });
+    setOccupancyGlowMeta(plan);
+    const glow = occupancyGlowRgb(plan.engineBound);
+    const geom = new THREE.SphereGeometry(
+      Math.max(0.12, hostAtomRadiusVisUnits * 1.55),
+      14,
+      14,
+    );
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      // Diadon: more transparent — soft halo, not a bright wash.
+      opacity: 0.035 + glow.intensity * 0.07,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const mesh = new THREE.InstancedMesh(geom, mat, restSites.length);
+    mesh.name = 'OccupancyGlowHosts';
+    mesh.frustumCulled = false;
+    const scratch = new THREE.Object3D();
+    const scratchColor = new THREE.Color();
+    const base = new THREE.Color(glow.r, glow.g, glow.b);
+    if (!mesh.instanceColor) {
+      mesh.instanceColor = new THREE.InstancedBufferAttribute(
+        new Float32Array(restSites.length * 3),
+        3,
+      );
+    }
+    restSites.forEach((site, index) => {
+      const strength = occupancyGlowSiteStrength(Boolean(plan.occupied[index]));
+      scratch.position.set(site.x, site.y, site.z);
+      scratch.scale.setScalar(0.82 + strength * 0.38);
+      scratch.updateMatrix();
+      mesh.setMatrixAt(index, scratch.matrix);
+      scratchColor.copy(base).multiplyScalar(0.35 + strength * 0.65);
+      mesh.setColorAt(index, scratchColor);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    mesh.userData = {
+      fidelity: plan.fidelity,
+      engineBound: plan.engineBound,
+      occupiedCount: plan.occupiedCount,
+      label: plan.label,
+      allHostsGlow: true,
+    };
+    lattice.add(mesh);
+    if (canvasRef.current?.dataset) {
+      canvasRef.current.dataset.occupancyGlow = plan.fidelity;
+    }
+  }, [
+    showLattice,
+    showOccupancyGlow,
+    simulationData,
+    loadingRatio,
+    latticeSize,
+    hostAtomRadiusVisUnits,
+    latticeSceneEpoch,
+  ]);
+
+  // Tier-2 schematic electron-density shells (soft additive) + mild bond lift.
+  // Layers OFF by default — paper-safe overlay only; never QM/DFT orbitals.
+  useEffect(() => {
+    const lattice = latticeGroupRef.current;
+    if (!lattice) return undefined;
+
+    const disposeShells = () => {
+      const prev = lattice.getObjectByName('SchematicShellHosts');
+      if (prev) {
+        lattice.remove(prev);
+        prev.geometry?.dispose?.();
+        prev.material?.dispose?.();
+      }
+    };
+
+    const bonds = lattice.getObjectByName('LatticeBonds');
+    const restoreBonds = () => {
+      if (!bonds?.material) return;
+      const base = bonds.userData?.schematicBondBase;
+      if (!base) return;
+      bonds.material.opacity = base.opacity;
+      bonds.material.color?.setHex?.(base.colorHex);
+    };
+
+    disposeShells();
+
+    if (!showLattice || !showSchematicShells) {
+      restoreBonds();
+      setSchematicShellMeta(null);
+      if (canvasRef.current?.dataset) {
+        delete canvasRef.current.dataset.schematicShells;
+      }
+      return disposeShells;
+    }
+
+    const hostAtoms = lattice.getObjectByName('LatticeHostAtoms');
+    const restSites = hostAtoms?.userData?.restSites;
+    if (!restSites?.length) {
+      setSchematicShellMeta(null);
+      return disposeShells;
+    }
+
+    const spec = resolveSchematicShellSpec({
+      loadingRatio,
+      hostMaterial,
+    });
+    setSchematicShellMeta(spec);
+
+    const shellRadius = Math.max(
+      0.14,
+      hostAtomRadiusVisUnits * spec.radiusScale,
+    );
+    const geom = new THREE.SphereGeometry(shellRadius, 16, 16);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: spec.opacity,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const mesh = new THREE.InstancedMesh(geom, mat, restSites.length);
+    mesh.name = 'SchematicShellHosts';
+    mesh.frustumCulled = false;
+    const scratch = new THREE.Object3D();
+    const scratchColor = new THREE.Color();
+    if (!mesh.instanceColor) {
+      mesh.instanceColor = new THREE.InstancedBufferAttribute(
+        new Float32Array(restSites.length * 3),
+        3,
+      );
+    }
+    // Per-site brightness via instanceColor (MeshBasic + Additive; shared mat.opacity).
+    // Keep additive strength modest so shells stay translucent over hosts.
+    const base = new THREE.Color(spec.colorHex);
+    restSites.forEach((site, index) => {
+      scratch.position.set(site.x, site.y, site.z);
+      const lift = schematicShellSiteOpacity(1, Boolean(site.occupied));
+      scratch.scale.setScalar(0.78 + lift * 0.22);
+      scratch.updateMatrix();
+      mesh.setMatrixAt(index, scratch.matrix);
+      scratchColor.copy(base).multiplyScalar(0.14 + lift * 0.22);
+      mesh.setColorAt(index, scratchColor);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    mesh.userData = {
+      fidelity: spec.fidelity,
+      claimTier: spec.claimTier,
+      label: spec.label,
+      loadingRatio,
+    };
+    lattice.add(mesh);
+
+    // Option C light: thicken bond readability while shells are visible.
+    if (bonds?.material) {
+      if (!bonds.userData.schematicBondBase) {
+        bonds.userData.schematicBondBase = {
+          opacity: bonds.material.opacity,
+          colorHex: bonds.material.color?.getHex?.() ?? 0x667788,
+        };
+      }
+      bonds.material.opacity = Math.min(
+        0.75,
+        (bonds.userData.schematicBondBase.opacity || 0.35) + 0.22,
+      );
+      bonds.material.color?.setHex?.(0x88aacc);
+    }
+
+    if (canvasRef.current?.dataset) {
+      canvasRef.current.dataset.schematicShells = spec.fidelity;
+    }
+
+    return () => {
+      disposeShells();
+      restoreBonds();
+    };
+  }, [
+    showLattice,
+    showSchematicShells,
+    loadingRatio,
+    hostMaterial,
+    hostAtomRadiusVisUnits,
+    latticeSize,
+    latticeSpacingVisUnits,
+  ]);
 
   // Animation update function
   const updateAnimation = useCallback((deltaTime) => {
@@ -2551,7 +2977,11 @@ const UnifiedBubbleLatticeVisualization = ({
           sw * (1 + pinchAmt * 0.18),
           sw * (1 - pinchAmt * 0.28) / surfMod,
         );
-        doubleLayerWire.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 0.75 : 0.5;
+        // Keep wire faint — membrane carries the bubble (BDS-504)
+        doubleLayerWire.material.opacity =
+          phase === 'COLLAPSE' || phase === 'MINIMUM'
+            ? DOUBLE_LAYER_WIRE_OPACITY_COLLAPSE
+            : DOUBLE_LAYER_WIRE_OPACITY_EXPANSION;
         doubleLayerWire.visible = showBubble && phase !== 'MINIMUM';
       }
       if (innerLayer) {
@@ -2561,9 +2991,20 @@ const UnifiedBubbleLatticeVisualization = ({
           si * (1 + pinchAmt * 0.12),
           si * (1 - pinchAmt * 0.22),
         );
-        const base = innerLayer.userData.baseOpacity ?? 0.22;
-        innerLayer.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? base + 0.15 : base;
+        const base = innerLayer.userData.baseOpacity ?? 0.34;
+        innerLayer.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? base + 0.12 : base;
         innerLayer.visible = showBubble;
+      }
+
+      // Schematic sheath surface flow (ionic DL / MHD peer motif) — not measured bubble spin
+      const sheathFlow = bubbleGroupRef.current.getObjectByName('SheathSurfaceFlow');
+      if (sheathFlow) {
+        updateSheathSurfaceFlow(sheathFlow, {
+          displayScale,
+          delta: deltaTime,
+          visible: showBubble && showSheathSurfaceFlow,
+          pinchAmt,
+        });
       }
       
       // Update pressure rings — Mach cue from collapse_results.peak_mach when present
@@ -2613,6 +3054,21 @@ const UnifiedBubbleLatticeVisualization = ({
           ? 0.38
           : 0.18;
       }
+
+      // Collapse ODE ribbon playhead follows scrub / cycle fraction (scene-rooted)
+      const ribbonGroup = sceneRef.current?.getObjectByName('CollapseRibbonGroup');
+      const ribbon = ribbonGroup?.getObjectByName('CollapseTrajectoryRibbon');
+      const playhead = ribbonGroup?.getObjectByName('CollapseRibbonPlayhead');
+      if (ribbon && playhead) {
+        const count = ribbon.userData?.sampleCount || 0;
+        const arr = ribbon.userData?.positions;
+        const idx = collapseRibbonPlayheadIndex(count, normalizedTime);
+        if (arr && count > 0 && arr.length >= (idx + 1) * 3) {
+          playhead.position.set(arr[idx * 3], arr[idx * 3 + 1], arr[idx * 3 + 2]);
+          playhead.visible = showCollapseRibbon && showBubble;
+        }
+        ribbonGroup.visible = showCollapseRibbon && showBubble;
+      }
       
       // ========================================================================
       // HETEROGENEOUS NUCLEATION — nest bubble underside on lattice boundary
@@ -2657,6 +3113,10 @@ const UnifiedBubbleLatticeVisualization = ({
           sites: restSites,
           displacements: null,
           hostHex: hostAtoms.userData?.hostHex ?? 0x8b8b8b,
+          colorMode: latticeColorModeRef.current,
+          temperatureK: temperature,
+          modeEnergies: null,
+          opticalWeight: phononModeMix({ phononFactor: enhancements?.phonon ?? 1 }).opticalWeight,
           setMatrixAt: (index, elements) => {
             const m = new THREE.Matrix4();
             m.fromArray(elements);
@@ -3270,7 +3730,8 @@ const UnifiedBubbleLatticeVisualization = ({
   }, [
     frequency, initialBubbleRadius, simulationData, setUsingAPIData,
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
-    showBubble, showProtons, showFieldLines, showVortices, showLattice, showPhonon, showElectronMig,
+    showBubble, showSheathSurfaceFlow, showProtons, showFieldLines, showVortices, showLattice, showPhonon, showElectronMig,
+    showCollapseRibbon,
     showCasimir, showRydberg, showHalo,
     latticeSpacingVisUnits, hostMeltMeta, loadingRatio, tickPhononStandingWaves,
     physicsData.temperature, physicsData.compressionRatio, enhancementBreakdown,
@@ -3357,6 +3818,7 @@ const UnifiedBubbleLatticeVisualization = ({
     
     // Create scene elements
     createLattice(scene);
+    setLatticeSceneEpoch((n) => n + 1);
     createLiquidPhaseOverlay(scene);
     createBubble(scene);
     createProtons(scene);
@@ -3580,6 +4042,15 @@ const UnifiedBubbleLatticeVisualization = ({
             if (!showBubble) child.visible = false;
             return;
           }
+          // Sheath surface flow: OFF-default Layers toggle; not measured bubble spin
+          if (
+            child.name === 'SheathSurfaceFlow'
+            || child.name === 'SheathSurfaceFlowPoints'
+            || (typeof child.name === 'string' && child.name.startsWith('SheathSurfaceFlowRibbon'))
+          ) {
+            child.visible = showBubble && showSheathSurfaceFlow;
+            return;
+          }
           if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
             child.visible = showBubble;
           }
@@ -3693,7 +4164,7 @@ const UnifiedBubbleLatticeVisualization = ({
     const timeoutId = setTimeout(updateVisibility, 100);
     
     return () => clearTimeout(timeoutId);
-  }, [showLattice, showBubble, showProtons, showFieldLines, showElectronMig, showVortices, showBoundaryPlane, showCasimir, showRydberg, showHalo]);
+  }, [showLattice, showBubble, showSheathSurfaceFlow, showProtons, showFieldLines, showElectronMig, showVortices, showBoundaryPlane, showCasimir, showRydberg, showHalo]);
 
   // Camera controls
   const resetCameraToPreset = useCallback(() => {
@@ -3853,8 +4324,24 @@ const UnifiedBubbleLatticeVisualization = ({
                   <FormControlLabel
                     control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" data-testid="ublv-layer-bubble" />}
                     label={
-                      <Tooltip title="Ionic double-layer sheath + brief torus/jet flash + mild pinch/surface-mod at collapse (hydro schematic). Torus/jet/pinch die when this layer is off. Not Benjamin–Feir proof; not nuclear burn.">
+                      <Tooltip title="Soft translucent ionic double-layer membrane + brief torus/jet flash + mild pinch/surface-mod at collapse (hydro schematic). Torus/jet/pinch die when this layer is off. Not Benjamin–Feir proof; not nuclear burn; not measured bubble spin.">
                         <Typography variant="caption" color="white">Double-layer / torus (ionic)</Typography>
+                      </Tooltip>
+                    }
+                  />
+                  <FormControlLabel
+                    control={(
+                      <Switch
+                        checked={showSheathSurfaceFlow}
+                        onChange={(e) => setShowSheathSurfaceFlow(e.target.checked)}
+                        size="small"
+                        color="info"
+                        data-testid="ublv-layer-sheath-surface-flow"
+                      />
+                    )}
+                    label={
+                      <Tooltip title={`${SHEATH_SURFACE_FLOW_CHIP}. Tangential Points/ribbons on the ionic sheath — DL / MHD peer motif only. Not macroscopic bubble spin; EQ-OPEN untouched.`}>
+                        <Typography variant="caption" color="white">Sheath surface flow (schematic)</Typography>
                       </Tooltip>
                     }
                   />
@@ -3895,9 +4382,103 @@ const UnifiedBubbleLatticeVisualization = ({
                     label={<Typography variant="caption" color="white">Halo Electrons</Typography>}
                   />
                   <FormControlLabel
+                    control={(
+                      <Switch
+                        checked={showSchematicShells}
+                        onChange={(e) => setShowSchematicShells(e.target.checked)}
+                        size="small"
+                        sx={{ color: '#5ee0ff' }}
+                        inputProps={{ 'data-testid': 'ublv-schematic-shells-switch' }}
+                      />
+                    )}
+                    label={(
+                      <Tooltip title="Soft additive electron-density shells — schematic presentation only. Not QM orbitals / DFT / ab initio Ψ². Opacity tracks loading_ratio; Layers OFF by default.">
+                        <Typography variant="caption" color="white">
+                          Schematic shells
+                        </Typography>
+                      </Tooltip>
+                    )}
+                  />
+                  <FormControlLabel
                     control={<Switch checked={showLegend} onChange={(e) => setShowLegend(e.target.checked)} size="small" sx={{ color: '#88ff88' }} />}
                     label={<Typography variant="caption" color="white">Legend</Typography>}
                   />
+                  <FormControlLabel
+                    control={(
+                      <Switch
+                        checked={showCollapseRibbon}
+                        onChange={(e) => setShowCollapseRibbon(e.target.checked)}
+                        size="small"
+                        data-testid="ublv-layer-collapse-ribbon"
+                      />
+                    )}
+                    label={
+                      <Tooltip title="Engine collapse_trajectory R(t) ribbon (Rayleigh–Plesset ODE path). EMP hydro — not CFD / not nuclear.">
+                        <Typography variant="caption" color="white">Collapse R(t) ribbon (ODE)</Typography>
+                      </Tooltip>
+                    }
+                  />
+                  <FormControlLabel
+                    control={(
+                      <Switch
+                        checked={showOccupancyGlow}
+                        onChange={(e) => setShowOccupancyGlow(e.target.checked)}
+                        size="small"
+                        data-testid="ublv-layer-occupancy-glow"
+                      />
+                    )}
+                    label={
+                      <Tooltip title="Host occupancy glow. Engine site loading when exported; otherwise schematic mask + honesty chip (VIZ-08).">
+                        <Typography variant="caption" color="white">Occupancy glow</Typography>
+                      </Tooltip>
+                    }
+                  />
+                  <Box sx={{ mt: 1, px: 0.5 }} data-testid="ublv-lattice-color-mode">
+                    <Tooltip title="Host instanceColor mode — mutually exclusive. Species = exclusive Pd/Ni palette; Loading = schematic occupancy; T = temperature_k warm lift; Phonon = contested mode-energy tint. Schematic presentation — not QM orbitals.">
+                      <Typography variant="caption" color="rgba(255,255,255,0.75)" sx={{ display: 'block', mb: 0.5 }}>
+                        Lattice color
+                      </Typography>
+                    </Tooltip>
+                    <ToggleButtonGroup
+                      exclusive
+                      size="small"
+                      value={latticeColorMode}
+                      onChange={(_e, next) => {
+                        if (next) setLatticeColorMode(normalizeLatticeColorMode(next));
+                      }}
+                      aria-label="Lattice host color mode"
+                      sx={{
+                        flexWrap: 'wrap',
+                        gap: 0.25,
+                        '& .MuiToggleButton-root': {
+                          color: 'rgba(255,255,255,0.85)',
+                          borderColor: 'rgba(255,255,255,0.25)',
+                          px: 0.75,
+                          py: 0.15,
+                          fontSize: '0.65rem',
+                          textTransform: 'none',
+                          '&.Mui-selected': {
+                            bgcolor: 'rgba(25, 118, 210, 0.55)',
+                            color: 'white',
+                          },
+                        },
+                      }}
+                    >
+                      {LATTICE_COLOR_MODES.map((mode) => (
+                        <ToggleButton
+                          key={mode}
+                          value={mode}
+                          data-testid={`ublv-color-mode-${mode}`}
+                          aria-label={LATTICE_COLOR_MODE_META[mode].honesty}
+                        >
+                          {LATTICE_COLOR_MODE_META[mode].short}
+                        </ToggleButton>
+                      ))}
+                    </ToggleButtonGroup>
+                    <Typography variant="caption" color="rgba(255,255,255,0.55)" sx={{ display: 'block', mt: 0.5, lineHeight: 1.2 }}>
+                      {LATTICE_COLOR_MODE_META[normalizeLatticeColorMode(latticeColorMode)].honesty}
+                    </Typography>
+                  </Box>
                 </FormGroup>
               </Paper>
             </Collapse>
@@ -4177,6 +4758,54 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
+              {showBubble && showSheathSurfaceFlow && (
+                <Tooltip title="Tangential additive Points/ribbons on the ionic sheath — DL / MHD peer motif. Not measured macroscopic bubble spin; not bulk kinetic spin; EQ-OPEN untouched.">
+                  <Chip
+                    label={SHEATH_SURFACE_FLOW_CHIP}
+                    size="small"
+                    data-testid="ublv-sheath-surface-flow-chip"
+                    sx={{
+                      bgcolor: 'rgba(50, 100, 130, 0.92)',
+                      color: 'white',
+                      fontSize: '0.6rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
+              {collapseRibbonMeta && showCollapseRibbon && (
+                <Tooltip title={`Engine collapse_trajectory (${collapseRibbonMeta.source}). EMP Rayleigh–Plesset R(t) — not CFD / not nuclear.`}>
+                  <Chip
+                    label={`Collapse R(t) · ${collapseRibbonMeta.sampleCount} samples`}
+                    size="small"
+                    data-testid="ublv-collapse-ribbon-chip"
+                    sx={{
+                      bgcolor: 'rgba(180, 110, 40, 0.9)',
+                      color: 'white',
+                      fontSize: '0.6rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
+              {occupancyGlowMeta && showOccupancyGlow && (
+                <Tooltip title={occupancyGlowMeta.label}>
+                  <Chip
+                    label={
+                      occupancyGlowMeta.engineBound
+                        ? `Occupancy glow · engine (${occupancyGlowMeta.occupiedCount})`
+                        : 'Occupancy glow · schematic'
+                    }
+                    size="small"
+                    data-testid="ublv-occupancy-glow-chip"
+                    sx={{
+                      bgcolor: occupancyGlowMeta.engineBound
+                        ? 'rgba(40, 140, 120, 0.9)'
+                        : 'rgba(70, 90, 140, 0.9)',
+                      color: 'white',
+                      fontSize: '0.6rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
               <Tooltip title={hostMeltMeta.citeNote}>
                 <Chip
                   label={
@@ -4194,6 +4823,21 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
+              {schematicShellMeta && showSchematicShells && (
+                <Tooltip title={SCHEMATIC_SHELL_LABEL}>
+                  <Chip
+                    label="Schematic · not QM orbitals"
+                    size="small"
+                    data-testid="ublv-schematic-shells-chip"
+                    data-fidelity={schematicShellMeta.fidelity}
+                    sx={{
+                      bgcolor: 'rgba(40, 120, 150, 0.9)',
+                      color: 'white',
+                      fontSize: '0.6rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
               {pickedLatticeSite && (
                 <Tooltip title="VIZ-06 schematic pick — lattice index only; not nuclear proof">
                   <Chip

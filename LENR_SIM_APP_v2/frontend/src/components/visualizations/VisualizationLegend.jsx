@@ -29,6 +29,7 @@ import StraightenIcon from '@mui/icons-material/Straighten';
 import BlurOnIcon from '@mui/icons-material/BlurOn';
 import FidelityLegendSplit from './FidelityLegendSplit';
 import HeatingModeGapGlyphs from './HeatingModeGapGlyphs';
+import { buildLenrLegendParticleTypes } from '../../utils/lenrParticlePalette';
 
 // Particle type definitions for Fusion (plasma-scale)
 const FUSION_PARTICLE_TYPES = {
@@ -76,58 +77,8 @@ const FUSION_PARTICLE_TYPES = {
   },
 };
 
-// Particle type definitions for LENR (lattice-scale)
-const LENR_PARTICLE_TYPES = {
-  nickel: {
-    color: '#4682b4',
-    label: 'Nickel (Ni)',
-    symbol: 'Ni',
-    description: 'Host metal lattice atom - FCC structure',
-    mass: '58.69 u',
-  },
-  palladium: {
-    color: '#8b8b8b',
-    label: 'Palladium (Pd)',
-    symbol: 'Pd',
-    description: 'Host metal with high H absorption - FCC structure',
-    mass: '106.42 u',
-  },
-  titanium: {
-    color: '#696969',
-    label: 'Titanium (Ti)',
-    symbol: 'Ti',
-    description: 'Alternative host metal - HCP structure',
-    mass: '47.87 u',
-  },
-  copper: {
-    color: '#b87333',
-    label: 'Copper (Cu)',
-    symbol: 'Cu',
-    description: 'Host metal reference - FCC structure',
-    mass: '63.55 u',
-  },
-  hydrogen: {
-    color: '#32cd32',
-    label: 'Hydrogen (H)',
-    symbol: 'H',
-    description: 'Interstitial hydrogen at octahedral/tetrahedral sites',
-    mass: '1.008 u',
-  },
-  deuterium: {
-    color: '#00ced1',
-    label: 'Deuterium (D)',
-    symbol: '²H',
-    description: 'Heavy hydrogen isotope in lattice',
-    mass: '2.014 u',
-  },
-  lithium: {
-    color: '#20b2aa',
-    label: 'Lithium (Li)',
-    symbol: 'Li',
-    description: 'Light element catalyst/dopant',
-    mass: '6.94 u',
-  },
-};
+// Shared SOT with UBLV WebGL hosts/solutes (lenrParticlePalette) — no CSS/hex drift.
+const LENR_PARTICLE_TYPES = buildLenrLegendParticleTypes();
 
 // Combined particle types for backward compatibility
 const _PARTICLE_TYPES = FUSION_PARTICLE_TYPES;

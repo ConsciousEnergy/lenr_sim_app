@@ -83,65 +83,75 @@ export function temperatureToBubbleTint(temperatureK, {
   };
 }
 
-/** Glass / ionic-shell look for the main gas volume (no env map required). */
+/**
+ * Soft translucent gas membrane (primary bubble fill).
+ * Defaults tuned so MeshPhysical reads as a bubble — not a ghost under wire.
+ */
 export function createBubbleGasMaterial({
   color = 0xb8e8ff,
-  opacity = 0.22,
+  opacity = 0.32,
 } = {}) {
   return new THREE.MeshPhysicalMaterial({
     color,
     metalness: 0.02,
-    roughness: 0.12,
+    roughness: 0.14,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.04,
-    reflectivity: 0.9,
+    clearcoatRoughness: 0.05,
+    reflectivity: 0.85,
     transparent: true,
     opacity,
     depthWrite: false,
     side: THREE.FrontSide,
-    emissive: new THREE.Color(0x226688),
-    emissiveIntensity: 0.15,
+    emissive: new THREE.Color(0x3388aa),
+    emissiveIntensity: 0.28,
   });
 }
 
-/** Outer ionic double-layer — thin refractive shell. */
+/**
+ * Outer ionic double-layer — primary readable membrane (not wireframe).
+ * Wire rim must stay faint; this shell carries the bubble silhouette.
+ */
 export function createDoubleLayerMaterial({
   color = 0x66f0ff,
-  opacity = 0.38,
+  opacity = 0.52,
 } = {}) {
   return new THREE.MeshPhysicalMaterial({
     color,
-    metalness: 0.05,
-    roughness: 0.2,
-    clearcoat: 0.85,
-    clearcoatRoughness: 0.08,
+    metalness: 0.04,
+    roughness: 0.18,
+    clearcoat: 0.9,
+    clearcoatRoughness: 0.06,
     transparent: true,
     opacity,
     depthWrite: false,
     side: THREE.DoubleSide,
-    emissive: new THREE.Color(0x00ccff),
-    emissiveIntensity: 0.35,
+    emissive: new THREE.Color(0x00ccee),
+    emissiveIntensity: 0.48,
   });
 }
 
-/** Inner charge sheath. */
+/** Inner charge sheath — soft warm tint under outer membrane. */
 export function createInnerLayerMaterial({
   color = 0xff8844,
-  opacity = 0.28,
+  opacity = 0.34,
 } = {}) {
   return new THREE.MeshPhysicalMaterial({
     color,
-    metalness: 0.08,
-    roughness: 0.25,
-    clearcoat: 0.5,
+    metalness: 0.06,
+    roughness: 0.28,
+    clearcoat: 0.45,
     transparent: true,
     opacity,
     depthWrite: false,
     side: THREE.FrontSide,
     emissive: new THREE.Color(0xff6622),
-    emissiveIntensity: 0.4,
+    emissiveIntensity: 0.45,
   });
 }
+
+/** Faint silhouette rim only — never the primary bubble read (BDS-504). */
+export const DOUBLE_LAYER_WIRE_OPACITY_EXPANSION = 0.08;
+export const DOUBLE_LAYER_WIRE_OPACITY_COLLAPSE = 0.12;
 
 /** Collapse torus / ring — hot plasma filament look (presentation). */
 export function createTorusPlasmaMaterial({
