@@ -2512,14 +2512,15 @@ const UnifiedBubbleLatticeVisualization = ({
       );
     }
     // Per-site brightness via instanceColor (MeshBasic + Additive; shared mat.opacity).
+    // Keep additive strength modest so shells stay translucent over hosts.
     const base = new THREE.Color(spec.colorHex);
     restSites.forEach((site, index) => {
       scratch.position.set(site.x, site.y, site.z);
       const lift = schematicShellSiteOpacity(1, Boolean(site.occupied));
-      scratch.scale.setScalar(0.85 + lift * 0.35);
+      scratch.scale.setScalar(0.8 + lift * 0.28);
       scratch.updateMatrix();
       mesh.setMatrixAt(index, scratch.matrix);
-      scratchColor.copy(base).multiplyScalar(0.45 + lift * 0.7);
+      scratchColor.copy(base).multiplyScalar(0.28 + lift * 0.42);
       mesh.setColorAt(index, scratchColor);
     });
     mesh.instanceMatrix.needsUpdate = true;
