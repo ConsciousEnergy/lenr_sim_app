@@ -121,6 +121,99 @@ export const BUBBLE_LATTICE_VIZ_CHANNELS: Record<string, VizChannelBinding> = {
     null_policy: 'schematic_fallback',
     label: 'Enhancement',
   },
+  // Mechanism product channels — claim-tier stack for Enhancement Breakdown
+  // (engine-bound only in UI; Local Calc stays schematic / speculative).
+  'enhancement.screening': {
+    channel_id: 'enhancement.screening',
+    observable_path: '$.enhancement_breakdown.screening',
+    unit: '1',
+    fidelity: 'quantitative',
+    claim_tier: 'speculative_exploratory',
+    provenance: {
+      source: 'bubble_lattice_mechanism_product',
+      validation_status: 'model_output',
+    },
+    null_policy: 'schematic_fallback',
+    label: 'Screening',
+  },
+  'enhancement.qed': {
+    channel_id: 'enhancement.qed',
+    observable_path: '$.enhancement_breakdown.qed',
+    unit: '1',
+    fidelity: 'quantitative',
+    claim_tier: 'speculative_exploratory',
+    provenance: {
+      source: 'bubble_lattice_mechanism_product',
+      validation_status: 'model_output',
+    },
+    null_policy: 'schematic_fallback',
+    label: 'QED',
+  },
+  'enhancement.casimir': {
+    channel_id: 'enhancement.casimir',
+    observable_path: '$.enhancement_breakdown.casimir',
+    unit: '1',
+    fidelity: 'quantitative',
+    claim_tier: 'speculative_exploratory',
+    provenance: {
+      source: 'bubble_lattice_mechanism_product',
+      validation_status: 'model_output',
+    },
+    null_policy: 'schematic_fallback',
+    label: 'Casimir',
+  },
+  'enhancement.rydberg': {
+    channel_id: 'enhancement.rydberg',
+    observable_path: '$.enhancement_breakdown.rydberg',
+    unit: '1',
+    fidelity: 'quantitative',
+    claim_tier: 'speculative_exploratory',
+    provenance: {
+      source: 'bubble_lattice_mechanism_product',
+      validation_status: 'model_output',
+    },
+    null_policy: 'schematic_fallback',
+    label: 'Rydberg',
+  },
+  'enhancement.compression': {
+    channel_id: 'enhancement.compression',
+    observable_path: '$.enhancement_breakdown.compression',
+    unit: '1',
+    fidelity: 'quantitative',
+    claim_tier: 'empirical_lenr_correlation',
+    provenance: {
+      source: 'bubble_lattice_collapse',
+      validation_status: 'model_output',
+    },
+    null_policy: 'schematic_fallback',
+    label: 'Compression',
+  },
+  'enhancement.phonon': {
+    channel_id: 'enhancement.phonon',
+    observable_path: '$.enhancement_breakdown.phonon',
+    unit: '1',
+    fidelity: 'quantitative',
+    claim_tier: 'speculative_exploratory',
+    provenance: {
+      source: 'bubble_lattice_mechanism_product',
+      validation_status: 'model_output',
+    },
+    null_policy: 'schematic_fallback',
+    label: 'Phonon',
+  },
+  'enhancement.loading': {
+    channel_id: 'enhancement.loading',
+    observable_path: '$.enhancement_breakdown.loading',
+    unit: '1',
+    fidelity: 'quantitative',
+    claim_tier: 'speculative_exploratory',
+    provenance: {
+      source: 'bubble_lattice_mechanism_product',
+      validation_status: 'model_output',
+    },
+    null_policy: 'schematic_fallback',
+    label: 'Loading',
+  },
   'collapse.compression_ratio': {
     channel_id: 'collapse.compression_ratio',
     observable_path: '$.collapse_results.compression_ratio',
@@ -459,4 +552,47 @@ export function listGapChannels(): VizChannelBinding[] {
   return Object.values(BUBBLE_LATTICE_VIZ_CHANNELS).filter(
     (b) => b.null_policy === 'show_gap_chip',
   );
+}
+
+/** Ordered Enhancement Breakdown mechanism keys (engine product stack). */
+export const ENHANCEMENT_BREAKDOWN_CHANNEL_IDS = [
+  'enhancement.screening',
+  'enhancement.qed',
+  'enhancement.casimir',
+  'enhancement.rydberg',
+  'enhancement.compression',
+  'enhancement.phonon',
+  'enhancement.loading',
+] as const;
+
+const ENHANCEMENT_BREAKDOWN_KEYS: Record<
+  (typeof ENHANCEMENT_BREAKDOWN_CHANNEL_IDS)[number],
+  string
+> = {
+  'enhancement.screening': 'screening',
+  'enhancement.qed': 'qed',
+  'enhancement.casimir': 'casimir',
+  'enhancement.rydberg': 'rydberg',
+  'enhancement.compression': 'compression',
+  'enhancement.phonon': 'phonon',
+  'enhancement.loading': 'loading',
+};
+
+/**
+ * Build claim-tier channel requests from an enhancement_breakdown object.
+ * Callers should pass engine `source` (`solver` / `interpolated`) only when
+ * samples are bound; Local Calc uses `local_fallback`.
+ */
+export function buildEnhancementBreakdownChannels(
+  breakdown: Record<string, unknown> | null | undefined,
+  opts?: { sampleSource?: HudReadoutRequest['source'] },
+): HudReadoutRequest[] {
+  const source = opts?.sampleSource || 'local_fallback';
+  const src = breakdown && typeof breakdown === 'object' ? breakdown : {};
+  return ENHANCEMENT_BREAKDOWN_CHANNEL_IDS.map((channelId) => {
+    const key = ENHANCEMENT_BREAKDOWN_KEYS[channelId];
+    const raw = src[key];
+    const value = typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
+    return { channel_id: channelId, value, source };
+  });
 }

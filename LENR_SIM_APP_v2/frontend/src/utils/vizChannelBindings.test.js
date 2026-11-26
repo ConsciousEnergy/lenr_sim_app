@@ -1,6 +1,7 @@
 import {
   BUBBLE_LATTICE_VIZ_CHANNELS,
   buildCollapseHudChannels,
+  buildEnhancementBreakdownChannels,
   buildVizChannelsFromFrame,
   listGapChannels,
   resolveHudReadout,
@@ -124,5 +125,29 @@ describe('vizChannelBindings', () => {
         source: 'local_fallback',
       }).claim_tier,
     ).toBe('speculative_exploratory');
+  });
+
+  test('enhancement breakdown channels carry claim tiers (engine stack)', () => {
+    const channels = buildEnhancementBreakdownChannels(
+      {
+        screening: 1e3,
+        qed: 2,
+        casimir: 3,
+        rydberg: 4,
+        compression: 10,
+        phonon: 1.5,
+        loading: 1.2,
+      },
+      { sampleSource: 'solver' },
+    );
+    expect(channels).toHaveLength(7);
+    expect(channels.every((c) => c.source === 'solver')).toBe(true);
+    const screening = resolveHudReadout(channels[0]);
+    expect(screening.claim_tier).toBe('speculative_exploratory');
+    const compression = resolveHudReadout(
+      channels.find((c) => c.channel_id === 'enhancement.compression'),
+    );
+    expect(compression.claim_tier).toBe('empirical_lenr_correlation');
+    expect(BUBBLE_LATTICE_VIZ_CHANNELS['enhancement.phonon']).toBeTruthy();
   });
 });

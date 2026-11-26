@@ -6,7 +6,7 @@
  * electrodynamic ionic double-layer collapse onto lattice materials.
  */
 
-import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useCallback, useEffect, useRef, Suspense, lazy } from 'react';
 import {
   Box,
   Container,
@@ -86,6 +86,10 @@ import {
   UNIFIED_EXPORT_ENDPOINT,
   buildUnifiedExportPayload,
 } from '../utils/unifiedExportPayload';
+import {
+  probeApiHealthOk,
+  shouldPreferEngineBootstrap,
+} from '../utils/preferEngineBootstrap';
 
 const VisualizationPanel = lazy(() => import('../components/unified-theory/VisualizationPanel'));
 
@@ -695,8 +699,10 @@ function UnifiedTheoryPage() {
   }, []);
 
   // Run simulation via API
-  const runSimulation = useCallback(async () => {
+  const runSimulation = useCallback(async (opts = {}) => {
+    const isPreferEngineBootstrap = Boolean(opts.preferEngineBootstrap);
     if (maintenanceHideRun) {
+      if (isPreferEngineBootstrap) return;
       setAlertMessage('Runs are temporarily unavailable (maintenance). This is not a physics result.');
       setAlertSeverity('warning');
       setAlertOpen(true);
@@ -710,8 +716,10 @@ function UnifiedTheoryPage() {
       host_material: parameters.hostMaterial,
       reactant: parameters.reactant,
       rate_mode: rateMode,
+      prefer_engine_bootstrap: isPreferEngineBootstrap || undefined,
     });
-    
+
+    let boundEngineSamples = false;
     try {
       // Validate parameters before sending
       if (parameters.loadingRatio < 0 || parameters.loadingRatio > 1) {
@@ -747,16 +755,20 @@ function UnifiedTheoryPage() {
         const data = await response.json();
         setSimulationData(data);
         setSimulationResult(data);
+        boundEngineSamples = true;
         track.simulationCompleted({
           sim_type: 'bubble_lattice',
           success: true,
           route_mode: data.validation?.route_mode || 'api',
           duration_ms: Date.now() - simStartedAt,
+          prefer_engine_bootstrap: isPreferEngineBootstrap || undefined,
         });
         setAlertMessage(
-          'Simulation completed with backend physics calculations (model output, not a laboratory measurement).',
+          isPreferEngineBootstrap
+            ? 'Prefer-engine: HUD bound to engine samples (model output, not a laboratory measurement).'
+            : 'Simulation completed with backend physics calculations (model output, not a laboratory measurement).',
         );
-        setAlertSeverity('success');
+        setAlertSeverity(isPreferEngineBootstrap ? 'info' : 'success');
       } else {
         // Handle specific HTTP status codes with clear user messaging
         let errorMessage;
@@ -790,10 +802,16 @@ function UnifiedTheoryPage() {
         throw new Error(`[${errorType}] ${errorMessage}`);
       }
     } catch (error) {
+      // Prefer-engine bootstrap: stay on Local Calc RAF — do not invent schematic "success".
+      if (isPreferEngineBootstrap) {
+        console.warn('prefer-engine bootstrap skipped:', error.message || error);
+        return;
+      }
+
       // Handle network errors and API failures gracefully — never overclaim science.
       const errorMessage = error.message || 'Unknown error occurred';
       const transport = classifyTransportError(error);
-      
+
       // Log unexpected errors
       if (!errorMessage.includes('endpoint_not_found')) {
         console.warn('Simulation API issue:', errorMessage);
@@ -804,7 +822,7 @@ function UnifiedTheoryPage() {
         surface: 'unified_theory_run',
         route_mode: 'local_fallback',
       });
-      
+
       // Fallback to local mock calculations
       try {
         const mockData = generateLocalResults(parameters);
@@ -816,7 +834,7 @@ function UnifiedTheoryPage() {
           route_mode: 'local_fallback',
           duration_ms: Date.now() - simStartedAt,
         });
-        
+
         // Provide specific user-friendly messages based on error type
         if (transport.isTransport) {
           setAlertMessage(schematicFallbackMessage(error));
@@ -862,9 +880,36 @@ function UnifiedTheoryPage() {
       }
     } finally {
       setIsLoading(false);
-      setAlertOpen(true);
+      if (!isPreferEngineBootstrap || boundEngineSamples) {
+        setAlertOpen(true);
+      }
     }
   }, [parameters, setSimulationResult, rateMode, includeUncertainty, uncertaintySamples, randomSeed, theoryResult, maintenanceHideRun]);
+
+  // Quiet prefer-engine: if /api/health OK, one auto Run so HUD defaults to Engine samples.
+  const preferEngineBootstrappedRef = useRef(false);
+  const simulationDataRef = useRef(simulationData);
+  simulationDataRef.current = simulationData;
+  useEffect(() => {
+    if (preferEngineBootstrappedRef.current) return undefined;
+    preferEngineBootstrappedRef.current = true;
+    let cancelled = false;
+    (async () => {
+      const healthOk = await probeApiHealthOk(resolveApiUrl);
+      if (cancelled) return;
+      if (!shouldPreferEngineBootstrap({
+        healthOk,
+        hasSimulationData: Boolean(simulationDataRef.current),
+        maintenanceHideRun,
+      })) {
+        return;
+      }
+      await runSimulation({ preferEngineBootstrap: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [maintenanceHideRun, runSimulation]);
 
   // Generate local fallback results
   const generateLocalResults = (params) => {

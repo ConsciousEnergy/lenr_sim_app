@@ -594,7 +594,8 @@ export function getRecommendedQualitySettings() {
     maxFPS: isMobile ? 30 : 60,
     useSimplifiedShaders: isMobile,
     vortexVisualizationEnabled: !isMobile,
-    vortexParticleCount: isMobile ? 36 : 200,
+    // Soft translucent plasma — enough density for streamer read without opaque lattice cover.
+    vortexParticleCount: isMobile ? 36 : 180,
     skipOptionalQuantumLayers: isMobile,
     simplifiedFieldLines: isMobile,
   };
