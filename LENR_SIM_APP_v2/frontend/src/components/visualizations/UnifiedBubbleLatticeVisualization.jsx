@@ -91,6 +91,11 @@ import {
   resolveOccupancyGlowPlan,
 } from '../../utils/occupancyGlow';
 import {
+  SCHEMATIC_SHELL_LABEL,
+  resolveSchematicShellSpec,
+  schematicShellSiteOpacity,
+} from '../../utils/schematicShells';
+import {
   ProtonWaveCompanion,
   enhancementGlowFactor,
   createSoftDiscTexture,
@@ -510,6 +515,9 @@ const UnifiedBubbleLatticeVisualization = ({
   const [occupancyGlowMeta, setOccupancyGlowMeta] = useState(null);
   const [collapseRibbonMeta, setCollapseRibbonMeta] = useState(null);
   const collapseRibbonMetaRef = useRef(null);
+  /** Tier-2 soft additive shells — OFF by default; schematic · not QM orbitals. */
+  const [showSchematicShells, setShowSchematicShells] = useState(false);
+  const [schematicShellMeta, setSchematicShellMeta] = useState(null);
   // First-visit defaults: legend / layers / Local Calc / Enhancement all minimized.
   const [legendCollapsed, setLegendCollapsed] = useState(
     UBLV_OVERLAY_CHROME_DEFAULTS.legendCollapsed
@@ -2432,6 +2440,131 @@ const UnifiedBubbleLatticeVisualization = ({
     hostAtomRadiusVisUnits,
   ]);
 
+  // Tier-2 schematic electron-density shells (soft additive) + mild bond lift.
+  // Layers OFF by default — paper-safe overlay only; never QM/DFT orbitals.
+  useEffect(() => {
+    const lattice = latticeGroupRef.current;
+    if (!lattice) return undefined;
+
+    const disposeShells = () => {
+      const prev = lattice.getObjectByName('SchematicShellHosts');
+      if (prev) {
+        lattice.remove(prev);
+        prev.geometry?.dispose?.();
+        prev.material?.dispose?.();
+      }
+    };
+
+    const bonds = lattice.getObjectByName('LatticeBonds');
+    const restoreBonds = () => {
+      if (!bonds?.material) return;
+      const base = bonds.userData?.schematicBondBase;
+      if (!base) return;
+      bonds.material.opacity = base.opacity;
+      bonds.material.color?.setHex?.(base.colorHex);
+    };
+
+    disposeShells();
+
+    if (!showLattice || !showSchematicShells) {
+      restoreBonds();
+      setSchematicShellMeta(null);
+      if (canvasRef.current?.dataset) {
+        delete canvasRef.current.dataset.schematicShells;
+      }
+      return disposeShells;
+    }
+
+    const hostAtoms = lattice.getObjectByName('LatticeHostAtoms');
+    const restSites = hostAtoms?.userData?.restSites;
+    if (!restSites?.length) {
+      setSchematicShellMeta(null);
+      return disposeShells;
+    }
+
+    const spec = resolveSchematicShellSpec({
+      loadingRatio,
+      hostMaterial,
+    });
+    setSchematicShellMeta(spec);
+
+    const shellRadius = Math.max(
+      0.14,
+      hostAtomRadiusVisUnits * spec.radiusScale,
+    );
+    const geom = new THREE.SphereGeometry(shellRadius, 16, 16);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: spec.opacity,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const mesh = new THREE.InstancedMesh(geom, mat, restSites.length);
+    mesh.name = 'SchematicShellHosts';
+    mesh.frustumCulled = false;
+    const scratch = new THREE.Object3D();
+    const scratchColor = new THREE.Color();
+    if (!mesh.instanceColor) {
+      mesh.instanceColor = new THREE.InstancedBufferAttribute(
+        new Float32Array(restSites.length * 3),
+        3,
+      );
+    }
+    // Per-site brightness via instanceColor (MeshBasic + Additive; shared mat.opacity).
+    const base = new THREE.Color(spec.colorHex);
+    restSites.forEach((site, index) => {
+      scratch.position.set(site.x, site.y, site.z);
+      const lift = schematicShellSiteOpacity(1, Boolean(site.occupied));
+      scratch.scale.setScalar(0.85 + lift * 0.35);
+      scratch.updateMatrix();
+      mesh.setMatrixAt(index, scratch.matrix);
+      scratchColor.copy(base).multiplyScalar(0.45 + lift * 0.7);
+      mesh.setColorAt(index, scratchColor);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    mesh.userData = {
+      fidelity: spec.fidelity,
+      claimTier: spec.claimTier,
+      label: spec.label,
+      loadingRatio,
+    };
+    lattice.add(mesh);
+
+    // Option C light: thicken bond readability while shells are visible.
+    if (bonds?.material) {
+      if (!bonds.userData.schematicBondBase) {
+        bonds.userData.schematicBondBase = {
+          opacity: bonds.material.opacity,
+          colorHex: bonds.material.color?.getHex?.() ?? 0x667788,
+        };
+      }
+      bonds.material.opacity = Math.min(
+        0.75,
+        (bonds.userData.schematicBondBase.opacity || 0.35) + 0.22,
+      );
+      bonds.material.color?.setHex?.(0x88aacc);
+    }
+
+    if (canvasRef.current?.dataset) {
+      canvasRef.current.dataset.schematicShells = spec.fidelity;
+    }
+
+    return () => {
+      disposeShells();
+      restoreBonds();
+    };
+  }, [
+    showLattice,
+    showSchematicShells,
+    loadingRatio,
+    hostMaterial,
+    hostAtomRadiusVisUnits,
+    latticeSize,
+    latticeSpacingVisUnits,
+  ]);
+
   // Animation update function
   const updateAnimation = useCallback((deltaTime) => {
       try {
@@ -4176,6 +4309,24 @@ const UnifiedBubbleLatticeVisualization = ({
                     label={<Typography variant="caption" color="white">Halo Electrons</Typography>}
                   />
                   <FormControlLabel
+                    control={(
+                      <Switch
+                        checked={showSchematicShells}
+                        onChange={(e) => setShowSchematicShells(e.target.checked)}
+                        size="small"
+                        sx={{ color: '#5ee0ff' }}
+                        inputProps={{ 'data-testid': 'ublv-schematic-shells-switch' }}
+                      />
+                    )}
+                    label={(
+                      <Tooltip title="Soft additive electron-density shells — schematic presentation only. Not QM orbitals / DFT / ab initio Ψ². Opacity tracks loading_ratio; Layers OFF by default.">
+                        <Typography variant="caption" color="white">
+                          Schematic shells
+                        </Typography>
+                      </Tooltip>
+                    )}
+                  />
+                  <FormControlLabel
                     control={<Switch checked={showLegend} onChange={(e) => setShowLegend(e.target.checked)} size="small" sx={{ color: '#88ff88' }} />}
                     label={<Typography variant="caption" color="white">Legend</Typography>}
                   />
@@ -4585,6 +4736,21 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
+              {schematicShellMeta && showSchematicShells && (
+                <Tooltip title={SCHEMATIC_SHELL_LABEL}>
+                  <Chip
+                    label="Schematic · not QM orbitals"
+                    size="small"
+                    data-testid="ublv-schematic-shells-chip"
+                    data-fidelity={schematicShellMeta.fidelity}
+                    sx={{
+                      bgcolor: 'rgba(40, 120, 150, 0.9)',
+                      color: 'white',
+                      fontSize: '0.6rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
               {pickedLatticeSite && (
                 <Tooltip title="VIZ-06 schematic pick — lattice index only; not nuclear proof">
                   <Chip
