@@ -88,6 +88,7 @@ import {
 } from '../../utils/collapseTrajectoryRibbon';
 import {
   occupancyGlowRgb,
+  occupancyGlowSiteStrength,
   resolveOccupancyGlowPlan,
 } from '../../utils/occupancyGlow';
 import {
@@ -509,10 +510,12 @@ const UnifiedBubbleLatticeVisualization = ({
   useEffect(() => {
     latticeColorModeRef.current = normalizeLatticeColorMode(latticeColorMode);
   }, [latticeColorMode]);
-  /** Collapse ODE ribbon + VIZ-08 occupancy glow (engine when exported). */
-  const [showCollapseRibbon, setShowCollapseRibbon] = useState(true);
+  /** Collapse R(t) ribbon — OFF by default (Diadon: ribbon work not needed). */
+  const [showCollapseRibbon, setShowCollapseRibbon] = useState(false);
   const [showOccupancyGlow, setShowOccupancyGlow] = useState(true);
   const [occupancyGlowMeta, setOccupancyGlowMeta] = useState(null);
+  /** Bumps when scene/lattice is (re)created so overlay effects rebuild. */
+  const [latticeSceneEpoch, setLatticeSceneEpoch] = useState(0);
   const [collapseRibbonMeta, setCollapseRibbonMeta] = useState(null);
   const collapseRibbonMetaRef = useRef(null);
   /** Tier-2 soft additive shells — OFF by default; schematic · not QM orbitals. */
@@ -2369,6 +2372,7 @@ const UnifiedBubbleLatticeVisualization = ({
   ]);
 
   // VIZ-08 occupancy glow — engine site loading when exported; else schematic + chip.
+  // Soft glow on ALL hosts; occupancy modulates intensity (no "dead" empty sites).
   useEffect(() => {
     const lattice = latticeGroupRef.current;
     if (!lattice) return;
@@ -2395,8 +2399,6 @@ const UnifiedBubbleLatticeVisualization = ({
       simulationData,
     });
     setOccupancyGlowMeta(plan);
-    const occupiedSites = restSites.filter((_, i) => plan.occupied[i]);
-    if (!occupiedSites.length) return;
     const glow = occupancyGlowRgb(plan.engineBound);
     const geom = new THREE.SphereGeometry(
       Math.max(0.12, hostAtomRadiusVisUnits * 1.55),
@@ -2404,28 +2406,42 @@ const UnifiedBubbleLatticeVisualization = ({
       14,
     );
     const mat = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(glow.r, glow.g, glow.b),
+      color: 0xffffff,
       transparent: true,
-      opacity: 0.38 + glow.intensity * 0.35,
+      // Diadon: more transparent — soft halo, not a bright wash.
+      opacity: 0.035 + glow.intensity * 0.07,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
-    const mesh = new THREE.InstancedMesh(geom, mat, occupiedSites.length);
+    const mesh = new THREE.InstancedMesh(geom, mat, restSites.length);
     mesh.name = 'OccupancyGlowHosts';
     mesh.frustumCulled = false;
     const scratch = new THREE.Object3D();
-    occupiedSites.forEach((site, index) => {
+    const scratchColor = new THREE.Color();
+    const base = new THREE.Color(glow.r, glow.g, glow.b);
+    if (!mesh.instanceColor) {
+      mesh.instanceColor = new THREE.InstancedBufferAttribute(
+        new Float32Array(restSites.length * 3),
+        3,
+      );
+    }
+    restSites.forEach((site, index) => {
+      const strength = occupancyGlowSiteStrength(Boolean(plan.occupied[index]));
       scratch.position.set(site.x, site.y, site.z);
-      scratch.scale.setScalar(1.15);
+      scratch.scale.setScalar(0.82 + strength * 0.38);
       scratch.updateMatrix();
       mesh.setMatrixAt(index, scratch.matrix);
+      scratchColor.copy(base).multiplyScalar(0.35 + strength * 0.65);
+      mesh.setColorAt(index, scratchColor);
     });
     mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.userData = {
       fidelity: plan.fidelity,
       engineBound: plan.engineBound,
       occupiedCount: plan.occupiedCount,
       label: plan.label,
+      allHostsGlow: true,
     };
     lattice.add(mesh);
     if (canvasRef.current?.dataset) {
@@ -2438,6 +2454,7 @@ const UnifiedBubbleLatticeVisualization = ({
     loadingRatio,
     latticeSize,
     hostAtomRadiusVisUnits,
+    latticeSceneEpoch,
   ]);
 
   // Tier-2 schematic electron-density shells (soft additive) + mild bond lift.
@@ -3772,6 +3789,7 @@ const UnifiedBubbleLatticeVisualization = ({
     
     // Create scene elements
     createLattice(scene);
+    setLatticeSceneEpoch((n) => n + 1);
     createLiquidPhaseOverlay(scene);
     createBubble(scene);
     createProtons(scene);
