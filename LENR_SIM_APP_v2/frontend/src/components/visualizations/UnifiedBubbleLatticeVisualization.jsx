@@ -122,12 +122,13 @@ import {
 } from '../../utils/bubbleSheathSurfaceFlow';
 import {
   ElectronMigrationCloud,
+  PHONON_MELT_CHIP,
+  PHONON_STANDING_CHIP,
+  PHONON_WAVEGUIDE_CHIP,
   buildPhononStandingWaveDisplacements,
   createPhononWaveguideRibbon,
-  meltProximityNorm,
-  phononJitterAmplitude,
   phononModeMix,
-  waveguideEnvelopeNorm,
+  resolvePhononStandingWaveParams,
 } from '../../utils/phononElectronViz';
 import {
   fieldLineOpacityFromE,
@@ -501,6 +502,13 @@ const UnifiedBubbleLatticeVisualization = ({
   // Schematic phonon jitter + e⁻ soft-flow — dedicated layer toggles
   const [showPhonon, setShowPhonon] = useState(true);
   const [showElectronMig, setShowElectronMig] = useState(true);
+  /** Live acoustic/optical mix from engine-bound resolver (HUD readout only). */
+  const [phononMixReadout, setPhononMixReadout] = useState({
+    acousticPct: 72,
+    opticalPct: 28,
+    amp: 0.14,
+  });
+  const phononMixReadoutRef = useRef(phononMixReadout);
   // Mobile optimization state (v0.2.2-beta / #409 M2–M3)
   const [isMobile] = useState(() => isMobileDevice());
   const [qualitySettings] = useState(() => getRecommendedQualitySettings());
@@ -2128,6 +2136,8 @@ const UnifiedBubbleLatticeVisualization = ({
   /**
    * Phonon standing waves keep ticking even while the bubble clock is paused,
    * so material-size acoustic/optical modes stay unmistakable on the HSE canvas.
+   * Params resolve from enhancement_breakdown.phonon / T / compression / loading —
+   * schematic modes only (not MD eigenvectors); never invents f_L.
    */
   const tickPhononStandingWaves = useCallback((deltaTime, {
     temperatureK = 300,
@@ -2145,32 +2155,34 @@ const UnifiedBubbleLatticeVisualization = ({
 
     phononTimeRef.current += Math.max(deltaTime, 1 / 60);
     const forces = cavitationForcesRef.current;
-    const mix = phononModeMix({ phononFactor });
-    const meltSoft = meltProximityNorm({
+    const params = resolvePhononStandingWaveParams({
+      phononFactor,
       temperatureK,
+      compressionRatio,
+      loadingRatio,
       meltingPointK: hostMeltMeta?.meltingPointK,
+      phononScale: forces?.phononScale ?? 1,
     });
-    const wgNorm = waveguideEnvelopeNorm({ loadingRatio, phononFactor });
-    // Floor so material-size standing waves stay unmistakable even at low
-    // phonon-factor samples (presentation floor — still schematic / contested).
-    const amp = Math.max(
-      0.14,
-      phononJitterAmplitude({
-        phononFactor,
-        temperatureK,
-        compressionRatio,
-      }) * (forces?.phononScale ?? 1),
-    );
-    const { displacements, modeEnergy } = buildPhononStandingWaveDisplacements(restSites, {
-      time: phononTimeRef.current,
+    const {
       amplitude: amp,
-      acousticWeight: mix.acousticWeight,
-      opticalWeight: mix.opticalWeight,
-      acousticFreq: 2.4 + Math.min(1.2, Math.log10(Math.max(phononFactor, 1)) * 0.35),
-      opticalFreq: 6.5 + Math.min(2.5, Math.log10(Math.max(phononFactor, 1)) * 0.55),
+      acousticWeight,
+      opticalWeight,
+      acousticFreq,
+      opticalFreq,
       waveguideNorm: wgNorm,
       meltSoftening: meltSoft,
-    });
+    } = params;
+    const { displacements, modeEnergy, acousticEnergy, opticalEnergy } =
+      buildPhononStandingWaveDisplacements(restSites, {
+        time: phononTimeRef.current,
+        amplitude: amp,
+        acousticWeight,
+        opticalWeight,
+        acousticFreq,
+        opticalFreq,
+        waveguideNorm: wgNorm,
+        meltSoftening: meltSoft,
+      });
     const hostHex = hostAtoms.userData?.hostHex ?? 0x8b8b8b;
     const scratchColor = new THREE.Color();
     applyDynamicLatticeInstances({
@@ -2180,7 +2192,7 @@ const UnifiedBubbleLatticeVisualization = ({
       colorMode: latticeColorModeRef.current,
       temperatureK,
       modeEnergies: modeEnergy,
-      opticalWeight: mix.opticalWeight,
+      opticalWeight,
       setMatrixAt: (index, elements) => {
         const m = new THREE.Matrix4();
         m.fromArray(elements);
@@ -2225,10 +2237,32 @@ const UnifiedBubbleLatticeVisualization = ({
       waveguideRibbon.material.opacity = 0.35 + wgNorm * 0.55 * pulse + meltSoft * 0.2;
     }
 
+    const acousticPct = Math.round(acousticWeight * 100);
+    const opticalPct = Math.round(opticalWeight * 100);
+    const ampRounded = Math.round(amp * 1000) / 1000;
+    const prevMix = phononMixReadoutRef.current;
+    if (
+      prevMix.acousticPct !== acousticPct
+      || prevMix.opticalPct !== opticalPct
+      || prevMix.amp !== ampRounded
+    ) {
+      const next = { acousticPct, opticalPct, amp: ampRounded };
+      phononMixReadoutRef.current = next;
+      setPhononMixReadout(next);
+    }
+
     if (canvasRef.current?.dataset) {
       canvasRef.current.dataset.phononAmp = amp.toFixed(3);
       const meanE = modeEnergy.reduce((s, e) => s + e, 0) / Math.max(modeEnergy.length, 1);
+      const meanA = acousticEnergy.reduce((s, e) => s + e, 0) / Math.max(acousticEnergy.length, 1);
+      const meanO = opticalEnergy.reduce((s, e) => s + e, 0) / Math.max(opticalEnergy.length, 1);
       canvasRef.current.dataset.phononEnergy = meanE.toFixed(3);
+      canvasRef.current.dataset.phononAcoustic = meanA.toFixed(3);
+      canvasRef.current.dataset.phononOptical = meanO.toFixed(3);
+      canvasRef.current.dataset.phononAcousticPct = String(acousticPct);
+      canvasRef.current.dataset.phononOpticalPct = String(opticalPct);
+      canvasRef.current.dataset.phononMeltSoft = meltSoft.toFixed(3);
+      canvasRef.current.dataset.phononWaveguide = wgNorm.toFixed(3);
       canvasRef.current.dataset.latticeColorMode = latticeColorModeRef.current;
     }
   }, [showLattice, showPhonon, hostMeltMeta, loadingRatio]);
@@ -4686,9 +4720,9 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
-              <Tooltip title="Acoustic + optical standing waves across material-size lattice from enhancement_breakdown.phonon / T / compression. Schematic modes — not MD eigenvectors. Dual-laser phonon→heat stays contested; never 'highly reproducible'.">
+              <Tooltip title="Acoustic (long-λ in-phase) + optical (short-λ antiphase) standing waves across material-size lattice from enhancement_breakdown.phonon / temperature_k / compression / loading_ratio. Schematic modes — not MD eigenvectors. Dual-laser phonon→heat stays contested; never 'highly reproducible'.">
                 <Chip
-                  label="Phonon · acoustic+optical standing (contested)"
+                  label={PHONON_STANDING_CHIP}
                   size="small"
                   data-testid="ublv-phonon-viz-chip"
                   sx={{
@@ -4698,9 +4732,24 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
+              {showPhonon && showLattice && (
+                <Tooltip title="Presentation mix from resolvePhononStandingWaveParams — acousticWeight / opticalWeight driven by enhancement_breakdown.phonon. Not MD mode occupancy; contested schematic only.">
+                  <Chip
+                    label={`A ${phononMixReadout.acousticPct}% · O ${phononMixReadout.opticalPct}%`}
+                    size="small"
+                    data-testid="ublv-phonon-mix-chip"
+                    data-phonon-amp={phononMixReadout.amp}
+                    sx={{
+                      bgcolor: 'rgba(100, 90, 50, 0.9)',
+                      color: 'white',
+                      fontSize: '0.6rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
               <Tooltip title="Catalyst-as-waveguide ribbon along host axis — schematic from loading_ratio × phonon samples. Not a verified LENR waveguide; ionized chem env remains electrolyte-label honest.">
                 <Chip
-                  label="Waveguide · catalyst schematic"
+                  label={PHONON_WAVEGUIDE_CHIP}
                   size="small"
                   data-testid="ublv-waveguide-chip"
                   sx={{
@@ -4712,7 +4761,7 @@ const UnifiedBubbleLatticeVisualization = ({
               </Tooltip>
               <Tooltip title="Near literature T_m softening cue only (cite-backed Pd/Ni). Does NOT invent f_L or melt morph; contribute-vs-diffuse reaction framing stays exploratory until TheoryModules export liquid fraction. EQ-OPEN / lenr_proved untouched.">
                 <Chip
-                  label="Near T_m · schematic (not f_L)"
+                  label={PHONON_MELT_CHIP}
                   size="small"
                   data-testid="ublv-melt-proximity-chip"
                   sx={{
