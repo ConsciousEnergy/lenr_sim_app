@@ -14,6 +14,24 @@ import {
   applyPlasmaFluidLook,
   disposePlasmaFluidLook,
 } from './plasmaFluidLook';
+import {
+  applyShedTorusTwistFold,
+  computeShedCascadeStage,
+  createShedEddyCloud,
+  ensureTorusRestPositions,
+  SHED_CASCADE_CHIP,
+  SHED_CASCADE_CHIP_TOOLTIP,
+  SHED_CASCADE_FIDELITY,
+  SHED_EDDY_CHIP,
+  SHED_EDDY_CHIP_TOOLTIP,
+} from './shedTorusCascadeViz';
+
+export {
+  SHED_CASCADE_CHIP,
+  SHED_CASCADE_CHIP_TOOLTIP,
+  SHED_EDDY_CHIP,
+  SHED_EDDY_CHIP_TOOLTIP,
+};
 
 export const BUBBLE_TORUS_FIDELITY = 'schematic';
 export const BUBBLE_TORUS_SOURCE = 'schematic_visualization';
@@ -111,7 +129,7 @@ export function createBubbleGasMaterial({
     emissive: new THREE.Color(0x3388aa),
     emissiveIntensity: 0.28,
   });
-  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'bubble', mode: 'turbulent' });
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'bubble', phase: 'liquid' });
   return mat;
 }
 
@@ -182,7 +200,7 @@ export function createTorusPlasmaMaterial({
     emissiveIntensity: 0.95,
     blending: THREE.AdditiveBlending,
   });
-  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'torus', mode: 'turbulent' });
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'torus', phase: 'plasma', mode: 'turbulent' });
   return mat;
 }
 
@@ -204,7 +222,7 @@ export function createTorusFilamentMaterial({
     emissiveIntensity: 1.1,
     blending: THREE.AdditiveBlending,
   });
-  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'torus', mode: 'turbulent' });
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'torus', phase: 'plasma', mode: 'turbulent' });
   return mat;
 }
 
@@ -229,8 +247,8 @@ export function createJetMaterial({
     emissiveIntensity: 1.45,
     blending: THREE.AdditiveBlending,
   });
-  // Jet uses laminar streak advection (contrast vs turbulent torus)
-  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'jet', mode: 'laminar' });
+  // Jet: plasma-phase streak advection (contrast vs liquid bubble / gas shed)
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'jet', phase: 'plasma', mode: 'laminar' });
   return mat;
 }
 
@@ -843,7 +861,8 @@ export function shedTorusRestRotation(azimuth = 0) {
  * Secondary turbulent tori + micro-bubbles that shed after the maser-like jet.
  * Rising cohort: world +Y away from lattice (latched; never reverse).
  * Lattice cohort: more bubbles/tori travel radially along the lattice plane.
- * Ejected tori sit ~90° to the large (XZ) torus; main spins inward.
+ * Ejected tori: twist/fold (not rigid flippers) + daughter/tertiary cascade
+ * with eddy / stretch-tensor cues (schematic vortex-ring cascade peer).
  *
  * Honesty: schematic hydro / optical morphology — not CFD, not fusion.
  *
@@ -854,6 +873,8 @@ export function createShedPlasmaDebrisGroup({
   bubbleCount = 8,
   latticeTorusCount = 4,
   latticeBubbleCount = 6,
+  daughterPerParent = 2,
+  tertiaryPerDaughter = 1,
   // Ignored for tint — shed stays neutral / uncolored (kept for API compat)
   primaryColor = SHED_NEUTRAL_COLOR,
   secondaryColor = SHED_NEUTRAL_COLOR,
@@ -865,38 +886,73 @@ export function createShedPlasmaDebrisGroup({
   group.userData = {
     fidelity: BUBBLE_TORUS_FIDELITY,
     source: BUBBLE_TORUS_SOURCE,
+    cascadeFidelity: SHED_CASCADE_FIDELITY,
     shedProgressMax: 0,
     uncolored: true,
+    cascade: true,
   };
 
-  const torusGeo = new THREE.TorusGeometry(0.42, 0.12, 12, 48);
-  const latticeTorusGeo = new THREE.TorusGeometry(0.32, 0.09, 10, 40);
   const bubbleGeo = new THREE.SphereGeometry(0.18, 16, 12);
   const smallBubbleGeo = new THREE.SphereGeometry(0.12, 12, 10);
-  const disposables = [torusGeo, latticeTorusGeo, bubbleGeo, smallBubbleGeo];
-  // Quiet unused-compat args (callers may still pass spectrum hexes)
+  const disposables = [bubbleGeo, smallBubbleGeo];
   void primaryColor;
   void secondaryColor;
 
-  const addRisingTorus = (i, nT) => {
+  const eddyCloud = createShedEddyCloud({ count: 140, color: SHED_NEUTRAL_COLOR });
+  group.add(eddyCloud.points);
+  disposables.push({ dispose: eddyCloud.dispose });
+
+  const makeTorusMat = (opacity, phase = 'gas') => {
     const mat = createTorusPlasmaMaterial({
       color: SHED_NEUTRAL_COLOR,
-      opacity: 0.38,
+      opacity,
       fluidLook: false,
     });
     if (mat.emissive) mat.emissive.setHex(SHED_NEUTRAL_EMISSIVE);
-    // Laminar look on shed rings — contrast vs turbulent main plasma
-    applyPlasmaFluidLook(mat, { kind: 'shed', mode: 'laminar' });
+    // Gas-phase laminar on shed — contrast vs turbulent plasma main
+    applyPlasmaFluidLook(mat, { kind: 'shed', mode: 'laminar', phase });
     disposables.push(mat);
-    const mesh = new THREE.Mesh(torusGeo, mat);
-    mesh.name = `ShedTorus${i}`;
+    return mat;
+  };
+
+  const makeBubbleMat = (opacity) => {
+    const mat = createBubbleGasMaterial({
+      color: SHED_NEUTRAL_COLOR,
+      opacity,
+    });
+    mat.blending = THREE.AdditiveBlending;
+    mat.emissive = new THREE.Color(SHED_NEUTRAL_EMISSIVE);
+    mat.emissiveIntensity = 0.45;
+    applyPlasmaFluidLook(mat, { kind: 'shed', mode: 'laminar', phase: 'gas' });
+    disposables.push(mat);
+    return mat;
+  };
+
+  /**
+   * Per-mesh torus geometry so twist/fold does not share vertex buffers.
+   */
+  const makeTorusMesh = ({
+    name, major = 0.42, tube = 0.12, radial = 12, tubular = 48, opacity = 0.38,
+  }) => {
+    const geo = new THREE.TorusGeometry(major, tube, radial, tubular);
+    ensureTorusRestPositions(geo);
+    disposables.push(geo);
+    const mesh = new THREE.Mesh(geo, makeTorusMat(opacity, 'gas'));
+    mesh.name = name;
+    mesh.visible = false;
+    return mesh;
+  };
+
+  const addRisingTorus = (i, nT) => {
+    const mesh = makeTorusMesh({ name: `ShedTorus${i}`, opacity: 0.38 });
     const azimuth = (i / nT) * Math.PI * 2 + 0.4;
     const rest = shedTorusRestRotation(azimuth);
     mesh.rotation.set(rest.x, rest.y, rest.z);
-    mesh.visible = false;
     mesh.userData = {
       kind: 'torus',
       path: 'rise',
+      generation: 0,
+      parentIndex: i,
       spinSign: -1,
       spinRate: 2.2 + i * 0.45,
       azimuth,
@@ -909,27 +965,21 @@ export function createShedPlasmaDebrisGroup({
       peakOpacity: 0.38,
       worldYLatched: null,
       spawnWorldY: null,
+      cascadeTime: 0,
+      deformOwnGeo: true,
     };
     group.add(mesh);
   };
 
   const addRisingBubble = (i, nB) => {
-    const mat = createBubbleGasMaterial({
-      color: SHED_NEUTRAL_COLOR,
-      opacity: 0.32,
-    });
-    mat.blending = THREE.AdditiveBlending;
-    mat.emissive = new THREE.Color(SHED_NEUTRAL_EMISSIVE);
-    mat.emissiveIntensity = 0.45;
-    applyPlasmaFluidLook(mat, { kind: 'shed', mode: 'laminar' });
-    disposables.push(mat);
-    const mesh = new THREE.Mesh(bubbleGeo, mat);
+    const mesh = new THREE.Mesh(bubbleGeo, makeBubbleMat(0.32));
     mesh.name = `ShedBubble${i}`;
     mesh.visible = false;
     const azimuth = (i / nB) * Math.PI * 2 + 1.1;
     mesh.userData = {
       kind: 'bubble',
       path: 'rise',
+      generation: 0,
       spinSign: -1,
       spinRate: 1.4 + i * 0.28,
       azimuth,
@@ -947,28 +997,24 @@ export function createShedPlasmaDebrisGroup({
   };
 
   const addLatticeTraveler = ({
-    i, n, kind, geo, namePrefix, delayBase, scale0,
+    i, n, kind, namePrefix, delayBase, scale0,
   }) => {
     const isTorus = kind === 'latticeTorus';
-    let mat;
+    let mesh;
     if (isTorus) {
-      mat = createTorusPlasmaMaterial({
-        color: SHED_NEUTRAL_COLOR,
+      mesh = makeTorusMesh({
+        name: `${namePrefix}${i}`,
+        major: 0.32,
+        tube: 0.09,
+        radial: 10,
+        tubular: 40,
         opacity: 0.34,
-        fluidLook: false,
       });
-      if (mat.emissive) mat.emissive.setHex(SHED_NEUTRAL_EMISSIVE);
     } else {
-      mat = createBubbleGasMaterial({ color: SHED_NEUTRAL_COLOR, opacity: 0.3 });
-      mat.blending = THREE.AdditiveBlending;
-      mat.emissive = new THREE.Color(SHED_NEUTRAL_EMISSIVE);
-      mat.emissiveIntensity = 0.4;
+      mesh = new THREE.Mesh(smallBubbleGeo, makeBubbleMat(0.3));
+      mesh.name = `${namePrefix}${i}`;
+      mesh.visible = false;
     }
-    applyPlasmaFluidLook(mat, { kind: 'shed', mode: 'laminar' });
-    disposables.push(mat);
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.name = `${namePrefix}${i}`;
-    mesh.visible = false;
     const azimuth = (i / Math.max(1, n)) * Math.PI * 2 + (isTorus ? 0.2 : 0.9);
     if (isTorus) {
       const rest = shedTorusRestRotation(azimuth);
@@ -977,19 +1023,67 @@ export function createShedPlasmaDebrisGroup({
     mesh.userData = {
       kind,
       path: 'lattice',
+      generation: 0,
       spinSign: -1,
       spinRate: (isTorus ? 1.8 : 1.1) + i * 0.22,
       azimuth,
-      // Travel along lattice plane (XZ); local Y stays near nest underside
       radialStart: 0.55 + (i % 3) * 0.12,
       radialEnd: 1.55 + (i % 4) * 0.35,
-      spawnLocalY: -0.15 + (i % 3) * 0.04, // near lattice plane under nest
-      riseDistance: 0.08 + (i % 3) * 0.04, // tiny float only — planar travel
+      spawnLocalY: -0.15 + (i % 3) * 0.04,
+      riseDistance: 0.08 + (i % 3) * 0.04,
       delay: delayBase + i * 0.05,
       scale0,
       peakOpacity: isTorus ? 0.38 : 0.34,
       worldYLatched: null,
       spawnWorldY: null,
+      cascadeTime: 0,
+      deformOwnGeo: isTorus,
+    };
+    group.add(mesh);
+  };
+
+  /** Daughter / tertiary cascade rings (spawned from parent rise). */
+  const addCascadeChild = ({
+    parentIndex, slot, generation, delayBias,
+  }) => {
+    const shrink = generation === 1 ? 0.62 : 0.42;
+    const mesh = makeTorusMesh({
+      name: generation === 1
+        ? `ShedDaughter${parentIndex}_${slot}`
+        : `ShedTertiary${parentIndex}_${slot}`,
+      major: 0.42 * shrink,
+      tube: 0.12 * shrink,
+      radial: 10,
+      tubular: 36,
+      opacity: generation === 1 ? 0.32 : 0.26,
+    });
+    const parentAz = (parentIndex / Math.max(1, torusCount)) * Math.PI * 2 + 0.4;
+    const azOff = (slot - 0.5) * 0.55 + (generation === 2 ? 0.35 : 0);
+    const azimuth = parentAz + azOff;
+    const rest = shedTorusRestRotation(azimuth);
+    mesh.rotation.set(rest.x, rest.y, rest.z);
+    mesh.userData = {
+      kind: generation === 1 ? 'daughterTorus' : 'tertiaryTorus',
+      path: 'rise',
+      generation,
+      parentIndex,
+      spinSign: slot % 2 === 0 ? -1 : 1,
+      spinRate: 2.8 + slot * 0.5 + generation * 0.4,
+      azimuth,
+      radialStart: 0.55 + slot * 0.12 + generation * 0.08,
+      radialEnd: 1.35 + slot * 0.22 + generation * 0.15,
+      spawnLocalY: 0.85 + slot * 0.08 + generation * 0.12,
+      riseDistance: 1.45 + slot * 0.2,
+      delay: delayBias,
+      scale0: (generation === 1 ? 0.38 : 0.26) + slot * 0.04,
+      peakOpacity: generation === 1 ? 0.32 : 0.26,
+      worldYLatched: null,
+      spawnWorldY: null,
+      cascadeTime: 0,
+      deformOwnGeo: true,
+      // Gate: become active only after parent cascade stage opens
+      cascadeGate: generation === 1 ? 'daughterGate' : 'tertiaryGate',
+      gateParentIndex: parentIndex,
     };
     group.add(mesh);
   };
@@ -1001,17 +1095,41 @@ export function createShedPlasmaDebrisGroup({
   const nLT = Math.max(0, latticeTorusCount | 0);
   for (let i = 0; i < nLT; i += 1) {
     addLatticeTraveler({
-      i, n: nLT, kind: 'latticeTorus', geo: latticeTorusGeo,
+      i, n: nLT, kind: 'latticeTorus',
       namePrefix: 'LatticeShedTorus', delayBase: 0.02, scale0: 0.4 + (i % 3) * 0.08,
     });
   }
   const nLB = Math.max(0, latticeBubbleCount | 0);
   for (let i = 0; i < nLB; i += 1) {
     addLatticeTraveler({
-      i, n: nLB, kind: 'latticeBubble', geo: smallBubbleGeo,
+      i, n: nLB, kind: 'latticeBubble',
       namePrefix: 'LatticeShedBubble', delayBase: 0.03, scale0: 0.28 + (i % 3) * 0.07,
     });
   }
+
+  const nD = Math.max(0, daughterPerParent | 0);
+  const nTer = Math.max(0, tertiaryPerDaughter | 0);
+  for (let p = 0; p < nT; p += 1) {
+    for (let d = 0; d < nD; d += 1) {
+      addCascadeChild({
+        parentIndex: p,
+        slot: d,
+        generation: 1,
+        delayBias: 0.12 + p * 0.05 + d * 0.04,
+      });
+      for (let t = 0; t < nTer; t += 1) {
+        addCascadeChild({
+          parentIndex: p,
+          slot: d * nTer + t,
+          generation: 2,
+          delayBias: 0.28 + p * 0.05 + d * 0.04 + t * 0.03,
+        });
+      }
+    }
+  }
+
+  // Parent riseT cache for cascade gate
+  const parentRiseByIndex = new Map();
 
   /**
    * @param {number} deltaTime
@@ -1023,12 +1141,15 @@ export function createShedPlasmaDebrisGroup({
     const parentWorldY = Number.isFinite(opts.parentWorldY) ? opts.parentWorldY : 0;
     if (raw < 0.02) {
       group.userData.shedProgressMax = 0;
+      parentRiseByIndex.clear();
       group.children.forEach((child) => {
-        if (!child.userData) return;
+        if (!child.userData || child === eddyCloud.points) return;
         child.userData.worldYLatched = null;
         child.userData.spawnWorldY = null;
+        child.userData.cascadeTime = 0;
         child.visible = false;
       });
+      eddyCloud.update([], 0, deltaTime);
       group.visible = false;
       return;
     }
@@ -1036,14 +1157,46 @@ export function createShedPlasmaDebrisGroup({
     const s = Math.max(prevMax, raw);
     group.userData.shedProgressMax = s;
     group.visible = true;
-    // Default inward main spin; shed counter-rotates via spinSign
     const primarySpin = Number.isFinite(opts.primarySpin)
       ? Math.sign(opts.primarySpin) || MAIN_TORUS_INWARD_SPIN
       : MAIN_TORUS_INWARD_SPIN;
     let anyVisible = false;
+    const eddyCenters = [];
+    let eddyStrength = 0;
+
+    // First pass: parents (generation 0 tori) to fill cascade gate map
     group.children.forEach((child) => {
       const d = child.userData;
-      if (!d) return;
+      if (!d || d.generation !== 0 || d.kind !== 'torus') return;
+      const sample = computeShedRiseSample({
+        shedProgress: s,
+        progressLatched: s,
+        delay: d.delay,
+        spawnLocalY: d.spawnLocalY,
+        riseDistance: d.riseDistance,
+        parentWorldY,
+        peakOpacity: d.peakOpacity,
+        worldYLatched: d.worldYLatched,
+        spawnWorldY: d.spawnWorldY,
+      });
+      parentRiseByIndex.set(d.parentIndex, sample.active ? sample.riseT : 0);
+    });
+
+    group.children.forEach((child) => {
+      const d = child.userData;
+      if (!d || child === eddyCloud.points) return;
+
+      // Cascade gate: daughters wait for parent tent→sheet stage
+      if (d.cascadeGate) {
+        const parentRise = parentRiseByIndex.get(d.gateParentIndex) || 0;
+        const parentStage = computeShedCascadeStage(parentRise, 0);
+        const gate = parentStage[d.cascadeGate] || 0;
+        if (gate < 0.15) {
+          child.visible = false;
+          return;
+        }
+      }
+
       const sample = computeShedRiseSample({
         shedProgress: s,
         progressLatched: s,
@@ -1065,32 +1218,68 @@ export function createShedPlasmaDebrisGroup({
       anyVisible = true;
       const r = d.radialStart + (d.radialEnd - d.radialStart) * sample.riseT;
       const az = d.azimuth + sample.riseT * 0.18 * d.spinSign;
-      // Lattice path: keep Y near lattice plane; rise path uses latched world +Y
       child.position.set(r * Math.cos(az), sample.localY, r * Math.sin(az));
-      child.userData.lastWorldY = sample.worldY;
-      child.userData.lastRiseT = sample.riseT;
-      child.userData.lastAzimuth = az;
+      d.lastWorldY = sample.worldY;
+      d.lastRiseT = sample.riseT;
+      d.lastAzimuth = az;
+      d.cascadeTime = (d.cascadeTime || 0) + deltaTime;
+
+      const isTorusKind = d.kind === 'torus' || d.kind === 'latticeTorus'
+        || d.kind === 'daughterTorus' || d.kind === 'tertiaryTorus';
+      const stage = isTorusKind
+        ? computeShedCascadeStage(sample.riseT, d.generation || 0)
+        : null;
+
       const sc = d.scale0;
-      if (d.kind === 'torus' || d.kind === 'latticeTorus') {
-        child.scale.set(sc, sc * 0.85, sc);
-        // Keep ~90° wheel facing travel azimuth as it slides
+      if (isTorusKind && stage) {
+        // Stretch-tensor cue (presentation) — NOT rigid flipper reset
+        const { sx, sy, sz } = stage.stretch;
+        child.scale.set(sc * sx, sc * sy * 0.9, sc * sz);
+        // Soft rest orientation with fold-induced tilt (no hard rotation.x/y reset)
         const rest = shedTorusRestRotation(az);
-        child.rotation.x = rest.x;
-        child.rotation.y = rest.y;
+        const foldTilt = stage.fold * 0.55 + stage.tent * 0.35;
+        child.rotation.x = rest.x + foldTilt * Math.sin(az * 2 + d.cascadeTime);
+        child.rotation.y = rest.y + stage.sheet * 0.25 * Math.cos(d.cascadeTime * 1.3)
+          + stage.twist * 0.2 * d.spinSign;
+        // Twist/fold vertex deform on own geometry
+        if (d.deformOwnGeo && child.geometry) {
+          applyShedTorusTwistFold(child.geometry, {
+            twist: stage.twist,
+            fold: stage.fold,
+            tent: stage.tent,
+            time: d.cascadeTime,
+          });
+        }
+        eddyStrength = Math.max(eddyStrength, stage.eddy);
+        eddyCenters.push({ x: child.position.x, y: child.position.y, z: child.position.z });
       } else {
         child.scale.setScalar(sc);
       }
+
+      let opacity = sample.opacity;
+      // Parent fades as daughters open (cascade handoff)
+      if (isTorusKind && stage && d.generation === 0 && stage.daughterGate > 0.4) {
+        opacity *= (1 - stage.daughterGate * 0.55);
+      }
+
       const spinDir = -primarySpin * (d.spinSign || -1);
-      child.rotation.z += deltaTime * d.spinRate * spinDir * (0.7 + s);
+      const twistBoost = stage ? (1 + stage.twist * 0.8) : 1;
+      child.rotation.z += deltaTime * d.spinRate * spinDir * (0.7 + s) * twistBoost;
+      // Mild tumbling from fold (not a locked wheel)
+      if (stage) {
+        child.rotation.x += deltaTime * stage.fold * 0.35 * d.spinSign;
+      }
+
       if (child.material) {
-        child.material.opacity = sample.opacity;
+        child.material.opacity = opacity;
         if (child.material.emissiveIntensity !== undefined) {
-          const isT = d.kind === 'torus' || d.kind === 'latticeTorus';
-          child.material.emissiveIntensity = (isT ? 1.0 : 0.7)
-            * (sample.opacity / Math.max(1e-6, d.peakOpacity));
+          child.material.emissiveIntensity = (isTorusKind ? 1.0 : 0.7)
+            * (opacity / Math.max(1e-6, d.peakOpacity));
         }
       }
     });
+
+    eddyCloud.update(eddyCenters, eddyStrength * Math.min(1, s * 1.4), deltaTime);
     group.visible = anyVisible || s > 0.02;
   };
 

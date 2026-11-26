@@ -218,12 +218,15 @@ describe('bubbleTorusViz (presentation materials)', () => {
     });
     expect(debris.group.name).toBe('ShedPlasmaDebris');
     expect(debris.group.userData.uncolored).toBe(true);
+    expect(debris.group.userData.cascade).toBe(true);
     const risingTori = debris.group.children.filter((c) => c.userData?.kind === 'torus');
     expect(risingTori.length).toBe(2);
     risingTori.forEach((t) => {
       expect(Math.abs(t.rotation.x)).toBeLessThan(0.05);
       expect(t.material.color.getHex()).toBe(SHED_NEUTRAL_COLOR);
       expect(t.material.userData.plasmaFluidLook.mode).toBe('laminar');
+      expect(t.material.userData.plasmaFluidLook.phase).toBe('gas');
+      expect(t.userData.deformOwnGeo).toBe(true);
     });
     const latticeKids = debris.group.children.filter((c) => c.userData?.path === 'lattice');
     expect(latticeKids.length).toBe(4);
@@ -244,13 +247,14 @@ describe('bubbleTorusViz (presentation materials)', () => {
         return;
       }
       const rising = kids.filter((c) => c.userData.path === 'rise');
+      const parents = rising.filter((c) => c.userData.kind === 'torus');
       const lattice = kids.filter((c) => c.userData.path === 'lattice');
       const risingYs = rising.map((c) => c.userData.lastWorldY);
-      const opacities = kids.map((c) => c.material.opacity);
+      const parentOpacities = parents.map((c) => c.material.opacity);
       frames.push({
         risingMaxY: risingYs.length ? Math.max(...risingYs) : null,
         risingMinY: risingYs.length ? Math.min(...risingYs) : null,
-        maxOpacity: Math.max(...opacities),
+        parentMaxOpacity: parentOpacities.length ? Math.max(...parentOpacities) : null,
         risingCount: rising.length,
         latticeCount: lattice.length,
         latticeRadial: lattice.map((c) => Math.hypot(c.position.x, c.position.z)),
@@ -273,8 +277,11 @@ describe('bubbleTorusViz (presentation materials)', () => {
       const lastR = Math.max(...withLattice[withLattice.length - 1].latticeRadial);
       expect(lastR).toBeGreaterThanOrEqual(firstR - 1e-6);
     }
-    expect(live[0].maxOpacity).toBeGreaterThan(0.15);
-    expect(live[live.length - 1].maxOpacity).toBeLessThan(live[0].maxOpacity);
+    // Parent tori fade with riseT (daughter cascade may still be bright)
+    const parentLive = live.filter((f) => f.parentMaxOpacity != null);
+    expect(parentLive[0].parentMaxOpacity).toBeGreaterThan(0.15);
+    expect(parentLive[parentLive.length - 1].parentMaxOpacity)
+      .toBeLessThan(parentLive[0].parentMaxOpacity);
     // Rising debris stay above deeply nested lattice surface
     expect(risingFrames[0].risingMinY).toBeGreaterThan(-3.0 + 0.4);
     debris.dispose();

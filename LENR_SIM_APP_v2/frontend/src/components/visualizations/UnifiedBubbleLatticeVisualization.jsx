@@ -125,6 +125,10 @@ import {
   LAB_SL_FLASH_CHIP,
   LAB_SL_FLASH_CHIP_TOOLTIP,
   MAIN_TORUS_INWARD_SPIN,
+  SHED_CASCADE_CHIP,
+  SHED_CASCADE_CHIP_TOOLTIP,
+  SHED_EDDY_CHIP,
+  SHED_EDDY_CHIP_TOOLTIP,
   computeLabHonestCollapseCue,
   createCollapseFocusPinGroup,
   createJetMaterial,
@@ -153,6 +157,8 @@ import {
   torusWindowProgress,
 } from '../../utils/plasmaSpectrumViz';
 import {
+  FLUID_PHASE_CHIP,
+  FLUID_PHASE_CHIP_TOOLTIP,
   PLASMA_FLUID_LOOK_CHIP,
   PLASMA_FLUID_LOOK_CHIP_TOOLTIP,
   advancePlasmaFluidLook,
@@ -5227,6 +5233,30 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
+              <Tooltip title={SHED_CASCADE_CHIP_TOOLTIP}>
+                <Chip
+                  label={SHED_CASCADE_CHIP}
+                  size="small"
+                  data-testid="ublv-shed-cascade-chip"
+                  sx={{
+                    bgcolor: 'rgba(55, 85, 105, 0.92)',
+                    color: 'white',
+                    fontSize: '0.58rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title={SHED_EDDY_CHIP_TOOLTIP}>
+                <Chip
+                  label={SHED_EDDY_CHIP}
+                  size="small"
+                  data-testid="ublv-shed-eddy-chip"
+                  sx={{
+                    bgcolor: 'rgba(50, 75, 95, 0.9)',
+                    color: 'white',
+                    fontSize: '0.58rem',
+                  }}
+                />
+              </Tooltip>
               <Tooltip title={PLASMA_FLUID_LOOK_CHIP_TOOLTIP}>
                 <Chip
                   label={PLASMA_FLUID_LOOK_CHIP}
@@ -5234,6 +5264,18 @@ const UnifiedBubbleLatticeVisualization = ({
                   data-testid="ublv-plasma-fluid-look-chip"
                   sx={{
                     bgcolor: 'rgba(70, 90, 110, 0.92)',
+                    color: 'white',
+                    fontSize: '0.58rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title={FLUID_PHASE_CHIP_TOOLTIP}>
+                <Chip
+                  label={FLUID_PHASE_CHIP}
+                  size="small"
+                  data-testid="ublv-fluid-phase-chip"
+                  sx={{
+                    bgcolor: 'rgba(65, 95, 100, 0.9)',
                     color: 'white',
                     fontSize: '0.58rem',
                   }}
