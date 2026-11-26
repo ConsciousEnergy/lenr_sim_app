@@ -1,6 +1,7 @@
 /**
  * Enhancement Breakdown drawer — claim-tier channel stack (engine-bound).
- * Replaces bare numeric factors with resolveHudReadout provenance chips.
+ * Primary radar/stack: screening · phonon · loading live bars from
+ * enhancement_breakdown (speculative / exploratory — not LENR proof).
  */
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
@@ -19,6 +20,12 @@ import {
   buildEnhancementBreakdownChannels,
   resolveHudReadout,
 } from '../../utils/vizChannelBindings';
+import {
+  ENHANCEMENT_BARS_CLAIM_TAG,
+  buildPrimaryEnhancementBars,
+  enhancementRadarPolygonPoints,
+  enhancementRadarVertices,
+} from '../../utils/enhancementBreakdownBars';
 
 const MECHANISM_COLORS = {
   'enhancement.screening': '#00ffff',
@@ -32,6 +39,144 @@ const MECHANISM_COLORS = {
 
 const ENGINE_SOURCES = new Set(['solver', 'interpolated']);
 
+function PrimaryEnhancementRadarStack({ bars }) {
+  const vertices = useMemo(
+    () => enhancementRadarVertices(bars, { cx: 50, cy: 50, r: 36 }),
+    [bars],
+  );
+  const polygon = useMemo(
+    () => enhancementRadarPolygonPoints(vertices),
+    [vertices],
+  );
+
+  return (
+    <Box
+      data-testid="ublv-enhancement-primary-stack"
+      sx={{ mb: 0.75 }}
+    >
+      <Tooltip title={`${ENHANCEMENT_BARS_CLAIM_TAG}. Log₁₀ bar fill from enhancement_breakdown — not MD / not LENR proof; EQ-OPEN / lenr_proved untouched.`}>
+        <Typography
+          variant="caption"
+          color="rgba(255,255,255,0.7)"
+          sx={{ fontSize: '0.58rem', display: 'block', mb: 0.35 }}
+          data-testid="ublv-enhancement-primary-label"
+        >
+          Primary · screening · phonon · loading
+        </Typography>
+      </Tooltip>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <Box
+          component="svg"
+          viewBox="0 0 100 100"
+          width={72}
+          height={72}
+          data-testid="ublv-enhancement-radar"
+          aria-hidden
+          sx={{ flexShrink: 0 }}
+        >
+          {/* Axis guide triangle */}
+          <polygon
+            points={enhancementRadarPolygonPoints(
+              enhancementRadarVertices(
+                bars.map((b) => ({ ...b, norm: 1 })),
+                { cx: 50, cy: 50, r: 36 },
+              ),
+            )}
+            fill="none"
+            stroke="rgba(255,255,255,0.18)"
+            strokeWidth="1"
+          />
+          <circle cx="50" cy="50" r="12" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+          <circle cx="50" cy="50" r="24" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+          {vertices.map((v) => (
+            <line
+              key={`axis-${v.key}`}
+              x1="50"
+              y1="50"
+              x2={v.axisX}
+              y2={v.axisY}
+              stroke="rgba(255,255,255,0.2)"
+              strokeWidth="1"
+            />
+          ))}
+          {polygon && (
+            <polygon
+              points={polygon}
+              fill="rgba(100, 160, 220, 0.28)"
+              stroke="rgba(160, 200, 255, 0.85)"
+              strokeWidth="1.5"
+              data-testid="ublv-enhancement-radar-fill"
+            />
+          )}
+          {vertices.map((v) => (
+            <circle
+              key={`pt-${v.key}`}
+              cx={v.x}
+              cy={v.y}
+              r="2.5"
+              fill={v.color}
+              data-testid={`ublv-enhancement-radar-pt-${v.key}`}
+            />
+          ))}
+        </Box>
+        <Stack spacing={0.35} sx={{ flex: 1, minWidth: 0 }} data-testid="ublv-enhancement-bar-stack">
+          {bars.map((bar) => (
+            <Tooltip
+              key={bar.key}
+              title={`${bar.label}: ${bar.missing ? 'gap' : bar.value?.toExponential?.(2) ?? bar.value} · log₁₀ fill ${Math.round(bar.norm * 100)}% · ${bar.claimTag}`}
+            >
+              <Box data-testid={`ublv-enhancement-bar-${bar.key}`}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.15 }}>
+                  <Typography variant="caption" color="white" sx={{ fontSize: '0.58rem' }}>
+                    {bar.label}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: '0.55rem', color: bar.color }}
+                    data-testid={`ublv-enhancement-bar-value-${bar.key}`}
+                  >
+                    {bar.missing ? '—' : (bar.value >= 100 ? bar.value.toExponential(1) : Number(bar.value).toPrecision(3))}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    height: 5,
+                    borderRadius: 1,
+                    bgcolor: 'rgba(255,255,255,0.12)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box
+                    data-testid={`ublv-enhancement-bar-fill-${bar.key}`}
+                    data-norm={bar.norm.toFixed(3)}
+                    sx={{
+                      height: '100%',
+                      width: `${Math.round(bar.norm * 100)}%`,
+                      bgcolor: bar.color,
+                      opacity: bar.missing ? 0.35 : 0.9,
+                      transition: 'width 0.25s ease',
+                    }}
+                  />
+                </Box>
+              </Box>
+            </Tooltip>
+          ))}
+        </Stack>
+      </Box>
+    </Box>
+  );
+}
+
+PrimaryEnhancementRadarStack.propTypes = {
+  bars: PropTypes.arrayOf(PropTypes.object).isRequired,
+};
+
 export default function EnhancementBreakdownDrawer({
   breakdown,
   sampleSource = 'local_fallback',
@@ -44,6 +189,11 @@ export default function EnhancementBreakdownDrawer({
     });
     return channels.map((ch) => resolveHudReadout(ch)).filter(Boolean);
   }, [breakdown, sampleSource]);
+
+  const primaryBars = useMemo(
+    () => buildPrimaryEnhancementBars(breakdown, { sampleSource }),
+    [breakdown, sampleSource],
+  );
 
   const isEngine = ENGINE_SOURCES.has(sampleSource);
 
@@ -113,6 +263,7 @@ export default function EnhancementBreakdownDrawer({
               />
             </Tooltip>
           </Box>
+          <PrimaryEnhancementRadarStack bars={primaryBars} />
           <Stack spacing={0.4} data-testid="ublv-enhancement-channel-stack">
             {readouts.map((r) => (
               <Tooltip
