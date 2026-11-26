@@ -239,7 +239,7 @@
         const z0 = bubbleRest[i + 2];
         const rear = Math.max(0, y0);
         const falloff = rear * rear;
-        const cave = d * 1.85 * falloff;
+        const cave = d * 2.15 * falloff; // slightly deeper dimple for fold-in readability
         let y = y0 - cave;
         const waist = Math.exp(-((y0 - (1 - d)) ** 2) / 0.18);
         const pinch = 1 - w * 0.55 * waist * (0.35 + 0.65 * d);
@@ -269,7 +269,7 @@
       const focusStrength = Math.min(1, dimple * 0.85 + wallsMeet * 0.35 + smooth(0.48, 0.78, p) * 0.55);
       const condensation = Math.min(1, dimple * 0.55 + wallsMeet * 0.7 + (punctured ? 0.35 : 0));
       const pinAxisY = 0.72 - dimple * 1.15 - wallsMeet * 0.25 - torusBirth * 0.35;
-      const schwingerHint = smooth(0.52, 0.78, p) * focusStrength;
+      const schwingerHint = smooth(0.62, 0.88, p) * focusStrength * 0.45;
       const jetBirthBoost = smooth(0.55, 0.85, p) * (0.4 + focusStrength * 0.6);
       return {
         bubbleVisible: bubbleOpacityMul > 0.03 && torusBirth < 0.97,
@@ -337,24 +337,26 @@
     function updateFocusPin(morph, jetGate = 0, t = 0) {
       const focus = morph.focusStrength || 0;
       const cond = morph.condensation || 0;
-      const hint = morph.schwingerHint || 0;
+      // Cap Schwinger hint so it doesn't wash out puncture topology on slow scrub
+      const hint = Math.min(0.35, morph.schwingerHint || 0) * 0.55;
       const jetBoost = morph.jetBirthBoost || 0;
-      const strength = Math.max(focus, jetGate * 0.55 + jetBoost * 0.45);
+      const strength = Math.max(focus * 0.85, jetGate * 0.45 + jetBoost * 0.35);
       focusGroup.visible = strength > 0.04;
       if (!focusGroup.visible) { focusLight.intensity = 0; return; }
       const pinY = (morph.pinAxisY ?? 0.4) - jetGate * 0.55 - jetBoost * 0.35;
       focusCore.position.set(0, pinY, 0);
       focusLight.position.set(0, pinY, 0);
-      focusCore.scale.setScalar(0.55 + strength * 1.4 + hint * 0.85);
-      focusCore.material.opacity = 0.35 + strength * 0.5 + hint * 0.25;
-      if (hint > 0.15) {
+      focusCore.scale.setScalar(0.4 + strength * 0.85 + hint * 0.35);
+      focusCore.material.opacity = 0.22 + strength * 0.32 + hint * 0.12;
+      if (hint > 0.12) {
         focusCore.material.color.setRGB(1, 0.96 + hint * 0.04, 0.85 + hint * 0.15);
         focusLight.color.setRGB(1, 0.92, 0.78 + hint * 0.2);
       } else {
         focusCore.material.color.setHex(0xfff4d0);
         focusLight.color.setHex(0xffe8b0);
       }
-      focusLight.intensity = 0.35 + strength * 1.8 + hint * 1.4 + jetGate * 0.6;
+      // Soft pin light — avoid white-out at walls-meet / puncture
+      focusLight.intensity = 0.2 + strength * 0.75 + hint * 0.35 + jetGate * 0.35;
       for (let i = 0; i < FN; i++) {
         const s = fSeeds[i];
         const az = s.az + t * (0.6 + (i % 5) * 0.08);
@@ -365,15 +367,15 @@
         fPos[i * 3 + 1] = y;
         fPos[i * 3 + 2] = r * Math.sin(az);
         const base = s.species ? cCol : hCol;
-        const hot = 0.55 + strength * 0.45 + hint * 0.35;
-        fCol[i * 3] = Math.min(1, base.r * hot + hint * 0.25);
-        fCol[i * 3 + 1] = Math.min(1, base.g * (0.7 + hot * 0.3) + hint * 0.2);
-        fCol[i * 3 + 2] = Math.min(1, base.b * (0.65 + hot * 0.35) + hint * 0.15);
+        const hot = 0.55 + strength * 0.35 + hint * 0.2;
+        fCol[i * 3] = Math.min(1, base.r * hot + hint * 0.15);
+        fCol[i * 3 + 1] = Math.min(1, base.g * (0.7 + hot * 0.3) + hint * 0.12);
+        fCol[i * 3 + 2] = Math.min(1, base.b * (0.65 + hot * 0.35) + hint * 0.1);
       }
       fGeo.attributes.position.needsUpdate = true;
       fGeo.attributes.color.needsUpdate = true;
-      fMat.opacity = 0.18 + strength * 0.55 + cond * 0.15;
-      fMat.size = 0.07 + strength * 0.12 + cond * 0.04;
+      fMat.opacity = 0.12 + strength * 0.35 + cond * 0.1;
+      fMat.size = 0.06 + strength * 0.08 + cond * 0.03;
     }
 
     const torus = new THREE.Mesh(
@@ -815,7 +817,8 @@
           return t * t * (3 - 2 * t);
         };
         const aspheric = smooth(0.05, 0.55, p) * (1 - smooth(0.7, 0.95, p) * 0.35);
-        const slAmt = smooth(0.58, 0.72, p) * (1 - smooth(0.78, 0.92, p));
+        // SL flash after puncture begins so walls-meet topology stays visible
+        const slAmt = smooth(0.68, 0.82, p) * (1 - smooth(0.88, 0.98, p));
         // Fold-in: rear→front dimple → walls meet → puncture → Clifford torus
         applyFoldInDimple(morph.dimple, morph.wallsMeet);
         const baseScale = 1.35 * (1 - p * 0.28);
@@ -827,10 +830,11 @@
         );
         bubble.material.opacity = 0.28 * morph.bubbleOpacityMul;
         bubble.rotation.y += 0.015 + morph.dimple * 0.03;
+        // Keep SL flash soft so puncture topology stays readable on slow scrub
         slFlash.visible = slAmt > 0.04;
         slFlash.position.set(0, (morph.pinAxisY || 0) * 0.35, 0);
-        slFlash.scale.setScalar(0.6 + slAmt * 2.2);
-        slFlash.material.opacity = slAmt * 0.85;
+        slFlash.scale.setScalar(0.55 + slAmt * 1.6);
+        slFlash.material.opacity = slAmt * 0.42;
         const shedEarly = p > 0.88 ? ((p - 0.88) / 0.12) * 0.22 : 0;
         torus.visible = morph.torusVisible && tighten < 0.98 && shedEarly < 0.08;
         filament.visible = morph.torusBirth > 0.25 && tighten < 0.95 && shedEarly < 0.08;
@@ -842,7 +846,9 @@
         filament.scale.set(ts * 1.02, ts * 0.55, ts * 1.02);
         torus.rotation.z += MAIN_INWARD * (0.07 + tighten * 0.06 + morph.torusBirth * 0.04);
         filament.rotation.z += (-MAIN_INWARD) * 0.08;
-        torus.material.opacity = (0.1 + morph.torusOpacityMul * 0.28) * (1 - tighten * 0.55);
+        // Stronger torus read during birth so puncture → Clifford ring is clear on slow scrub
+        torus.material.opacity = (0.16 + morph.torusOpacityMul * 0.38) * (1 - tighten * 0.5);
+        filament.material.opacity = (0.14 + morph.torusOpacityMul * 0.32) * (1 - tighten * 0.55);
         updateCloud(
           elapsed,
           morph.cloudStrength * (1 - tighten * 0.7),
@@ -851,20 +857,23 @@
         );
         cloud.scale.copy(torus.scale);
         cloud.rotation.z += 0.05;
-        glow.intensity = 0.6 + p * 0.7 + tighten * 0.4;
+        glow.intensity = 0.45 + p * 0.35 + tighten * 0.25;
+        // Jet after puncture reads — keep early morph free of bright washout beam
         let jetGate = 0;
-        if (p > 0.65) {
-          jetGate = (p - 0.65) / 0.35;
+        if (p > 0.72) {
+          jetGate = (p - 0.72) / 0.28;
           jet.visible = true;
-          const jb = morph.jetBirthBoost || 0;
+          const jb = (morph.jetBirthBoost || 0) * 0.65;
           jet.scale.set(
-            1.05 - jetGate * 0.3 - jb * 0.05,
-            0.7 + jetGate * 2.2 + jb * 0.35,
-            1.05 - jetGate * 0.3 - jb * 0.05,
+            1.05 - jetGate * 0.25 - jb * 0.04,
+            0.55 + jetGate * 1.85 + jb * 0.28,
+            1.05 - jetGate * 0.25 - jb * 0.04,
           );
-          jet.material.opacity = 0.18 + jetGate * 0.4 + morph.focusStrength * 0.08;
-          jet.material.emissiveIntensity = 1.0 + jetGate * 0.9 + morph.schwingerHint * 0.45;
+          jet.material.opacity = 0.1 + jetGate * 0.28 + morph.focusStrength * 0.04;
+          jet.material.emissiveIntensity = 0.55 + jetGate * 0.55 + (morph.schwingerHint || 0) * 0.15;
           jet.position.y = -0.3;
+        } else {
+          jet.visible = false;
         }
         updateFocusPin(morph, jetGate, elapsed);
         updateShed(shedEarly);
