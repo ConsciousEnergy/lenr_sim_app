@@ -84,6 +84,7 @@ import {
 import { resolveSolutePaletteEntry } from '../../utils/lenrParticlePalette';
 import {
   buildCollapseRibbonPositions,
+  collapseRibbonCollapsePunch,
   collapseRibbonPlayheadIndex,
 } from '../../utils/collapseTrajectoryRibbon';
 import {
@@ -2261,10 +2262,10 @@ const UnifiedBubbleLatticeVisualization = ({
       });
       group = null;
     }
+    // Defaults place ribbon by the teal ScaleBar (-6,-6,4), under lattice floor.
     const built = buildCollapseRibbonPositions({
       trajectory: simulationData?.collapse_trajectory,
       initialRadiusUm: initialBubbleRadius,
-      nestY: PHYSICS_CONFIG.LATTICE_Y_OFFSET + 0.35,
     });
     if (!built || !showCollapseRibbon || !showBubble) {
       setCollapseRibbonMeta(null);
@@ -2286,7 +2287,7 @@ const UnifiedBubbleLatticeVisualization = ({
     const tubeGeom = new THREE.TubeGeometry(
       curve,
       Math.min(160, Math.max(32, built.sampleCount * 2)),
-      0.055,
+      0.045,
       8,
       false,
     );
@@ -2295,7 +2296,7 @@ const UnifiedBubbleLatticeVisualization = ({
       new THREE.MeshBasicMaterial({
         color: 0xffb84d,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.72,
         depthWrite: false,
       }),
     );
@@ -2304,31 +2305,34 @@ const UnifiedBubbleLatticeVisualization = ({
     ribbonTube.userData = {
       sampleCount: built.sampleCount,
       minIndex: built.minIndex,
+      minAcousticFraction: built.minAcousticFraction,
       source: built.source,
       fidelity: built.fidelity,
       positions: built.positions,
+      baseOpacity: 0.72,
     };
     group.add(ribbonTube);
 
     const playhead = new THREE.Mesh(
-      new THREE.SphereGeometry(0.12, 14, 14),
+      new THREE.SphereGeometry(0.1, 14, 14),
       new THREE.MeshBasicMaterial({
         color: 0xfff3a0,
         transparent: true,
-        opacity: 1,
+        opacity: 0.85,
         depthWrite: false,
       }),
     );
     playhead.name = 'CollapseRibbonPlayhead';
     playhead.position.set(built.positions[0], built.positions[1], built.positions[2]);
+    playhead.userData = { baseScale: 1 };
     group.add(playhead);
 
     const minMark = new THREE.Mesh(
-      new THREE.SphereGeometry(0.14, 14, 14),
+      new THREE.SphereGeometry(0.11, 14, 14),
       new THREE.MeshBasicMaterial({
         color: 0xff5533,
         transparent: true,
-        opacity: 0.95,
+        opacity: 0.9,
         depthWrite: false,
       }),
     );
@@ -2346,6 +2350,7 @@ const UnifiedBubbleLatticeVisualization = ({
       sampleCount: built.sampleCount,
       source: built.source,
       fidelity: built.fidelity,
+      minIndex: built.minIndex,
     };
     setCollapseRibbonMeta(meta);
     collapseRibbonMetaRef.current = meta;
@@ -3023,17 +3028,41 @@ const UnifiedBubbleLatticeVisualization = ({
           : 0.18;
       }
 
-      // Collapse ODE ribbon playhead follows scrub / cycle fraction (scene-rooted)
+      // Collapse ODE ribbon — dual-clock playhead + min-R punch (near ScaleBar floor)
       const ribbonGroup = sceneRef.current?.getObjectByName('CollapseRibbonGroup');
       const ribbon = ribbonGroup?.getObjectByName('CollapseTrajectoryRibbon');
       const playhead = ribbonGroup?.getObjectByName('CollapseRibbonPlayhead');
+      const minMark = ribbonGroup?.getObjectByName('CollapseRibbonMinMark');
       if (ribbon && playhead) {
         const count = ribbon.userData?.sampleCount || 0;
         const arr = ribbon.userData?.positions;
-        const idx = collapseRibbonPlayheadIndex(count, normalizedTime);
+        const minIndex = Number.isFinite(ribbon.userData?.minIndex)
+          ? ribbon.userData.minIndex
+          : null;
+        const idx = collapseRibbonPlayheadIndex(count, normalizedTime, minIndex);
         if (arr && count > 0 && arr.length >= (idx + 1) * 3) {
           playhead.position.set(arr[idx * 3], arr[idx * 3 + 1], arr[idx * 3 + 2]);
           playhead.visible = showCollapseRibbon && showBubble;
+        }
+        const punch = collapseRibbonCollapsePunch({
+          sampleCount: count,
+          visualCycleFraction: normalizedTime,
+          minIndex: minIndex ?? 0,
+        });
+        const baseScale = playhead.userData?.baseScale || 1;
+        playhead.scale.setScalar(baseScale * (1 + punch * 2.2));
+        if (playhead.material) {
+          playhead.material.opacity = 0.55 + punch * 0.45;
+          playhead.material.color.setHex(punch > 0.55 ? 0xfff8e0 : 0xfff3a0);
+        }
+        if (ribbon.material) {
+          const baseOp = ribbon.userData?.baseOpacity ?? 0.72;
+          ribbon.material.opacity = baseOp + punch * 0.28;
+          ribbon.material.color.setHex(punch > 0.55 ? 0xffd27a : 0xffb84d);
+        }
+        if (minMark?.material) {
+          minMark.material.opacity = 0.55 + punch * 0.45;
+          minMark.scale.setScalar(1 + punch * 1.4);
         }
         ribbonGroup.visible = showCollapseRibbon && showBubble;
       }
