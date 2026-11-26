@@ -652,7 +652,9 @@ const UnifiedBubbleLatticeVisualization = ({
     // Phong (not high-metalness Standard): Standard@metalness≈0.85 with no envMap
     // paints near-black on the dark HSE canvas even when instanceColor matches
     // exclusive Pd/Ni legend hexes. Per-instance colors via InstancedMesh.instanceColor.
-    const hostEmissive = new THREE.Color(hostColor).multiplyScalar(0.18);
+    // Keep emissive modest so Tier-1 instanceColor modes stay readable
+    // (high shared emissive washed Loading/T/Phonon contrast into uniform grey).
+    const hostEmissive = new THREE.Color(hostColor).multiplyScalar(0.06);
     const hostMaterial3D = new THREE.MeshPhongMaterial({
       color: 0xffffff,
       shininess: 72,

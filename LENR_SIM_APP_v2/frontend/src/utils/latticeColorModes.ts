@@ -21,13 +21,14 @@ export function occupancyTintRgb(
 ): { r: number; g: number; b: number } {
   const { r, g, b } = hexToRgb01(baseHex);
   if (!occupied) {
-    return { r: r * 0.55, g: g * 0.55, b: b * 0.55 };
+    // Stronger empty darken so Loading mode is unmistakable vs Species.
+    return { r: r * 0.32, g: g * 0.32, b: b * 0.35 };
   }
-  // Slight cool lift — schematic loading cue, not quantitative flux.
+  // Cool lift — schematic loading cue, not quantitative flux.
   return {
-    r: Math.min(1, r * 0.85 + 0.05),
-    g: Math.min(1, g * 0.95 + 0.12),
-    b: Math.min(1, b * 0.75 + 0.2),
+    r: Math.min(1, r * 0.75 + 0.08),
+    g: Math.min(1, g * 0.9 + 0.18),
+    b: Math.min(1, b * 0.65 + 0.35),
   };
 }
 
@@ -99,11 +100,13 @@ export function temperatureTintRgb(
 ): { r: number; g: number; b: number } {
   const base = hexToRgb01(hostHex);
   const t = temperatureHeatNorm(temperatureK);
-  // Cool host → warm orange-white lift (matches bubble heat narrative)
+  // Cool host → warm orange-white lift (matches bubble heat narrative).
+  // Floor a small warm bias so T mode is not identical to Species at 300 K.
+  const lift = Math.max(0.12, t);
   return {
-    r: Math.min(1, base.r * (1 - t * 0.35) + t * 0.95),
-    g: Math.min(1, base.g * (1 - t * 0.45) + t * 0.45),
-    b: Math.min(1, base.b * (1 - t * 0.7) + t * 0.12),
+    r: Math.min(1, base.r * (1 - lift * 0.4) + lift * 0.98),
+    g: Math.min(1, base.g * (1 - lift * 0.5) + lift * 0.42),
+    b: Math.min(1, base.b * (1 - lift * 0.75) + lift * 0.08),
   };
 }
 
@@ -134,8 +137,11 @@ export function resolveLatticeHostInstanceRgb({
       return occupancyTintRgb(hostHex, occupied === true);
     case 'temperature':
       return temperatureTintRgb(hostHex, temperatureK);
-    case 'phonon':
-      return phononModeTintRgb(hexToRgb01(hostHex), modeEnergy, opticalWeight);
+    case 'phonon': {
+      // Floor so Phonon mode is distinct even before standing-wave tick fills energies.
+      const energy = Math.max(0.35, Number(modeEnergy) || 0);
+      return phononModeTintRgb(hexToRgb01(hostHex), energy, opticalWeight);
+    }
     case 'species':
     default:
       return hexToRgb01(hostHex);
