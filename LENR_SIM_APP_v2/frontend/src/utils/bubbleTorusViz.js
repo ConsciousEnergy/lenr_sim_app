@@ -461,7 +461,12 @@ export function createShedPlasmaDebrisGroup({
    * @param {{ primarySpin?: number }} [opts] primary torus Z-spin direction cue
    */
   const update = (deltaTime = 0.016, shedProgress = 0, opts = {}) => {
-    const s = Math.min(1, Math.max(0, Number(shedProgress) || 0));
+    const raw = Math.min(1, Math.max(0, Number(shedProgress) || 0));
+    // Latch peak progress so +Y never reverses mid-cycle (opacity fades only)
+    if (raw < 0.02) group.userData.shedProgressMax = 0;
+    const prevMax = Number(group.userData.shedProgressMax) || 0;
+    const s = Math.max(prevMax, raw);
+    group.userData.shedProgressMax = s;
     group.visible = s > 0.02;
     if (!group.visible) {
       group.children.forEach((child) => {
@@ -479,6 +484,7 @@ export function createShedPlasmaDebrisGroup({
         return;
       }
       child.visible = true;
+      // Monotonic ease-in-out: y only increases with s; fade via opacity only
       const ease = local * local * (3 - 2 * local);
       const r = d.radialStart + (d.radialEnd - d.radialStart) * ease;
       const y = d.yStart + (d.yEnd - d.yStart) * ease;
@@ -493,9 +499,9 @@ export function createShedPlasmaDebrisGroup({
       const spinDir = -primarySpin * (d.spinSign || -1);
       child.rotation.z += deltaTime * d.spinRate * spinDir * (0.7 + s);
       if (child.material) {
-        // Peak mid-flight, fade out as debris rises away from the lattice
+        // Fade out as debris rises away from the lattice (no Y reverse)
         const peak = d.kind === 'torus' ? 0.38 : 0.32;
-        child.material.opacity = peak * (1 - ease) * (0.55 + 0.45 * s);
+        child.material.opacity = peak * (1 - ease) * (0.55 + 0.45 * Math.min(1, s));
         if (child.material.emissiveIntensity !== undefined) {
           child.material.emissiveIntensity = (d.kind === 'torus' ? 1.0 : 0.7) * (1 - ease);
         }

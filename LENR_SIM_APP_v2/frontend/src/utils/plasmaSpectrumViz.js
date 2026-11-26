@@ -271,7 +271,8 @@ export function maserCollapseProgress({
 
 /**
  * After maser jet: shed secondary turbulent tori + micro-bubbles.
- * Peaks mid-MINIMUM, fades through early REBOUND.
+ * Progress is monotonic 0→1 once shed starts (MINIMUM → REBOUND stays at 1).
+ * Opacity fade is handled in the mesh update — never reverse +Y / bounce.
  */
 export function shedDebrisProgress({
   cycleFraction,
@@ -287,11 +288,12 @@ export function shedDebrisProgress({
   const name = String(phase || '').toUpperCase();
   if (name === 'MINIMUM') {
     const p = clamp01(phaseProgress);
-    // Rise and fade through MINIMUM (debris drifts up, not onto lattice)
+    // Monotonic rise through MINIMUM (debris drifts up, not onto lattice)
     return clamp01(0.35 + p * 0.65);
   }
   if (name === 'REBOUND') {
-    return clamp01(0.9 * (1 - clamp01(phaseProgress)));
+    // Hold at fully shed — no +Y reverse / bounce / settle on surface
+    return 1;
   }
   return 0;
 }

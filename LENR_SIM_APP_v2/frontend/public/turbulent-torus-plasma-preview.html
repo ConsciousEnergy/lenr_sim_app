@@ -182,10 +182,11 @@
     jet.visible = false;
     group.add(jet);
 
-    // Counter-rotating shed debris → lattice
+    // Counter-rotating shed debris: monotonic rise away from lattice + fade
     const shedGroup = new THREE.Group();
     shedGroup.name = 'ShedPlasmaDebris';
     shedGroup.visible = false;
+    shedGroup.userData.shedProgressMax = 0;
     group.add(shedGroup);
     const shedTorusGeo = new THREE.TorusGeometry(0.42, 0.12, 12, 48);
     const shedBubbleGeo = new THREE.SphereGeometry(0.18, 16, 12);
@@ -216,7 +217,10 @@
     }
 
     function updateShed(progress) {
-      const s = Math.min(1, Math.max(0, progress));
+      const raw = Math.min(1, Math.max(0, progress));
+      if (raw < 0.02) shedGroup.userData.shedProgressMax = 0;
+      const s = Math.max(shedGroup.userData.shedProgressMax || 0, raw);
+      shedGroup.userData.shedProgressMax = s;
       shedGroup.visible = s > 0.02;
       shedItems.forEach((child) => {
         const d = child.userData;
@@ -225,7 +229,7 @@
         child.visible = true;
         const ease = local * local * (3 - 2 * local);
         const r = d.radialStart + (d.radialEnd - d.radialStart) * ease;
-        const y = d.yStart + (d.yEnd - d.yStart) * ease;
+        const y = d.yStart + (d.yEnd - d.yStart) * ease; // monotonic +Y only
         const az = d.azimuth - ease * 0.55;
         child.position.set(r * Math.cos(az), y, r * Math.sin(az));
         const sc = d.scale0 * (0.55 + 0.55 * (1 - ease * 0.35));
@@ -366,9 +370,9 @@
           updateCloud(elapsed, 0.35 * (1 - p / 0.45), 0.4, 0.2);
           cloud.scale.copy(torus.scale);
         }
-        // Counter-rotating shed onto lattice
-        const shed = p < 0.15 ? 0.35 + p * 2 : Math.min(1, 0.65 + p * 0.45);
-        updateShed(phase === 'REBOUND' ? Math.max(0, 0.9 * (1 - (p - 0.55) / 0.45)) : shed);
+        // Counter-rotating shed: monotonic rise + fade (never reverse in REBOUND)
+        const shed = Math.min(1, 0.35 + p * 1.15);
+        updateShed(shed);
         glow.intensity = 1.2 * (1 - p * 0.7);
       }
 

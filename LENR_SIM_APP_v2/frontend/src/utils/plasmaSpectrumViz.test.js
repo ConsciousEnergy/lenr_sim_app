@@ -100,13 +100,17 @@ describe('plasmaSpectrumViz (schematic excited plasma)', () => {
     expect(MASER_JET_CHIP.toLowerCase()).toContain('not fusion');
   });
 
-  test('shedDebrisProgress rises after maser jet and through MINIMUM', () => {
+  test('shedDebrisProgress rises after maser jet and stays monotonic through REBOUND', () => {
     expect(shedDebrisProgress({ cycleFraction: 0.93 })).toBe(0);
     expect(shedDebrisProgress({ cycleFraction: 0.955 })).toBeGreaterThan(0);
     expect(shedDebrisProgress({ phase: 'MINIMUM', phaseProgress: 0.6 }))
       .toBeGreaterThan(0.6);
-    expect(shedDebrisProgress({ phase: 'REBOUND', phaseProgress: 0.95 }))
-      .toBeLessThan(0.15);
+    // REBOUND holds at 1 — no +Y reverse / bounce
+    expect(shedDebrisProgress({ phase: 'REBOUND', phaseProgress: 0.05 })).toBe(1);
+    expect(shedDebrisProgress({ phase: 'REBOUND', phaseProgress: 0.95 })).toBe(1);
+    const earlyMin = shedDebrisProgress({ phase: 'MINIMUM', phaseProgress: 0.1 });
+    const lateMin = shedDebrisProgress({ phase: 'MINIMUM', phaseProgress: 0.9 });
+    expect(lateMin).toBeGreaterThanOrEqual(earlyMin);
     expect(SHED_DEBRIS_CHIP.toLowerCase()).toContain('counter-rotating');
   });
 

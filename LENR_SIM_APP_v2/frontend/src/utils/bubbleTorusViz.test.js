@@ -78,13 +78,23 @@ describe('bubbleTorusViz (presentation materials)', () => {
     expect(mid.length).toBeGreaterThan(0);
     // Rise away from lattice (+Y), not settle onto surface
     expect(mid.some((c) => c.position.y > 0.3)).toBe(true);
+    const midY = Math.max(...mid.map((c) => c.position.y));
     const midOpacity = Math.max(...mid.map((c) => c.material.opacity));
     debris.update(0.016, 1.0, { primarySpin: 1 });
     const late = debris.group.children.filter((c) => c.visible);
+    const lateY = Math.max(
+      ...debris.group.children.map((c) => c.position.y),
+      midY,
+    );
+    expect(lateY).toBeGreaterThanOrEqual(midY);
     const lateOpacity = late.length
       ? Math.max(...late.map((c) => c.material.opacity))
       : 0;
     expect(lateOpacity).toBeLessThan(midOpacity);
+    // Decreasing progress must not pull debris back down (latch)
+    debris.update(0.016, 0.2, { primarySpin: 1 });
+    const afterReverse = Math.max(...debris.group.children.map((c) => c.position.y));
+    expect(afterReverse).toBeGreaterThanOrEqual(lateY - 1e-6);
     debris.dispose();
   });
 });
