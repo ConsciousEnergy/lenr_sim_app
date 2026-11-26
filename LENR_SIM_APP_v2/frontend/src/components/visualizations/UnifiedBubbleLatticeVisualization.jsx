@@ -664,7 +664,9 @@ const UnifiedBubbleLatticeVisualization = ({
 
     // Solute beads: shared palette SOT (Pd run → D teal; else H green).
     // Schematic species label only — not isotopic proof / not QM orbitals.
-    const soluteHex = resolveSolutePaletteEntry(hostMaterial).hex;
+    const solutePalette = resolveSolutePaletteEntry(hostMaterial);
+    const soluteHex = solutePalette.hex;
+    const soluteIsDeuterium = solutePalette.key === 'deuterium';
     const hydrogenRadius = Math.max(0.06, hostAtomRadiusVisUnits * 0.5);
     const hydrogenGeometry = new THREE.SphereGeometry(hydrogenRadius, 14, 14);
     const hydrogenMaterial = new THREE.MeshPhongMaterial({
