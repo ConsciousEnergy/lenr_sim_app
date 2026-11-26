@@ -37,6 +37,8 @@
     <span class="chip alt">Counter-rotating shed · schematic</span>
     <span class="chip alt">fluid look · schematic · not CFD</span>
     <span class="chip" style="background:rgba(100,50,120,0.92)">fold-in torus · puncture · schematic</span>
+    <span class="chip" style="background:rgba(120,55,75,0.92)">pin focus · H+e/ions · schematic</span>
+    <span class="chip" style="background:rgba(90,70,40,0.9)">Schwinger hint · exploratory · not proved</span>
   </div>
   <div id="badge">
     Torus window scrub <b>90.7% → 95.7%</b> → collapses onto maser-like jet → counter-rotating shed rises &amp; fades<br/>
@@ -44,7 +46,9 @@
     Shed: monotonic world +Y rise (lattice below) + opacity fade — no reverse / bounce.<br/>
     Fluid look: procedural noise / soft refraction / UV advection · schematic · not CFD · plasma ≠ fusion<br/>
     Fold-in: rear→front dimple → walls meet → puncture → Clifford R/a≈√2 torus → jet
-    (genus change needs puncture — not flatten+spawn; PoF/CMC peers · not CFD).
+    (genus change needs puncture — not flatten+spawn; PoF/CMC peers · not CFD).<br/>
+    Dimple pin = collapse focus: H + e⁻/ions condensation → extreme-field cue; Schwinger-limit
+    <i>hint</i> only (exploratory · not proved · EQ-OPEN untouched · lenr_proved false).
   </div>
   <script type="importmap">
   {
@@ -239,6 +243,11 @@
       const punctured = p >= 0.5;
       const torusBirth = smooth(0.48, 0.7, p);
       const bubbleOpacityMul = (1 - smooth(0.45, 0.72, p)) * (1 - wallsMeet * 0.35);
+      const focusStrength = Math.min(1, dimple * 0.85 + wallsMeet * 0.35 + smooth(0.48, 0.78, p) * 0.55);
+      const condensation = Math.min(1, dimple * 0.55 + wallsMeet * 0.7 + (punctured ? 0.35 : 0));
+      const pinAxisY = 0.72 - dimple * 1.15 - wallsMeet * 0.25 - torusBirth * 0.35;
+      const schwingerHint = smooth(0.52, 0.78, p) * focusStrength;
+      const jetBirthBoost = smooth(0.55, 0.85, p) * (0.4 + focusStrength * 0.6);
       return {
         bubbleVisible: bubbleOpacityMul > 0.03 && torusBirth < 0.97,
         bubbleOpacityMul,
@@ -253,7 +262,95 @@
         torusTubeMul: 1.35 - torusBirth * 0.35,
         torusOpacityMul: torusBirth,
         cloudStrength: Math.max(dimple * 0.25, torusBirth * (0.4 + p * 0.6)),
+        focusStrength,
+        condensation,
+        pinAxisY,
+        schwingerHint,
+        jetBirthBoost,
       };
+    }
+
+    // Collapse-focus pin (H + e/ions condensation along dimple axis)
+    const focusGroup = new THREE.Group();
+    focusGroup.visible = false;
+    group.add(focusGroup);
+    const focusCore = new THREE.Mesh(
+      new THREE.SphereGeometry(0.08, 16, 12),
+      new THREE.MeshBasicMaterial({
+        color: 0xfff4d0, transparent: true, opacity: 0.85,
+        depthWrite: false, blending: THREE.AdditiveBlending,
+      }),
+    );
+    focusGroup.add(focusCore);
+    const focusLight = new THREE.PointLight(0xffe8b0, 0, 4.5, 2);
+    focusGroup.add(focusLight);
+    const FN = 72;
+    const fPos = new Float32Array(FN * 3);
+    const fCol = new Float32Array(FN * 3);
+    const fSeeds = [];
+    const hCol = new THREE.Color(0xff6b8a);
+    const cCol = new THREE.Color(0x7ec8ff);
+    for (let i = 0; i < FN; i++) {
+      const species = i % 3 === 0 ? 0 : 1;
+      fSeeds.push({
+        r0: 0.25 + Math.random() * 0.85,
+        az: Math.random() * Math.PI * 2,
+        yBias: (Math.random() - 0.5) * 0.9,
+        species,
+      });
+      const col = species ? cCol : hCol;
+      fCol[i * 3] = col.r; fCol[i * 3 + 1] = col.g; fCol[i * 3 + 2] = col.b;
+    }
+    const fGeo = new THREE.BufferGeometry();
+    fGeo.setAttribute('position', new THREE.BufferAttribute(fPos, 3));
+    fGeo.setAttribute('color', new THREE.BufferAttribute(fCol, 3));
+    const fMat = new THREE.PointsMaterial({
+      color: 0xffffff, size: 0.1, map: softDisc(64), transparent: true, opacity: 0.5,
+      depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true, sizeAttenuation: true,
+    });
+    const fPoints = new THREE.Points(fGeo, fMat);
+    focusGroup.add(fPoints);
+
+    function updateFocusPin(morph, jetGate = 0, t = 0) {
+      const focus = morph.focusStrength || 0;
+      const cond = morph.condensation || 0;
+      const hint = morph.schwingerHint || 0;
+      const jetBoost = morph.jetBirthBoost || 0;
+      const strength = Math.max(focus, jetGate * 0.55 + jetBoost * 0.45);
+      focusGroup.visible = strength > 0.04;
+      if (!focusGroup.visible) { focusLight.intensity = 0; return; }
+      const pinY = (morph.pinAxisY ?? 0.4) - jetGate * 0.55 - jetBoost * 0.35;
+      focusCore.position.set(0, pinY, 0);
+      focusLight.position.set(0, pinY, 0);
+      focusCore.scale.setScalar(0.55 + strength * 1.4 + hint * 0.85);
+      focusCore.material.opacity = 0.35 + strength * 0.5 + hint * 0.25;
+      if (hint > 0.15) {
+        focusCore.material.color.setRGB(1, 0.96 + hint * 0.04, 0.85 + hint * 0.15);
+        focusLight.color.setRGB(1, 0.92, 0.78 + hint * 0.2);
+      } else {
+        focusCore.material.color.setHex(0xfff4d0);
+        focusLight.color.setHex(0xffe8b0);
+      }
+      focusLight.intensity = 0.35 + strength * 1.8 + hint * 1.4 + jetGate * 0.6;
+      for (let i = 0; i < FN; i++) {
+        const s = fSeeds[i];
+        const az = s.az + t * (0.6 + (i % 5) * 0.08);
+        const inward = 1 - cond * 0.78 - strength * 0.15;
+        const r = s.r0 * Math.max(0.04, inward) * (0.55 + 0.45 * (1 - jetGate));
+        const y = pinY + s.yBias * (0.55 - cond * 0.35) * (1 - strength * 0.25);
+        fPos[i * 3] = r * Math.cos(az);
+        fPos[i * 3 + 1] = y;
+        fPos[i * 3 + 2] = r * Math.sin(az);
+        const base = s.species ? cCol : hCol;
+        const hot = 0.55 + strength * 0.45 + hint * 0.35;
+        fCol[i * 3] = Math.min(1, base.r * hot + hint * 0.25);
+        fCol[i * 3 + 1] = Math.min(1, base.g * (0.7 + hot * 0.3) + hint * 0.2);
+        fCol[i * 3 + 2] = Math.min(1, base.b * (0.65 + hot * 0.35) + hint * 0.15);
+      }
+      fGeo.attributes.position.needsUpdate = true;
+      fGeo.attributes.color.needsUpdate = true;
+      fMat.opacity = 0.18 + strength * 0.55 + cond * 0.15;
+      fMat.size = 0.07 + strength * 0.12 + cond * 0.04;
     }
 
     const torus = new THREE.Mesh(
@@ -467,6 +564,7 @@
         const scale = 0.35 + p * 1.15;
         bubble.scale.setScalar(scale);
         bubble.material.opacity = 0.28;
+        updateFocusPin({}, 0, elapsed);
         updateShed(0);
       } else if (u < 0.78) {
         phase = 'COLLAPSE';
@@ -506,13 +604,21 @@
         cloud.scale.copy(torus.scale);
         cloud.rotation.z += 0.05;
         glow.intensity = 0.6 + p * 0.7 + tighten * 0.4;
+        let jetGate = 0;
         if (p > 0.65) {
-          const jg = (p - 0.65) / 0.35;
+          jetGate = (p - 0.65) / 0.35;
           jet.visible = true;
-          jet.scale.set(1.05 - jg * 0.3, 0.7 + jg * 2.2, 1.05 - jg * 0.3);
-          jet.material.opacity = 0.18 + jg * 0.4;
+          const jb = morph.jetBirthBoost || 0;
+          jet.scale.set(
+            1.05 - jetGate * 0.3 - jb * 0.05,
+            0.7 + jetGate * 2.2 + jb * 0.35,
+            1.05 - jetGate * 0.3 - jb * 0.05,
+          );
+          jet.material.opacity = 0.18 + jetGate * 0.4 + morph.focusStrength * 0.08;
+          jet.material.emissiveIntensity = 1.0 + jetGate * 0.9 + morph.schwingerHint * 0.45;
           jet.position.y = -0.3;
         }
+        updateFocusPin(morph, jetGate, elapsed);
         updateShed(shedEarly);
       } else {
         phase = u < 0.90 ? 'MINIMUM' : 'REBOUND';
@@ -526,6 +632,13 @@
         jet.scale.set(1 - p * 0.3, 1 + p * 1.8, 1 - p * 0.3);
         jet.material.opacity = 0.2 + (1 - p) * 0.35;
         jet.position.y = -0.4;
+        updateFocusPin({
+          focusStrength: Math.max(0, 0.55 * (1 - p * 0.85)),
+          condensation: Math.max(0, 0.7 * (1 - p * 0.6)),
+          schwingerHint: Math.max(0, 0.35 * (1 - p)),
+          pinAxisY: -0.35 - p * 0.55,
+          jetBirthBoost: 1 - p * 0.4,
+        }, Math.min(1, p * 1.2), elapsed);
         // Primary collapse finishes before shed (strict separation)
         const shed = Math.min(1, 0.22 + p * 1.1);
         if (p < 0.12 && shed < 0.08) {

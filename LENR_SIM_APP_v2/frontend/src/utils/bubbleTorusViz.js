@@ -384,12 +384,32 @@ export const BUBBLE_FOLD_IN_CHIP_TOOLTIP =
   + '(PoF spherical-cap→toroidal peer; CMC/Clifford R/a≈√2). Young–Laplace / '
   + 'buoyancy-jetting motif only — not continuum CFD; plasma ≠ fusion.';
 
+/** Dimple pin as collapse focus — H + e⁻/ions schematic condensation. */
+export const COLLAPSE_FOCUS_CHIP = 'pin focus · H+e/ions · schematic';
+export const COLLAPSE_FOCUS_CHIP_TOOLTIP =
+  'Dimple pin is the collapse focus: schematic condensation of H and electrons/ions '
+  + 'toward an extreme local field cue along the pin-through axis. Presentation '
+  + 'morphology only — not PIC/MD, not continuum CFD; plasma ≠ fusion. Does not '
+  + 'close EQ-OPEN or flip lenr_proved.';
+
+/**
+ * Optional Schwinger-limit visual hint only — exploratory / not proved.
+ * Engine E_cr peer is ~1.32e18 V/m; attainable collapse fields stay far below.
+ */
+export const SCHWINGER_HINT_CHIP = 'Schwinger hint · exploratory · not proved';
+export const SCHWINGER_HINT_CHIP_TOOLTIP =
+  'Optional Schwinger-limit (E_cr ≈ m_e²c³/eℏ) *hint* at the pin focus — exploratory '
+  + 'motif only, not a solved QED pair-production claim. Weak-field HE vacuum '
+  + 'polarisation is negligible at attainable collapse fields; does NOT close any '
+  + 'EQ-OPEN-* or flip lenr_proved. Plasma ≠ fusion.';
+
 /**
  * Bubble fold-in → puncture → through-hole torus across the scrub window.
  * Topology honesty: genus change via puncture/coalesce, not flatten+spawn.
+ * Dimple pin = collapse focus (H + e/ions condensation) → jet birth.
  *
  * Stages (collapseProgress 0..1):
- *   dimple → walls meet → puncture → Clifford-ish torus → jet tighten (caller)
+ *   dimple/focus → walls meet → puncture → Clifford-ish torus → jet (caller)
  *
  * @param {number} collapseProgress 0..1 across torus scrub window
  */
@@ -417,6 +437,17 @@ export function computeBubbleTorusMorph(collapseProgress = 0) {
   const torusTubeMul = 1.35 - torusBirth * 0.35;
   const torusOpacityMul = torusBirth;
   const cloudStrength = Math.max(dimple * 0.25, torusBirth * (0.4 + p * 0.6));
+  // Collapse focus: pin intensifies with dimple, peaks at puncture, feeds jet
+  const focusStrength = Math.min(
+    1,
+    dimple * 0.85 + wallsMeet * 0.35 + smooth(0.48, 0.78, p) * 0.55,
+  );
+  const condensation = Math.min(1, dimple * 0.55 + wallsMeet * 0.7 + (punctured ? 0.35 : 0));
+  // Pin core rides rear→front (+Y → −Y) with the dimple
+  const pinAxisY = 0.72 - dimple * 1.15 - wallsMeet * 0.25 - torusBirth * 0.35;
+  // Optional Schwinger-limit hint: late, high-focus flash only (exploratory)
+  const schwingerHint = smooth(0.52, 0.78, p) * focusStrength;
+  const jetBirthBoost = smooth(0.55, 0.85, p) * (0.4 + focusStrength * 0.6);
   return {
     bubbleVisible,
     bubbleOpacityMul,
@@ -432,6 +463,11 @@ export function computeBubbleTorusMorph(collapseProgress = 0) {
     torusOpacityMul,
     cloudStrength,
     cliffordAspect: CLIFFORD_TORUS_ASPECT,
+    focusStrength,
+    condensation,
+    pinAxisY,
+    schwingerHint,
+    jetBirthBoost,
   };
 }
 
@@ -490,6 +526,155 @@ export function applySphereFoldInDimple(geometry, dimpleAmount = 0, wallsMeet = 
   }
   pos.needsUpdate = true;
   geometry.computeVertexNormals();
+}
+
+/**
+ * Soft pin-focus condensation along the dimple axis (H + e⁻/ions schematic).
+ * Core rides pinAxisY; particles fall inward; schwingerHint = exploratory flash only.
+ *
+ * @returns {{ group: THREE.Group, update: Function, dispose: Function }}
+ */
+export function createCollapseFocusPinGroup({
+  count = 96,
+  hydrogenColor = 0xff6b8a,
+  chargeColor = 0x7ec8ff,
+} = {}) {
+  const n = Math.max(24, count | 0);
+  const group = new THREE.Group();
+  group.name = 'CollapseFocusPin';
+  group.visible = false;
+
+  const positions = new Float32Array(n * 3);
+  const colors = new Float32Array(n * 3);
+  const seeds = new Float32Array(n * 4); // radial0, az, yBias, species (0=H,1=charge)
+  const hCol = new THREE.Color(hydrogenColor);
+  const cCol = new THREE.Color(chargeColor);
+
+  for (let i = 0; i < n; i += 1) {
+    const species = i % 3 === 0 ? 0 : 1;
+    seeds[i * 4] = 0.25 + Math.random() * 0.85;
+    seeds[i * 4 + 1] = Math.random() * Math.PI * 2;
+    seeds[i * 4 + 2] = (Math.random() - 0.5) * 0.9;
+    seeds[i * 4 + 3] = species;
+    const col = species < 0.5 ? hCol : cCol;
+    colors[i * 3] = col.r;
+    colors[i * 3 + 1] = col.g;
+    colors[i * 3 + 2] = col.b;
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  const softMap = createSoftDiscTexture(64);
+  const pointsMat = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 0.11,
+    map: softMap,
+    transparent: true,
+    opacity: 0.55,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true,
+    vertexColors: true,
+  });
+  const points = new THREE.Points(geo, pointsMat);
+  points.name = 'CollapseFocusCondensate';
+  points.renderOrder = 5;
+  group.add(points);
+
+  const coreGeo = new THREE.SphereGeometry(0.08, 16, 12);
+  const coreMat = new THREE.MeshBasicMaterial({
+    color: 0xfff4d0,
+    transparent: true,
+    opacity: 0.85,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  const core = new THREE.Mesh(coreGeo, coreMat);
+  core.name = 'CollapseFocusCore';
+  core.renderOrder = 6;
+  group.add(core);
+
+  const pinLight = new THREE.PointLight(0xffe8b0, 0, 4.5, 2);
+  pinLight.name = 'CollapseFocusLight';
+  group.add(pinLight);
+
+  group.userData = {
+    fidelity: BUBBLE_TORUS_FIDELITY,
+    source: BUBBLE_TORUS_SOURCE,
+    seeds,
+    softMap,
+    time: 0,
+  };
+
+  const update = (morph = {}, deltaTime = 0.016, jetGate = 0) => {
+    const focus = Math.min(1, Math.max(0, Number(morph.focusStrength) || 0));
+    const cond = Math.min(1, Math.max(0, Number(morph.condensation) || 0));
+    const hint = Math.min(1, Math.max(0, Number(morph.schwingerHint) || 0));
+    const pinY = Number.isFinite(morph.pinAxisY) ? morph.pinAxisY : 0.4;
+    const jetBoost = Math.min(1, Math.max(0, Number(morph.jetBirthBoost) || 0));
+    const jg = Math.min(1, Math.max(0, Number(jetGate) || 0));
+    const strength = Math.max(focus, jg * 0.55 + jetBoost * 0.45);
+    group.visible = strength > 0.04;
+    if (!group.visible) {
+      pinLight.intensity = 0;
+      return;
+    }
+    group.userData.time += deltaTime * (1.4 + strength * 2.8);
+    const t = group.userData.time;
+    const pos = geo.attributes.position.array;
+    const col = geo.attributes.color.array;
+    // Core rides pin; after puncture drifts toward lattice (−Y) into jet birth
+    const coreY = pinY - jg * 0.55 - jetBoost * 0.35;
+    core.position.set(0, coreY, 0);
+    pinLight.position.set(0, coreY, 0);
+    const coreScale = 0.55 + strength * 1.4 + hint * 0.85;
+    core.scale.setScalar(coreScale);
+    coreMat.opacity = 0.35 + strength * 0.5 + hint * 0.25;
+    // Exploratory Schwinger hint: brief whitening + light kick only
+    if (hint > 0.15) {
+      coreMat.color.setRGB(1, 0.96 + hint * 0.04, 0.85 + hint * 0.15);
+      pinLight.color.setRGB(1, 0.92, 0.78 + hint * 0.2);
+    } else {
+      coreMat.color.setHex(0xfff4d0);
+      pinLight.color.setHex(0xffe8b0);
+    }
+    pinLight.intensity = 0.35 + strength * 1.8 + hint * 1.4 + jg * 0.6;
+    pinLight.distance = 3.2 + strength * 2.5;
+
+    for (let i = 0; i < n; i += 1) {
+      const r0 = seeds[i * 4];
+      const az = seeds[i * 4 + 1] + t * (0.6 + (i % 5) * 0.08);
+      const yBias = seeds[i * 4 + 2];
+      const species = seeds[i * 4 + 3];
+      const inward = 1 - cond * 0.78 - strength * 0.15;
+      const r = r0 * Math.max(0.04, inward) * (0.55 + 0.45 * (1 - jg));
+      const y = coreY + yBias * (0.55 - cond * 0.35) * (1 - strength * 0.25)
+        + Math.sin(t * 3.2 + i) * 0.03 * (1 - cond);
+      pos[i * 3] = r * Math.cos(az);
+      pos[i * 3 + 1] = y;
+      pos[i * 3 + 2] = r * Math.sin(az);
+      const base = species < 0.5 ? hCol : cCol;
+      const hot = 0.55 + strength * 0.45 + hint * 0.35;
+      col[i * 3] = Math.min(1, base.r * hot + hint * 0.25);
+      col[i * 3 + 1] = Math.min(1, base.g * (0.7 + hot * 0.3) + hint * 0.2);
+      col[i * 3 + 2] = Math.min(1, base.b * (0.65 + hot * 0.35) + hint * 0.15);
+    }
+    geo.attributes.position.needsUpdate = true;
+    geo.attributes.color.needsUpdate = true;
+    pointsMat.opacity = 0.18 + strength * 0.55 + cond * 0.15;
+    pointsMat.size = 0.07 + strength * 0.12 + cond * 0.04;
+  };
+
+  const dispose = () => {
+    geo.dispose();
+    pointsMat.dispose();
+    if (softMap?.dispose) softMap.dispose();
+    coreGeo.dispose();
+    coreMat.dispose();
+  };
+
+  return { group, update, dispose };
 }
 
 /**

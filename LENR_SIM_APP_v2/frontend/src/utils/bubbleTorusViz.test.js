@@ -9,11 +9,14 @@ import {
   createShedPlasmaDebrisGroup,
   BUBBLE_FOLD_IN_CHIP,
   CLIFFORD_TORUS_ASPECT,
+  COLLAPSE_FOCUS_CHIP,
   FOLD_IN_TORUS_MAJOR,
   FOLD_IN_TORUS_TUBE,
+  SCHWINGER_HINT_CHIP,
   applySphereFoldInDimple,
   computeBubbleTorusMorph,
   computeShedRiseSample,
+  createCollapseFocusPinGroup,
   createTorusPlasmaMaterial,
   ensureSphereRestPositions,
   applyBubbleTemperatureTint,
@@ -82,8 +85,29 @@ describe('bubbleTorusViz (presentation materials)', () => {
     const late = computeBubbleTorusMorph(0.9);
     expect(late.torusBirth).toBeGreaterThan(0.95);
     expect(late.cliffordAspect).toBeCloseTo(Math.SQRT2, 5);
+    expect(late.focusStrength).toBeGreaterThan(0.7);
+    expect(late.condensation).toBeGreaterThan(0.5);
+    expect(late.pinAxisY).toBeLessThan(prePuncture.pinAxisY);
+    expect(late.schwingerHint).toBeGreaterThan(0.3);
+    expect(late.jetBirthBoost).toBeGreaterThan(0.4);
     expect(BUBBLE_FOLD_IN_CHIP.toLowerCase()).toContain('puncture');
+    expect(COLLAPSE_FOCUS_CHIP.toLowerCase()).toContain('pin focus');
+    expect(SCHWINGER_HINT_CHIP.toLowerCase()).toContain('not proved');
     expect(FOLD_IN_TORUS_MAJOR / FOLD_IN_TORUS_TUBE).toBeCloseTo(CLIFFORD_TORUS_ASPECT, 5);
+  });
+
+  test('createCollapseFocusPinGroup condenses toward pin and stays schematic', () => {
+    const pin = createCollapseFocusPinGroup({ count: 48 });
+    expect(pin.group.name).toBe('CollapseFocusPin');
+    expect(pin.group.userData.fidelity).toBe('schematic');
+    const morph = computeBubbleTorusMorph(0.6);
+    pin.update(morph, 0.016, 0.2);
+    expect(pin.group.visible).toBe(true);
+    const core = pin.group.getObjectByName('CollapseFocusCore');
+    expect(core.position.y).toBeLessThan(0.4);
+    pin.update({}, 0.016, 0);
+    expect(pin.group.visible).toBe(false);
+    pin.dispose();
   });
 
   test('applySphereFoldInDimple caves rear +Y toward lattice (−Y)', () => {

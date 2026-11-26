@@ -112,10 +112,15 @@ import {
   createInnerLayerMaterial,
   BUBBLE_FOLD_IN_CHIP,
   BUBBLE_FOLD_IN_CHIP_TOOLTIP,
+  COLLAPSE_FOCUS_CHIP,
+  COLLAPSE_FOCUS_CHIP_TOOLTIP,
   FOLD_IN_TORUS_MAJOR,
   FOLD_IN_TORUS_TUBE,
+  SCHWINGER_HINT_CHIP,
+  SCHWINGER_HINT_CHIP_TOOLTIP,
   applySphereFoldInDimple,
   computeBubbleTorusMorph,
+  createCollapseFocusPinGroup,
   createJetMaterial,
   createShedPlasmaDebrisGroup,
   createTorusFilamentMaterial,
@@ -1110,6 +1115,15 @@ const UnifiedBubbleLatticeVisualization = ({
     jet.renderOrder = 3;
     jet.userData = { baseRadius: 0.32, baseHeight: 3.8 };
     bubbleGroup.add(jet);
+
+    // Dimple pin = collapse focus (H + e/ions condensation → jet birth)
+    const collapseFocus = createCollapseFocusPinGroup({
+      count: 110,
+      hydrogenColor: 0xff6b8a,
+      chargeColor: spectrum?.secondaryHex ?? 0x7ec8ff,
+    });
+    bubbleGroup.add(collapseFocus.group);
+    bubbleGroup.userData.collapseFocusPin = collapseFocus;
 
     // Counter-rotating shed tori + micro-bubbles rise/fade away from lattice
     const shedDebris = createShedPlasmaDebrisGroup({
@@ -3018,6 +3032,9 @@ const UnifiedBubbleLatticeVisualization = ({
       const shedDebrisApi = bubbleGroupRef.current.userData?.shedPlasmaDebris;
       const shedDebrisGroup = shedDebrisApi?.group
         || bubbleGroupRef.current.getObjectByName('ShedPlasmaDebris');
+      const collapseFocusApi = bubbleGroupRef.current.userData?.collapseFocusPin;
+      const collapseFocusGroup = collapseFocusApi?.group
+        || bubbleGroupRef.current.getObjectByName('CollapseFocusPin');
 
       // Phase progress for nucleation storytelling + scene-safe display scale.
       // Prefer timeline segment progress when API data is driving the mesh.
@@ -3077,6 +3094,8 @@ const UnifiedBubbleLatticeVisualization = ({
         if (jet) jet.visible = false;
         if (shedDebrisApi) shedDebrisApi.update(deltaTime, 0, shedUpdateOpts);
         else if (shedDebrisGroup) shedDebrisGroup.visible = false;
+        if (collapseFocusApi) collapseFocusApi.update({}, deltaTime, 0);
+        else if (collapseFocusGroup) collapseFocusGroup.visible = false;
       } else if (phase === 'COLLAPSE' || inTorusWindow) {
         // Fold-in: rear→front dimple → walls meet → puncture → through-hole torus
         const collapseProgress = inTorusWindow ? scrubTorus : phaseProgress;
@@ -3157,19 +3176,30 @@ const UnifiedBubbleLatticeVisualization = ({
         if (jet) {
           jet.visible = showBubble && jetGate > 0.05;
           if (jet.visible) {
-            const jetRadius = jet.userData.baseRadius * (1.1 - jetGate * 0.35);
-            const jetHeight = jet.userData.baseHeight * (0.6 + jetGate * 2.4);
+            const jetBoost = morph.jetBirthBoost || 0;
+            const jetRadius = jet.userData.baseRadius
+              * (1.1 - jetGate * 0.35)
+              * (1 - jetBoost * 0.08);
+            const jetHeight = jet.userData.baseHeight
+              * (0.6 + jetGate * 2.4 + jetBoost * 0.35);
             jet.scale.set(
               jetRadius / jet.userData.baseRadius,
               jetHeight / jet.userData.baseHeight,
               jetRadius / jet.userData.baseRadius,
             );
-            jet.material.opacity = 0.14 + jetGate * 0.36;
+            jet.material.opacity = 0.14 + jetGate * 0.36 + morph.focusStrength * 0.08;
             if (jet.material.emissiveIntensity !== undefined) {
-              jet.material.emissiveIntensity = 1.0 + jetGate * 0.95;
+              jet.material.emissiveIntensity = 1.0 + jetGate * 0.95
+                + morph.schwingerHint * 0.45 + jetBoost * 0.25;
             }
             jet.position.set(0, -jetHeight * 0.15, 0);
           }
+        }
+        // Pin focus condensation rides dimple → puncture → jet birth
+        if (collapseFocusApi && showBubble) {
+          collapseFocusApi.update(morph, deltaTime, jetGate);
+        } else if (collapseFocusGroup) {
+          collapseFocusGroup.visible = false;
         }
         if (shedDebrisApi) {
           shedDebrisApi.update(deltaTime, showBubble ? shedProg : 0, shedUpdateOpts);
@@ -3235,6 +3265,24 @@ const UnifiedBubbleLatticeVisualization = ({
           }
           jet.position.set(0, -jetHeight * 0.18, 0);
         }
+        // Focus pin hands off into jet along −Y (exploratory Schwinger hint fades)
+        if (collapseFocusApi && showBubble) {
+          const handoffMorph = computeBubbleTorusMorph(1);
+          collapseFocusApi.update(
+            {
+              ...handoffMorph,
+              focusStrength: Math.max(0, 0.55 * (1 - jetProgress * 0.85)),
+              condensation: Math.max(0, 0.7 * (1 - jetProgress * 0.6)),
+              schwingerHint: Math.max(0, 0.35 * (1 - jetProgress)),
+              pinAxisY: -0.35 - jetProgress * 0.55,
+              jetBirthBoost: 1 - jetProgress * 0.4,
+            },
+            deltaTime,
+            jetProgress,
+          );
+        } else if (collapseFocusGroup) {
+          collapseFocusGroup.visible = false;
+        }
         // Counter-rotating shed: world +Y rise + opacity fade (parentWorldY compensated)
         if (shedDebrisApi) {
           shedDebrisApi.update(deltaTime, showBubble ? shedProg : 0, shedUpdateOpts);
@@ -3246,6 +3294,8 @@ const UnifiedBubbleLatticeVisualization = ({
         if (filament) filament.visible = false;
         if (plasmaCloud) plasmaCloud.visible = false;
         if (jet) jet.visible = false;
+        if (collapseFocusApi) collapseFocusApi.update({}, deltaTime, 0);
+        else if (collapseFocusGroup) collapseFocusGroup.visible = false;
         if (shedDebrisApi) shedDebrisApi.update(deltaTime, 0, shedUpdateOpts);
         else if (shedDebrisGroup) shedDebrisGroup.visible = false;
       }
@@ -5134,6 +5184,30 @@ const UnifiedBubbleLatticeVisualization = ({
                   data-testid="ublv-bubble-fold-in-chip"
                   sx={{
                     bgcolor: 'rgba(100, 70, 90, 0.92)',
+                    color: 'white',
+                    fontSize: '0.58rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title={COLLAPSE_FOCUS_CHIP_TOOLTIP}>
+                <Chip
+                  label={COLLAPSE_FOCUS_CHIP}
+                  size="small"
+                  data-testid="ublv-collapse-focus-chip"
+                  sx={{
+                    bgcolor: 'rgba(120, 55, 75, 0.92)',
+                    color: 'white',
+                    fontSize: '0.58rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title={SCHWINGER_HINT_CHIP_TOOLTIP}>
+                <Chip
+                  label={SCHWINGER_HINT_CHIP}
+                  size="small"
+                  data-testid="ublv-schwinger-hint-chip"
+                  sx={{
+                    bgcolor: 'rgba(90, 70, 40, 0.9)',
                     color: 'white',
                     fontSize: '0.58rem',
                   }}
