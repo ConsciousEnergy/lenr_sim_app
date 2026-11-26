@@ -532,7 +532,9 @@
     }
 
     let lastNow = null;
-    function frame(now) {
+    function frame(_rafTs) {
+      // Use performance.now so capture scripts can seek via a patched clock
+      const now = performance.now();
       if (t0 == null) t0 = now;
       const dt = lastNow == null ? 0.016 : Math.min(0.05, (now - lastNow) / 1000);
       lastNow = now;
