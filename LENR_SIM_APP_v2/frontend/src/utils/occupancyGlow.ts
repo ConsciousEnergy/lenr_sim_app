@@ -37,6 +37,10 @@ function coerceOccupancyArray(
   let sawFinite = false;
   for (let i = 0; i < siteCount; i += 1) {
     const v = raw[i];
+    // Reject null / undefined / blank strings before Number() — Number(null)===0
+    // would falsely accept incomplete masks as engine-bound (CodeRabbit #528).
+    if (v == null) return null;
+    if (typeof v === 'string' && v.trim() === '') return null;
     if (typeof v === 'boolean') {
       out[i] = v;
       sawFinite = true;
@@ -135,10 +139,10 @@ export function occupancyGlowRgb(engineBound: boolean): {
   intensity: number;
 } {
   if (engineBound) {
-    return { r: 0.35, g: 0.95, b: 0.85, intensity: 0.42 };
+    return { r: 0.35, g: 0.95, b: 0.85, intensity: 0.28 };
   }
   // Schematic: cooler, dimmer — still readable on dark canvas
-  return { r: 0.45, g: 0.75, b: 1.0, intensity: 0.28 };
+  return { r: 0.45, g: 0.75, b: 1.0, intensity: 0.18 };
 }
 
 /**
@@ -146,5 +150,5 @@ export function occupancyGlowRgb(engineBound: boolean): {
  * does not look "dead"; occupied sites lift intensity (Diadon HSE).
  */
 export function occupancyGlowSiteStrength(occupied: boolean): number {
-  return occupied ? 0.72 : 0.22;
+  return occupied ? 0.58 : 0.16;
 }

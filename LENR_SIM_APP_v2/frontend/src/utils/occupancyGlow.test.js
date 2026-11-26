@@ -47,6 +47,19 @@ describe('occupancyGlow', () => {
     expect(extractEngineSiteOccupancy({}, 4)).toBeNull();
   });
 
+  test('rejects null / blank occupancy entries (schematic fallback)', () => {
+    expect(extractEngineSiteOccupancy({ site_occupancy: [null, null] }, 2)).toBeNull();
+    expect(extractEngineSiteOccupancy({ site_occupancy: ['', 1] }, 2)).toBeNull();
+    const plan = resolveOccupancyGlowPlan({
+      siteCount: 2,
+      loadingRatio: 0.9,
+      seed: 1,
+      simulationData: { site_occupancy: [null, null] },
+    });
+    expect(plan.engineBound).toBe(false);
+    expect(plan.fidelity).toBe(OCCUPANCY_GLOW_SCHEMATIC_FIDELITY);
+  });
+
   test('glow RGB is brighter when engine-bound', () => {
     const eng = occupancyGlowRgb(true);
     const sch = occupancyGlowRgb(false);
