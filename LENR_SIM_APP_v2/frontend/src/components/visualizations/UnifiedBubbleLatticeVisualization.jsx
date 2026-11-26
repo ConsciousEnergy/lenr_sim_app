@@ -103,6 +103,8 @@ import {
   createSoftPointsMaterial,
 } from '../../utils/waveParticleViz';
 import {
+  DOUBLE_LAYER_WIRE_OPACITY_COLLAPSE,
+  DOUBLE_LAYER_WIRE_OPACITY_EXPANSION,
   applyBubbleTemperatureTint,
   createBubbleGasMaterial,
   createBubbleTorusGeometries,
@@ -113,6 +115,11 @@ import {
   getLatticeBoundBubbleY,
   temperatureToBubbleTint,
 } from '../../utils/bubbleTorusViz';
+import {
+  SHEATH_SURFACE_FLOW_CHIP,
+  createSheathSurfaceFlowGroup,
+  updateSheathSurfaceFlow,
+} from '../../utils/bubbleSheathSurfaceFlow';
 import {
   ElectronMigrationCloud,
   buildPhononStandingWaveDisplacements,
@@ -487,6 +494,8 @@ const UnifiedBubbleLatticeVisualization = ({
   // Visualization toggles
   const [showLattice, setShowLattice] = useState(true);
   const [showBubble, setShowBubble] = useState(true);
+  /** Optional sheath tangential Points/ribbons — OFF default; not measured bubble spin. */
+  const [showSheathSurfaceFlow, setShowSheathSurfaceFlow] = useState(false);
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
   // Schematic phonon jitter + e⁻ soft-flow — dedicated layer toggles
@@ -954,15 +963,15 @@ const UnifiedBubbleLatticeVisualization = ({
     bubbleGroup.position.set(0, initialY, 0);
     const geos = createBubbleTorusGeometries();
     
-    // Interior gas volume — clearcoat glass-like, kept translucent so shells read
-    const bubbleMaterial = createBubbleGasMaterial({ opacity: 0.2 });
+    // Soft translucent gas membrane — primary bubble fill (BDS-504: not wireframe)
+    const bubbleMaterial = createBubbleGasMaterial({ opacity: 0.32 });
     const bubble = new THREE.Mesh(geos.gas, bubbleMaterial);
     bubble.name = 'MainBubble';
     bubble.renderOrder = 1;
     bubble.userData = { 
       geometryType: 'sphere', // 'sphere', 'torus', 'jet'
       baseGeometry: geos.gas,
-      baseOpacity: 0.2,
+      baseOpacity: 0.32,
     };
     bubble.scale.setScalar(initialScale);
     bubbleGroup.add(bubble);
@@ -987,21 +996,21 @@ const UnifiedBubbleLatticeVisualization = ({
     jet.userData = { baseRadius: 0.28, baseHeight: 3.6 };
     bubbleGroup.add(jet);
     
-    // Ionic double-layer shell (outer) — primary bubble visual
-    const doubleLayer = new THREE.Mesh(geos.doubleLayer, createDoubleLayerMaterial({ opacity: 0.38 }));
+    // Ionic double-layer membrane (outer) — primary readable bubble silhouette
+    const doubleLayer = new THREE.Mesh(geos.doubleLayer, createDoubleLayerMaterial({ opacity: 0.52 }));
     doubleLayer.name = 'DoubleLayer';
     doubleLayer.renderOrder = 2;
     doubleLayer.scale.setScalar(initialScale);
-    doubleLayer.userData = { baseOpacity: 0.38 };
+    doubleLayer.userData = { baseOpacity: 0.52 };
     bubbleGroup.add(doubleLayer);
 
-    // Subtle wire rim for silhouette readability
+    // Faint wire rim only — never primary (was boosted to 0.75 → cage look)
     const doubleLayerWire = new THREE.Mesh(
       geos.doubleLayerWire,
       new THREE.MeshBasicMaterial({
         color: 0xaaffff,
         transparent: true,
-        opacity: 0.28,
+        opacity: DOUBLE_LAYER_WIRE_OPACITY_EXPANSION,
         wireframe: true,
         depthWrite: false,
       }),
@@ -1012,12 +1021,17 @@ const UnifiedBubbleLatticeVisualization = ({
     bubbleGroup.add(doubleLayerWire);
     
     // Inner charge layer
-    const innerLayer = new THREE.Mesh(geos.innerLayer, createInnerLayerMaterial({ opacity: 0.26 }));
+    const innerLayer = new THREE.Mesh(geos.innerLayer, createInnerLayerMaterial({ opacity: 0.34 }));
     innerLayer.name = 'InnerLayer';
     innerLayer.renderOrder = 2;
     innerLayer.scale.setScalar(initialScale);
-    innerLayer.userData = { baseOpacity: 0.26 };
+    innerLayer.userData = { baseOpacity: 0.34 };
     bubbleGroup.add(innerLayer);
+
+    // Optional sheath surface-flow Points/ribbons — OFF until Layers toggle
+    const sheathFlow = createSheathSurfaceFlowGroup();
+    sheathFlow.visible = false;
+    bubbleGroup.add(sheathFlow);
 
     // Soft local light so clearcoat shells catch highlights (presentation)
     const bubbleLight = new THREE.PointLight(0xb8e8ff, 0.85, 10, 2);
@@ -2963,7 +2977,11 @@ const UnifiedBubbleLatticeVisualization = ({
           sw * (1 + pinchAmt * 0.18),
           sw * (1 - pinchAmt * 0.28) / surfMod,
         );
-        doubleLayerWire.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 0.75 : 0.5;
+        // Keep wire faint — membrane carries the bubble (BDS-504)
+        doubleLayerWire.material.opacity =
+          phase === 'COLLAPSE' || phase === 'MINIMUM'
+            ? DOUBLE_LAYER_WIRE_OPACITY_COLLAPSE
+            : DOUBLE_LAYER_WIRE_OPACITY_EXPANSION;
         doubleLayerWire.visible = showBubble && phase !== 'MINIMUM';
       }
       if (innerLayer) {
@@ -2973,9 +2991,20 @@ const UnifiedBubbleLatticeVisualization = ({
           si * (1 + pinchAmt * 0.12),
           si * (1 - pinchAmt * 0.22),
         );
-        const base = innerLayer.userData.baseOpacity ?? 0.22;
-        innerLayer.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? base + 0.15 : base;
+        const base = innerLayer.userData.baseOpacity ?? 0.34;
+        innerLayer.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? base + 0.12 : base;
         innerLayer.visible = showBubble;
+      }
+
+      // Schematic sheath surface flow (ionic DL / MHD peer motif) — not measured bubble spin
+      const sheathFlow = bubbleGroupRef.current.getObjectByName('SheathSurfaceFlow');
+      if (sheathFlow) {
+        updateSheathSurfaceFlow(sheathFlow, {
+          displayScale,
+          delta: deltaTime,
+          visible: showBubble && showSheathSurfaceFlow,
+          pinchAmt,
+        });
       }
       
       // Update pressure rings — Mach cue from collapse_results.peak_mach when present
@@ -3701,7 +3730,7 @@ const UnifiedBubbleLatticeVisualization = ({
   }, [
     frequency, initialBubbleRadius, simulationData, setUsingAPIData,
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
-    showBubble, showProtons, showFieldLines, showVortices, showLattice, showPhonon, showElectronMig,
+    showBubble, showSheathSurfaceFlow, showProtons, showFieldLines, showVortices, showLattice, showPhonon, showElectronMig,
     showCollapseRibbon,
     showCasimir, showRydberg, showHalo,
     latticeSpacingVisUnits, hostMeltMeta, loadingRatio, tickPhononStandingWaves,
@@ -4013,6 +4042,15 @@ const UnifiedBubbleLatticeVisualization = ({
             if (!showBubble) child.visible = false;
             return;
           }
+          // Sheath surface flow: OFF-default Layers toggle; not measured bubble spin
+          if (
+            child.name === 'SheathSurfaceFlow'
+            || child.name === 'SheathSurfaceFlowPoints'
+            || (typeof child.name === 'string' && child.name.startsWith('SheathSurfaceFlowRibbon'))
+          ) {
+            child.visible = showBubble && showSheathSurfaceFlow;
+            return;
+          }
           if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
             child.visible = showBubble;
           }
@@ -4126,7 +4164,7 @@ const UnifiedBubbleLatticeVisualization = ({
     const timeoutId = setTimeout(updateVisibility, 100);
     
     return () => clearTimeout(timeoutId);
-  }, [showLattice, showBubble, showProtons, showFieldLines, showElectronMig, showVortices, showBoundaryPlane, showCasimir, showRydberg, showHalo]);
+  }, [showLattice, showBubble, showSheathSurfaceFlow, showProtons, showFieldLines, showElectronMig, showVortices, showBoundaryPlane, showCasimir, showRydberg, showHalo]);
 
   // Camera controls
   const resetCameraToPreset = useCallback(() => {
@@ -4286,8 +4324,24 @@ const UnifiedBubbleLatticeVisualization = ({
                   <FormControlLabel
                     control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" data-testid="ublv-layer-bubble" />}
                     label={
-                      <Tooltip title="Ionic double-layer sheath + brief torus/jet flash + mild pinch/surface-mod at collapse (hydro schematic). Torus/jet/pinch die when this layer is off. Not Benjamin–Feir proof; not nuclear burn.">
+                      <Tooltip title="Soft translucent ionic double-layer membrane + brief torus/jet flash + mild pinch/surface-mod at collapse (hydro schematic). Torus/jet/pinch die when this layer is off. Not Benjamin–Feir proof; not nuclear burn; not measured bubble spin.">
                         <Typography variant="caption" color="white">Double-layer / torus (ionic)</Typography>
+                      </Tooltip>
+                    }
+                  />
+                  <FormControlLabel
+                    control={(
+                      <Switch
+                        checked={showSheathSurfaceFlow}
+                        onChange={(e) => setShowSheathSurfaceFlow(e.target.checked)}
+                        size="small"
+                        color="info"
+                        data-testid="ublv-layer-sheath-surface-flow"
+                      />
+                    )}
+                    label={
+                      <Tooltip title={`${SHEATH_SURFACE_FLOW_CHIP}. Tangential Points/ribbons on the ionic sheath — DL / MHD peer motif only. Not macroscopic bubble spin; EQ-OPEN untouched.`}>
+                        <Typography variant="caption" color="white">Sheath surface flow (schematic)</Typography>
                       </Tooltip>
                     }
                   />
@@ -4704,6 +4758,20 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
+              {showBubble && showSheathSurfaceFlow && (
+                <Tooltip title="Tangential additive Points/ribbons on the ionic sheath — DL / MHD peer motif. Not measured macroscopic bubble spin; not bulk kinetic spin; EQ-OPEN untouched.">
+                  <Chip
+                    label={SHEATH_SURFACE_FLOW_CHIP}
+                    size="small"
+                    data-testid="ublv-sheath-surface-flow-chip"
+                    sx={{
+                      bgcolor: 'rgba(50, 100, 130, 0.92)',
+                      color: 'white',
+                      fontSize: '0.6rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
               {collapseRibbonMeta && showCollapseRibbon && (
                 <Tooltip title={`Engine collapse_trajectory (${collapseRibbonMeta.source}). EMP Rayleigh–Plesset R(t) — not CFD / not nuclear.`}>
                   <Chip
