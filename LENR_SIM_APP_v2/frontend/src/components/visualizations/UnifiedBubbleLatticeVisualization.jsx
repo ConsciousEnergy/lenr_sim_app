@@ -83,6 +83,14 @@ import {
 } from '../../utils/latticeColorModes';
 import { resolveSolutePaletteEntry } from '../../utils/lenrParticlePalette';
 import {
+  buildCollapseRibbonPositions,
+  collapseRibbonPlayheadIndex,
+} from '../../utils/collapseTrajectoryRibbon';
+import {
+  occupancyGlowRgb,
+  resolveOccupancyGlowPlan,
+} from '../../utils/occupancyGlow';
+import {
   ProtonWaveCompanion,
   enhancementGlowFactor,
   createSoftDiscTexture,
@@ -496,6 +504,12 @@ const UnifiedBubbleLatticeVisualization = ({
   useEffect(() => {
     latticeColorModeRef.current = normalizeLatticeColorMode(latticeColorMode);
   }, [latticeColorMode]);
+  /** Collapse ODE ribbon + VIZ-08 occupancy glow (engine when exported). */
+  const [showCollapseRibbon, setShowCollapseRibbon] = useState(true);
+  const [showOccupancyGlow, setShowOccupancyGlow] = useState(true);
+  const [occupancyGlowMeta, setOccupancyGlowMeta] = useState(null);
+  const [collapseRibbonMeta, setCollapseRibbonMeta] = useState(null);
+  const collapseRibbonMetaRef = useRef(null);
   // First-visit defaults: legend / layers / Local Calc / Enhancement all minimized.
   const [legendCollapsed, setLegendCollapsed] = useState(
     UBLV_OVERLAY_CHROME_DEFAULTS.legendCollapsed
@@ -1041,7 +1055,7 @@ const UnifiedBubbleLatticeVisualization = ({
     histLine.name = 'RadiusHistoryTrail';
     histLine.frustumCulled = false;
     bubbleGroup.add(histLine);
-    
+
     scene.add(bubbleGroup);
     bubbleGroupRef.current = bubbleGroup;
     
@@ -2222,6 +2236,202 @@ const UnifiedBubbleLatticeVisualization = ({
     }
   }, [latticeColorMode, showLattice, physicsData?.temperature]);
 
+  // Rebuild collapse ODE ribbon on scene root (not bubble-scaled) when trajectory present.
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    let group = scene.getObjectByName('CollapseRibbonGroup');
+    if (group) {
+      scene.remove(group);
+      group.traverse((obj) => {
+        obj.geometry?.dispose?.();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose?.());
+          else obj.material.dispose?.();
+        }
+      });
+      group = null;
+    }
+    const built = buildCollapseRibbonPositions({
+      trajectory: simulationData?.collapse_trajectory,
+      initialRadiusUm: initialBubbleRadius,
+      nestY: PHYSICS_CONFIG.LATTICE_Y_OFFSET + 0.35,
+    });
+    if (!built || !showCollapseRibbon || !showBubble) {
+      setCollapseRibbonMeta(null);
+      collapseRibbonMetaRef.current = null;
+      return undefined;
+    }
+    group = new THREE.Group();
+    group.name = 'CollapseRibbonGroup';
+    // Fat tube so the ODE path reads at HSE zoom (LineBasic is too thin).
+    const curvePts = [];
+    for (let i = 0; i < built.sampleCount; i += 1) {
+      curvePts.push(new THREE.Vector3(
+        built.positions[i * 3],
+        built.positions[i * 3 + 1],
+        built.positions[i * 3 + 2],
+      ));
+    }
+    const curve = new THREE.CatmullRomCurve3(curvePts);
+    const tubeGeom = new THREE.TubeGeometry(
+      curve,
+      Math.min(160, Math.max(32, built.sampleCount * 2)),
+      0.055,
+      8,
+      false,
+    );
+    const ribbonTube = new THREE.Mesh(
+      tubeGeom,
+      new THREE.MeshBasicMaterial({
+        color: 0xffb84d,
+        transparent: true,
+        opacity: 0.9,
+        depthWrite: false,
+      }),
+    );
+    ribbonTube.name = 'CollapseTrajectoryRibbon';
+    ribbonTube.frustumCulled = false;
+    ribbonTube.userData = {
+      sampleCount: built.sampleCount,
+      minIndex: built.minIndex,
+      source: built.source,
+      fidelity: built.fidelity,
+      positions: built.positions,
+    };
+    group.add(ribbonTube);
+
+    const playhead = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 14, 14),
+      new THREE.MeshBasicMaterial({
+        color: 0xfff3a0,
+        transparent: true,
+        opacity: 1,
+        depthWrite: false,
+      }),
+    );
+    playhead.name = 'CollapseRibbonPlayhead';
+    playhead.position.set(built.positions[0], built.positions[1], built.positions[2]);
+    group.add(playhead);
+
+    const minMark = new THREE.Mesh(
+      new THREE.SphereGeometry(0.14, 14, 14),
+      new THREE.MeshBasicMaterial({
+        color: 0xff5533,
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: false,
+      }),
+    );
+    minMark.name = 'CollapseRibbonMinMark';
+    const mi = built.minIndex;
+    minMark.position.set(
+      built.positions[mi * 3],
+      built.positions[mi * 3 + 1],
+      built.positions[mi * 3 + 2],
+    );
+    group.add(minMark);
+    scene.add(group);
+
+    const meta = {
+      sampleCount: built.sampleCount,
+      source: built.source,
+      fidelity: built.fidelity,
+    };
+    setCollapseRibbonMeta(meta);
+    collapseRibbonMetaRef.current = meta;
+    if (canvasRef.current?.dataset) {
+      canvasRef.current.dataset.collapseRibbon = built.source;
+    }
+    return () => {
+      scene.remove(group);
+      group.traverse((obj) => {
+        obj.geometry?.dispose?.();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose?.());
+          else obj.material.dispose?.();
+        }
+      });
+    };
+  }, [
+    simulationData?.collapse_trajectory,
+    initialBubbleRadius,
+    showCollapseRibbon,
+    showBubble,
+  ]);
+
+  // VIZ-08 occupancy glow — engine site loading when exported; else schematic + chip.
+  useEffect(() => {
+    const lattice = latticeGroupRef.current;
+    if (!lattice) return;
+    const prev = lattice.getObjectByName('OccupancyGlowHosts');
+    if (prev) {
+      lattice.remove(prev);
+      prev.geometry?.dispose?.();
+      prev.material?.dispose?.();
+    }
+    if (!showLattice || !showOccupancyGlow) {
+      setOccupancyGlowMeta(null);
+      return;
+    }
+    const hostAtoms = lattice.getObjectByName('LatticeHostAtoms');
+    const restSites = hostAtoms?.userData?.restSites;
+    if (!restSites?.length) {
+      setOccupancyGlowMeta(null);
+      return;
+    }
+    const plan = resolveOccupancyGlowPlan({
+      siteCount: restSites.length,
+      loadingRatio,
+      seed: latticeSize * 17 + Math.round(loadingRatio * 1000),
+      simulationData,
+    });
+    setOccupancyGlowMeta(plan);
+    const occupiedSites = restSites.filter((_, i) => plan.occupied[i]);
+    if (!occupiedSites.length) return;
+    const glow = occupancyGlowRgb(plan.engineBound);
+    const geom = new THREE.SphereGeometry(
+      Math.max(0.12, hostAtomRadiusVisUnits * 1.55),
+      14,
+      14,
+    );
+    const mat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(glow.r, glow.g, glow.b),
+      transparent: true,
+      opacity: 0.38 + glow.intensity * 0.35,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const mesh = new THREE.InstancedMesh(geom, mat, occupiedSites.length);
+    mesh.name = 'OccupancyGlowHosts';
+    mesh.frustumCulled = false;
+    const scratch = new THREE.Object3D();
+    occupiedSites.forEach((site, index) => {
+      scratch.position.set(site.x, site.y, site.z);
+      scratch.scale.setScalar(1.15);
+      scratch.updateMatrix();
+      mesh.setMatrixAt(index, scratch.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.userData = {
+      fidelity: plan.fidelity,
+      engineBound: plan.engineBound,
+      occupiedCount: plan.occupiedCount,
+      label: plan.label,
+    };
+    lattice.add(mesh);
+    if (canvasRef.current?.dataset) {
+      canvasRef.current.dataset.occupancyGlow = plan.fidelity;
+    }
+  }, [
+    showLattice,
+    showOccupancyGlow,
+    simulationData,
+    loadingRatio,
+    latticeSize,
+    hostAtomRadiusVisUnits,
+  ]);
+
   // Animation update function
   const updateAnimation = useCallback((deltaTime) => {
       try {
@@ -2663,6 +2873,21 @@ const UnifiedBubbleLatticeVisualization = ({
           || sampleSource === 'interpolated'
           ? 0.38
           : 0.18;
+      }
+
+      // Collapse ODE ribbon playhead follows scrub / cycle fraction (scene-rooted)
+      const ribbonGroup = sceneRef.current?.getObjectByName('CollapseRibbonGroup');
+      const ribbon = ribbonGroup?.getObjectByName('CollapseTrajectoryRibbon');
+      const playhead = ribbonGroup?.getObjectByName('CollapseRibbonPlayhead');
+      if (ribbon && playhead) {
+        const count = ribbon.userData?.sampleCount || 0;
+        const arr = ribbon.userData?.positions;
+        const idx = collapseRibbonPlayheadIndex(count, normalizedTime);
+        if (arr && count > 0 && arr.length >= (idx + 1) * 3) {
+          playhead.position.set(arr[idx * 3], arr[idx * 3 + 1], arr[idx * 3 + 2]);
+          playhead.visible = showCollapseRibbon && showBubble;
+        }
+        ribbonGroup.visible = showCollapseRibbon && showBubble;
       }
       
       // ========================================================================
@@ -3326,6 +3551,7 @@ const UnifiedBubbleLatticeVisualization = ({
     frequency, initialBubbleRadius, simulationData, setUsingAPIData,
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
     showBubble, showProtons, showFieldLines, showVortices, showLattice, showPhonon, showElectronMig,
+    showCollapseRibbon,
     showCasimir, showRydberg, showHalo,
     latticeSpacingVisUnits, hostMeltMeta, loadingRatio, tickPhononStandingWaves,
     physicsData.temperature, physicsData.compressionRatio, enhancementBreakdown,
@@ -3953,6 +4179,36 @@ const UnifiedBubbleLatticeVisualization = ({
                     control={<Switch checked={showLegend} onChange={(e) => setShowLegend(e.target.checked)} size="small" sx={{ color: '#88ff88' }} />}
                     label={<Typography variant="caption" color="white">Legend</Typography>}
                   />
+                  <FormControlLabel
+                    control={(
+                      <Switch
+                        checked={showCollapseRibbon}
+                        onChange={(e) => setShowCollapseRibbon(e.target.checked)}
+                        size="small"
+                        data-testid="ublv-layer-collapse-ribbon"
+                      />
+                    )}
+                    label={
+                      <Tooltip title="Engine collapse_trajectory R(t) ribbon (Rayleigh–Plesset ODE path). EMP hydro — not CFD / not nuclear.">
+                        <Typography variant="caption" color="white">Collapse R(t) ribbon (ODE)</Typography>
+                      </Tooltip>
+                    }
+                  />
+                  <FormControlLabel
+                    control={(
+                      <Switch
+                        checked={showOccupancyGlow}
+                        onChange={(e) => setShowOccupancyGlow(e.target.checked)}
+                        size="small"
+                        data-testid="ublv-layer-occupancy-glow"
+                      />
+                    )}
+                    label={
+                      <Tooltip title="Host occupancy glow. Engine site loading when exported; otherwise schematic mask + honesty chip (VIZ-08).">
+                        <Typography variant="caption" color="white">Occupancy glow</Typography>
+                      </Tooltip>
+                    }
+                  />
                   <Box sx={{ mt: 1, px: 0.5 }} data-testid="ublv-lattice-color-mode">
                     <Tooltip title="Host instanceColor mode — mutually exclusive. Species = exclusive Pd/Ni palette; Loading = schematic occupancy; T = temperature_k warm lift; Phonon = contested mode-energy tint. Schematic presentation — not QM orbitals.">
                       <Typography variant="caption" color="rgba(255,255,255,0.75)" sx={{ display: 'block', mb: 0.5 }}>
@@ -4278,6 +4534,40 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
+              {collapseRibbonMeta && showCollapseRibbon && (
+                <Tooltip title={`Engine collapse_trajectory (${collapseRibbonMeta.source}). EMP Rayleigh–Plesset R(t) — not CFD / not nuclear.`}>
+                  <Chip
+                    label={`Collapse R(t) · ${collapseRibbonMeta.sampleCount} samples`}
+                    size="small"
+                    data-testid="ublv-collapse-ribbon-chip"
+                    sx={{
+                      bgcolor: 'rgba(180, 110, 40, 0.9)',
+                      color: 'white',
+                      fontSize: '0.6rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
+              {occupancyGlowMeta && showOccupancyGlow && (
+                <Tooltip title={occupancyGlowMeta.label}>
+                  <Chip
+                    label={
+                      occupancyGlowMeta.engineBound
+                        ? `Occupancy glow · engine (${occupancyGlowMeta.occupiedCount})`
+                        : 'Occupancy glow · schematic'
+                    }
+                    size="small"
+                    data-testid="ublv-occupancy-glow-chip"
+                    sx={{
+                      bgcolor: occupancyGlowMeta.engineBound
+                        ? 'rgba(40, 140, 120, 0.9)'
+                        : 'rgba(70, 90, 140, 0.9)',
+                      color: 'white',
+                      fontSize: '0.6rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
               <Tooltip title={hostMeltMeta.citeNote}>
                 <Chip
                   label={
