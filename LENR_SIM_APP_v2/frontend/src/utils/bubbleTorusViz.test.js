@@ -1,8 +1,11 @@
 import * as THREE from 'three';
 import {
   BUBBLE_TORUS_FIDELITY,
+  DOUBLE_LAYER_WIRE_OPACITY_COLLAPSE,
+  DOUBLE_LAYER_WIRE_OPACITY_EXPANSION,
   temperatureToBubbleTint,
   createBubbleGasMaterial,
+  createDoubleLayerMaterial,
   createTorusPlasmaMaterial,
   applyBubbleTemperatureTint,
   createBubbleTorusGeometries,
@@ -21,13 +24,19 @@ describe('bubbleTorusViz (presentation materials)', () => {
     expect(hot.emissiveIntensity).toBeGreaterThan(cool.emissiveIntensity);
   });
 
-  test('materials are MeshPhysical with transparency', () => {
+  test('membrane materials stay MeshPhysical and readable (not wire-primary)', () => {
     const gas = createBubbleGasMaterial();
+    const shell = createDoubleLayerMaterial();
     const torus = createTorusPlasmaMaterial();
     expect(gas.type).toBe('MeshPhysicalMaterial');
     expect(gas.transparent).toBe(true);
+    expect(gas.opacity).toBeGreaterThanOrEqual(0.28);
+    expect(shell.opacity).toBeGreaterThanOrEqual(0.45);
     expect(torus.emissiveIntensity).toBeGreaterThan(0.5);
+    expect(DOUBLE_LAYER_WIRE_OPACITY_EXPANSION).toBeLessThan(0.15);
+    expect(DOUBLE_LAYER_WIRE_OPACITY_COLLAPSE).toBeLessThan(0.2);
     gas.dispose();
+    shell.dispose();
     torus.dispose();
   });
 
