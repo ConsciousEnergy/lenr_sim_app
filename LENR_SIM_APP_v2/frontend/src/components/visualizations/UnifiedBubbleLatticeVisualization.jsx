@@ -135,6 +135,10 @@ import {
   torusWindowProgress,
 } from '../../utils/plasmaSpectrumViz';
 import {
+  PLASMA_FLUID_LOOK_CHIP,
+  advancePlasmaFluidLook,
+} from '../../utils/plasmaFluidLook';
+import {
   SHEATH_SURFACE_FLOW_CHIP,
   createSheathSurfaceFlowGroup,
   updateSheathSurfaceFlow,
@@ -3032,6 +3036,11 @@ const UnifiedBubbleLatticeVisualization = ({
       const nestWorldY = getBubbleYFromPhase(phase, phaseProgress, displayScale);
       bubbleGroupRef.current.position.y = nestWorldY;
       const shedUpdateOpts = { primarySpin: 1, parentWorldY: nestWorldY };
+      // Schematic fluid look: advective UV scroll on torus / jet / shed maps
+      if (showBubble && (inTorusWindow || phase === 'MINIMUM' || phase === 'REBOUND'
+        || phase === 'COLLAPSE')) {
+        advancePlasmaFluidLook(bubbleGroupRef.current, deltaTime);
+      }
 
       // Determine which geometry to show based on phase
       // Main bubble visibility is controlled by showBubble toggle
@@ -5073,6 +5082,18 @@ const UnifiedBubbleLatticeVisualization = ({
                   data-testid="ublv-shed-debris-chip"
                   sx={{
                     bgcolor: 'rgba(60, 100, 120, 0.9)',
+                    color: 'white',
+                    fontSize: '0.58rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="Procedural noise + soft refraction cue + advective UV scroll on torus / shed / jet. Presentation fluid look only — not continuum CFD / PIC; plasma ≠ fusion.">
+                <Chip
+                  label={PLASMA_FLUID_LOOK_CHIP}
+                  size="small"
+                  data-testid="ublv-plasma-fluid-look-chip"
+                  sx={{
+                    bgcolor: 'rgba(70, 90, 110, 0.92)',
                     color: 'white',
                     fontSize: '0.58rem',
                   }}

@@ -10,6 +10,10 @@
 
 import * as THREE from 'three';
 import { createSoftDiscTexture } from './waveParticleViz';
+import {
+  applyPlasmaFluidLook,
+  disposePlasmaFluidLook,
+} from './plasmaFluidLook';
 
 export const BUBBLE_TORUS_FIDELITY = 'schematic';
 export const BUBBLE_TORUS_SOURCE = 'schematic_visualization';
@@ -161,60 +165,69 @@ export const DOUBLE_LAYER_WIRE_OPACITY_COLLAPSE = 0.12;
 export function createTorusPlasmaMaterial({
   color = 0xff9955,
   opacity = 0.42,
+  fluidLook = true,
 } = {}) {
-  return new THREE.MeshStandardMaterial({
+  const mat = new THREE.MeshStandardMaterial({
     color,
     metalness: 0.02,
-    roughness: 0.82,
+    roughness: 0.72,
     transparent: true,
     opacity,
     depthWrite: false,
     side: THREE.DoubleSide,
     emissive: new THREE.Color(0xff5500),
-    emissiveIntensity: 0.85,
+    emissiveIntensity: 0.95,
     blending: THREE.AdditiveBlending,
   });
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'torus' });
+  return mat;
 }
 
 /** Thin secondary filament for turbulent plasma read (offset tube). */
 export function createTorusFilamentMaterial({
   color = 0xffcc88,
   opacity = 0.32,
+  fluidLook = true,
 } = {}) {
-  return new THREE.MeshStandardMaterial({
+  const mat = new THREE.MeshStandardMaterial({
     color,
     metalness: 0.0,
-    roughness: 0.9,
+    roughness: 0.85,
     transparent: true,
     opacity,
     depthWrite: false,
     side: THREE.DoubleSide,
     emissive: new THREE.Color(0xffaa44),
-    emissiveIntensity: 1.05,
+    emissiveIntensity: 1.1,
     blending: THREE.AdditiveBlending,
   });
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'torus' });
+  return mat;
 }
 
 /**
  * Focused jet remnant — transparent light cone (species-tintable).
- * Additive so lattice reads through; not an opaque glass spike.
+ * Additive so lattice reads through; advective streak map = schematic flow cue.
  */
 export function createJetMaterial({
   color = 0xffee88,
   opacity = 0.32,
+  fluidLook = true,
 } = {}) {
-  return new THREE.MeshStandardMaterial({
+  const mat = new THREE.MeshStandardMaterial({
     color,
     metalness: 0.0,
-    roughness: 0.65,
+    roughness: 0.45,
     transparent: true,
     opacity,
     depthWrite: false,
     side: THREE.DoubleSide,
     emissive: new THREE.Color(0xffcc44),
-    emissiveIntensity: 1.35,
+    emissiveIntensity: 1.45,
     blending: THREE.AdditiveBlending,
   });
+  if (fluidLook) applyPlasmaFluidLook(mat, { kind: 'jet' });
+  return mat;
 }
 
 /**
@@ -362,10 +375,10 @@ export function createBubbleTorusGeometries() {
     doubleLayerWire: new THREE.SphereGeometry(1.135, 32, 20),
     innerLayer: new THREE.SphereGeometry(0.92, 48, 36),
     // Major / tube radii tuned for a readable collapse ring
-    torus: new THREE.TorusGeometry(1.15, 0.38, 32, 96),
-    torusFilament: new THREE.TorusGeometry(1.18, 0.16, 16, 96),
+    torus: new THREE.TorusGeometry(1.15, 0.38, 48, 128),
+    torusFilament: new THREE.TorusGeometry(1.18, 0.16, 24, 112),
     // Open cone reads as transparent light punch into the lattice
-    jet: new THREE.ConeGeometry(0.32, 3.8, 40, 1, true),
+    jet: new THREE.ConeGeometry(0.32, 3.8, 48, 1, true),
   };
 }
 
@@ -484,7 +497,9 @@ export function createShedPlasmaDebrisGroup({
     const mat = createTorusPlasmaMaterial({
       color: i % 2 === 0 ? primaryColor : secondaryColor,
       opacity: 0.42,
+      fluidLook: false,
     });
+    applyPlasmaFluidLook(mat, { kind: 'shed' });
     disposables.push(mat);
     const mesh = new THREE.Mesh(torusGeo, mat);
     mesh.name = `ShedTorus${i}`;
@@ -518,6 +533,8 @@ export function createShedPlasmaDebrisGroup({
     mat.blending = THREE.AdditiveBlending;
     mat.emissive = new THREE.Color(i % 2 === 0 ? secondaryColor : primaryColor);
     mat.emissiveIntensity = 0.65;
+    // Soft refraction cue on micro-bubbles (schematic; not measured index)
+    applyPlasmaFluidLook(mat, { kind: 'shed' });
     disposables.push(mat);
     const mesh = new THREE.Mesh(bubbleGeo, mat);
     mesh.name = `ShedBubble${i}`;
@@ -613,7 +630,10 @@ export function createShedPlasmaDebrisGroup({
     while (group.children.length) {
       group.remove(group.children[0]);
     }
-    disposables.forEach((item) => item.dispose?.());
+    disposables.forEach((item) => {
+      disposePlasmaFluidLook(item);
+      item.dispose?.();
+    });
   };
 
   return { group, update, dispose };

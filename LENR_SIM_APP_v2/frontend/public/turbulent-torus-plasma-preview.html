@@ -35,12 +35,13 @@
     <span class="chip alt" id="specChip">Plasma tint · D/Pd/K (schematic)</span>
     <span class="chip" style="background:rgba(90,70,150,0.9)">Schematic maser-like jet · not fusion</span>
     <span class="chip alt">Counter-rotating shed · schematic</span>
+    <span class="chip alt">fluid look · schematic · not CFD</span>
   </div>
   <div id="badge">
     Torus window scrub <b>90.7% → 95.7%</b> → collapses onto maser-like jet → counter-rotating shed rises &amp; fades<br/>
-    Spectrum binds host / solute / electrolyte (Pd·D·K demo). Jet = transparent light.<br/>
+    Spectrum binds host / solute / electrolyte (Pd·D·K demo). Jet = transparent light + advective streaks.<br/>
     Shed: monotonic world +Y rise (lattice below) + opacity fade — no reverse / bounce.<br/>
-    Peer: Flannigan–Suslick optical / EMP chem · plasma ≠ fusion · EQ-OPEN untouched
+    Fluid look: procedural noise / soft refraction / UV advection · schematic · not CFD · plasma ≠ fusion
   </div>
   <script type="importmap">
   {
@@ -104,12 +105,68 @@
     group.position.set(0, -0.25, 0);
     scene.add(group);
 
-    function plasmaMat(color, opacity = 0.4) {
-      return new THREE.MeshStandardMaterial({
-        color, metalness: 0.02, roughness: 0.85, transparent: true, opacity,
+    function hashNoise(x, y, seed) {
+      const n = Math.sin(x * 127.1 + y * 311.7 + seed * 74.7) * 43758.5453;
+      return n - Math.floor(n);
+    }
+    function makeNoiseTex(size, seed, warm, streaky) {
+      const c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      const ctx = c.getContext('2d');
+      const img = ctx.createImageData(size, size);
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const u = x / size, v = y / size;
+          let t = 0, a = 0.5, f = 1;
+          for (let o = 0; o < 4; o++) {
+            const xx = streaky ? u * 10 * f : u * 6 * f;
+            const yy = streaky ? v * 2.2 * f : v * 6 * f;
+            t += a * hashNoise(xx, yy, seed + o);
+            a *= 0.5; f *= 2.05;
+          }
+          t = Math.min(1, Math.max(0, t));
+          const i = (y * size + x) * 4;
+          if (warm) {
+            img.data[i] = 140 + t * 115; img.data[i+1] = 70 + t * 90; img.data[i+2] = 40 + t * 50;
+          } else if (streaky) {
+            img.data[i] = 200 + t * 55; img.data[i+1] = 220 + t * 35; img.data[i+2] = 255;
+          } else {
+            img.data[i] = 60 + t * 90; img.data[i+1] = 140 + t * 100; img.data[i+2] = 180 + t * 75;
+          }
+          img.data[i+3] = 90 + t * 165;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.needsUpdate = true;
+      return tex;
+    }
+    const fluidNoise = makeNoiseTex(96, 3, true, false);
+    const fluidStreak = makeNoiseTex(96, 21, false, true);
+    fluidNoise.repeat.set(3, 1.5);
+    fluidStreak.repeat.set(2, 3);
+    const fluidMats = [];
+
+    function plasmaMat(color, opacity = 0.4, kind = 'torus') {
+      const map = kind === 'jet' ? fluidStreak : fluidNoise;
+      const mat = new THREE.MeshStandardMaterial({
+        color, metalness: 0.02, roughness: kind === 'jet' ? 0.45 : 0.72, transparent: true, opacity,
         depthWrite: false, side: THREE.DoubleSide,
-        emissive: new THREE.Color(color), emissiveIntensity: 0.9,
+        emissive: new THREE.Color(color), emissiveIntensity: kind === 'jet' ? 1.35 : 0.95,
         blending: THREE.AdditiveBlending,
+        map, emissiveMap: map,
+      });
+      mat.userData.fluidScroll = kind === 'jet' ? { u: 0.04, v: 0.22 } : { u: 0.08, v: 0.05 };
+      fluidMats.push(mat);
+      return mat;
+    }
+    function scrollFluid(dt) {
+      fluidMats.forEach((m) => {
+        const s = m.userData.fluidScroll;
+        if (!s || !m.map) return;
+        m.map.offset.x = (m.map.offset.x + s.u * dt) % 1;
+        m.map.offset.y = (m.map.offset.y + s.v * dt) % 1;
       });
     }
 
@@ -140,12 +197,12 @@
     );
     group.add(bubble);
 
-    const torus = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.38, 32, 96), plasmaMat(spectrum.primary, 0.18));
+    const torus = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.38, 48, 128), plasmaMat(spectrum.primary, 0.22, 'torus'));
     torus.rotation.x = Math.PI / 2;
     torus.visible = false;
     group.add(torus);
 
-    const filament = new THREE.Mesh(new THREE.TorusGeometry(1.18, 0.16, 16, 96), plasmaMat(spectrum.secondary, 0.22));
+    const filament = new THREE.Mesh(new THREE.TorusGeometry(1.18, 0.16, 24, 112), plasmaMat(spectrum.secondary, 0.26, 'torus'));
     filament.rotation.x = Math.PI / 2;
     filament.visible = false;
     group.add(filament);
@@ -176,8 +233,8 @@
     group.add(cloud);
 
     const jet = new THREE.Mesh(
-      new THREE.ConeGeometry(0.32, 3.8, 40, 1, true),
-      plasmaMat(spectrum.jet, 0.35),
+      new THREE.ConeGeometry(0.32, 3.8, 48, 1, true),
+      plasmaMat(spectrum.jet, 0.38, 'jet'),
     );
     jet.rotation.x = Math.PI;
     jet.visible = false;
@@ -193,7 +250,7 @@
     const shedBubbleGeo = new THREE.SphereGeometry(0.18, 16, 12);
     const shedItems = [];
     for (let i = 0; i < 3; i++) {
-      const m = new THREE.Mesh(shedTorusGeo, plasmaMat(i % 2 ? spectrum.secondary : spectrum.primary, 0.42));
+      const m = new THREE.Mesh(shedTorusGeo, plasmaMat(i % 2 ? spectrum.secondary : spectrum.primary, 0.42, 'shed'));
       m.rotation.x = Math.PI / 2 + (i - 1) * 0.18;
       m.visible = false;
       m.userData = {
@@ -207,7 +264,7 @@
       shedItems.push(m);
     }
     for (let i = 0; i < 5; i++) {
-      const m = new THREE.Mesh(shedBubbleGeo, plasmaMat(i % 2 ? spectrum.primary : spectrum.secondary, 0.36));
+      const m = new THREE.Mesh(shedBubbleGeo, plasmaMat(i % 2 ? spectrum.primary : spectrum.secondary, 0.36, 'shed'));
       m.visible = false;
       m.userData = {
         kind: 'bubble', azimuth: (i / 5) * Math.PI * 2 + 1.1,
@@ -312,8 +369,12 @@
       cloudMat.size = 0.12 + strength * 0.12;
     }
 
+    let lastNow = null;
     function frame(now) {
       if (t0 == null) t0 = now;
+      const dt = lastNow == null ? 0.016 : Math.min(0.05, (now - lastNow) / 1000);
+      lastNow = now;
+      scrollFluid(dt);
       const elapsed = Math.max(0, (now - t0) / 1000);
       const u = (elapsed % CYCLE) / CYCLE;
       // Map demo cycle onto scrub: dwell longer in 90.7–95.7 for review
