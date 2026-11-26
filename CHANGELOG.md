@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Schematic species colors only — not QM orbitals; honesty locks unchanged.
 
 ### Added
+- **UBLV Tier-2 schematic shells:** soft additive InstancedMesh electron-density
+  shells (opacity ↔ `loading_ratio` / occupancy) + mild bond lift; Layers OFF by
+  default with HUD chip “Schematic · not QM orbitals”. Paper-safe overlay only —
+  not QM/DFT/ab initio orbitals; honesty locks unchanged.
 - **UBLV collapse R(t) ribbon + occupancy glow:** engine `collapse_trajectory`
   ODE path as a faint 3D ribbon (playhead + min-R mark); VIZ-08 occupancy glow
   prefers exported site loading, else schematic mask + honesty chip. Markers
