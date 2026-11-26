@@ -8,21 +8,26 @@
  * - Pick metadata is lattice index only — never a nuclear-proof claim.
  */
 
+import {
+  occupancyTintRgb,
+  resolveLatticeHostInstanceRgb,
+  type LatticeColorMode,
+} from './latticeColorModes';
+import {
+  EXCLUSIVE_HOST_COLORS as PALETTE_EXCLUSIVE_HOST_COLORS,
+  type LenrHostPaletteKey,
+} from './lenrParticlePalette';
+
+export { occupancyTintRgb };
+
 export const DYNAMIC_LATTICE_FIDELITY = 'schematic' as const;
 export const DYNAMIC_LATTICE_CLAIM_TIER = 'speculative_exploratory' as const;
 export const DYNAMIC_LATTICE_BUFFER_USAGE = 'DynamicDrawUsage' as const;
 
-/** Exclusive host palette — one material key → one hex; no Pd/Ni blend. */
-export const EXCLUSIVE_HOST_COLORS = Object.freeze({
-  palladium: 0x8b8b8b,
-  nickel: 0x4682b4,
-  titanium: 0x7f8c8d,
-  copper: 0xb87333,
-  constantan: 0xb87333,
-  lithium: 0xc0c0c0,
-} as const);
+/** Exclusive host palette — re-exported from shared lenrParticlePalette SOT. */
+export const EXCLUSIVE_HOST_COLORS = PALETTE_EXCLUSIVE_HOST_COLORS;
 
-export type ExclusiveHostKey = keyof typeof EXCLUSIVE_HOST_COLORS;
+export type ExclusiveHostKey = LenrHostPaletteKey;
 
 export type ExclusiveHostColor = {
   hostKey: ExclusiveHostKey | 'unknown';
@@ -214,28 +219,10 @@ export function buildLatticeRestSites({
   return sites;
 }
 
-/** Tint host base color when site is schematically occupied (loading). */
-export function occupancyTintRgb(
-  baseHex: number,
-  occupied: boolean,
-): { r: number; g: number; b: number } {
-  const r = ((baseHex >> 16) & 0xff) / 255;
-  const g = ((baseHex >> 8) & 0xff) / 255;
-  const b = (baseHex & 0xff) / 255;
-  if (!occupied) {
-    return { r: r * 0.55, g: g * 0.55, b: b * 0.55 };
-  }
-  // Slight cool lift — schematic loading cue, not quantitative flux.
-  return {
-    r: Math.min(1, r * 0.85 + 0.05),
-    g: Math.min(1, g * 0.95 + 0.12),
-    b: Math.min(1, b * 0.75 + 0.2),
-  };
-}
-
 /**
- * Apply rest matrices (+ optional schematic displacement) and occupancy colors.
+ * Apply rest matrices (+ optional schematic displacement) and mode-driven colors.
  * Duck-typed for InstancedMesh without requiring WebGL in unit tests.
+ * Default colorMode `species` matches Tier-1 HUD; pass `loading` for occupancy tint.
  */
 export function applyDynamicLatticeInstances({
   setMatrixAt,
@@ -245,6 +232,10 @@ export function applyDynamicLatticeInstances({
   sites,
   displacements,
   hostHex,
+  colorMode = 'species',
+  temperatureK = 300,
+  modeEnergies = null,
+  opticalWeight = 0.4,
 }: {
   setMatrixAt: (_index: number, _elements: Float32Array | number[]) => void;
   setColorAt?: (_index: number, _rgb: { r: number; g: number; b: number }) => void;
@@ -254,6 +245,10 @@ export function applyDynamicLatticeInstances({
   /** Optional per-instance xyz displacement (VIZ-09 hook); default rest. */
   displacements?: Array<{ x: number; y: number; z: number } | null> | null;
   hostHex: number;
+  colorMode?: LatticeColorMode | string | null;
+  temperatureK?: number | null;
+  modeEnergies?: Array<number> | Float32Array | null;
+  opticalWeight?: number;
 }): { bufferUsage: typeof DYNAMIC_LATTICE_BUFFER_USAGE; count: number } {
   markMatrixDynamic?.();
   if (setColorAt) markColorDynamic?.();
@@ -272,7 +267,17 @@ export function applyDynamicLatticeInstances({
     scratch[13] = site.y + (d?.y || 0);
     scratch[14] = site.z + (d?.z || 0);
     setMatrixAt(i, scratch.slice());
-    setColorAt?.(i, occupancyTintRgb(hostHex, site.occupied));
+    setColorAt?.(
+      i,
+      resolveLatticeHostInstanceRgb({
+        mode: colorMode,
+        hostHex,
+        occupied: site.occupied,
+        temperatureK,
+        modeEnergy: modeEnergies?.[i] ?? 0,
+        opticalWeight,
+      }),
+    );
   }
 
   return { bufferUsage: DYNAMIC_LATTICE_BUFFER_USAGE, count: sites.length };

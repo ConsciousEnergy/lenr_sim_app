@@ -19,7 +19,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import {
   Box, Typography, Paper, FormGroup, FormControlLabel, Switch,
-  IconButton, Tooltip, Chip, Stack, Collapse
+  IconButton, Tooltip, Chip, Stack, Collapse, ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
@@ -72,10 +72,16 @@ import {
   applyDynamicLatticeInstances,
   buildLatticeRestSites,
   interstitialOffsetFromSite,
-  occupancyTintRgb,
   resolveExclusiveHostColor,
   resolveLatticePick,
 } from '../../utils/dynamicLattice';
+import {
+  LATTICE_COLOR_MODE_META,
+  LATTICE_COLOR_MODES,
+  normalizeLatticeColorMode,
+  resolveLatticeHostInstanceRgb,
+} from '../../utils/latticeColorModes';
+import { resolveSolutePaletteEntry } from '../../utils/lenrParticlePalette';
 import {
   ProtonWaveCompanion,
   enhancementGlowFactor,
@@ -100,7 +106,6 @@ import {
   meltProximityNorm,
   phononJitterAmplitude,
   phononModeMix,
-  phononModeTintRgb,
   waveguideEnvelopeNorm,
 } from '../../utils/phononElectronViz';
 import {
@@ -485,6 +490,12 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showRydberg, setShowRydberg] = useState(false);
   const [showHalo, setShowHalo] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
+  /** Tier-1 mutually exclusive host instanceColor mode (Species default). */
+  const [latticeColorMode, setLatticeColorMode] = useState('species');
+  const latticeColorModeRef = useRef('species');
+  useEffect(() => {
+    latticeColorModeRef.current = normalizeLatticeColorMode(latticeColorMode);
+  }, [latticeColorMode]);
   // First-visit defaults: legend / layers / Local Calc / Enhancement all minimized.
   const [legendCollapsed, setLegendCollapsed] = useState(
     UBLV_OVERLAY_CHROME_DEFAULTS.legendCollapsed
@@ -651,10 +662,9 @@ const UnifiedBubbleLatticeVisualization = ({
       vertexColors: true,
     });
 
-    // Solute beads: match VisualizationLegend LENR swatches (Pd run → D teal; else H green).
+    // Solute beads: shared palette SOT (Pd run → D teal; else H green).
     // Schematic species label only — not isotopic proof / not QM orbitals.
-    const soluteIsDeuterium = hostMaterial === 'palladium';
-    const soluteHex = soluteIsDeuterium ? 0x00ced1 : 0x32cd32;
+    const soluteHex = resolveSolutePaletteEntry(hostMaterial).hex;
     const hydrogenRadius = Math.max(0.06, hostAtomRadiusVisUnits * 0.5);
     const hydrogenGeometry = new THREE.SphereGeometry(hydrogenRadius, 14, 14);
     const hydrogenMaterial = new THREE.MeshPhongMaterial({
@@ -694,6 +704,7 @@ const UnifiedBubbleLatticeVisualization = ({
     applyDynamicLatticeInstances({
       sites: restSites,
       hostHex: hostColor,
+      colorMode: latticeColorModeRef.current,
       markMatrixDynamic: () => {
         hostAtoms.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       },
@@ -2122,16 +2133,18 @@ const UnifiedBubbleLatticeVisualization = ({
       sites: restSites,
       displacements,
       hostHex,
+      colorMode: latticeColorModeRef.current,
+      temperatureK,
+      modeEnergies: modeEnergy,
+      opticalWeight: mix.opticalWeight,
       setMatrixAt: (index, elements) => {
         const m = new THREE.Matrix4();
         m.fromArray(elements);
         hostAtoms.setMatrixAt(index, m);
       },
       setColorAt: hostAtoms.instanceColor
-        ? (index) => {
-          const base = occupancyTintRgb(hostHex, restSites[index]?.occupied);
-          const tinted = phononModeTintRgb(base, modeEnergy[index] || 0, mix.opticalWeight);
-          scratchColor.setRGB(tinted.r, tinted.g, tinted.b);
+        ? (index, rgb) => {
+          scratchColor.setRGB(rgb.r, rgb.g, rgb.b);
           hostAtoms.setColorAt(index, scratchColor);
         }
         : undefined,
@@ -2172,8 +2185,37 @@ const UnifiedBubbleLatticeVisualization = ({
       canvasRef.current.dataset.phononAmp = amp.toFixed(3);
       const meanE = modeEnergy.reduce((s, e) => s + e, 0) / Math.max(modeEnergy.length, 1);
       canvasRef.current.dataset.phononEnergy = meanE.toFixed(3);
+      canvasRef.current.dataset.latticeColorMode = latticeColorModeRef.current;
     }
   }, [showLattice, showPhonon, hostMeltMeta, loadingRatio]);
+
+  // Immediate host recolor when Tier-1 color mode changes (colors only — keep phonon pose).
+  useEffect(() => {
+    if (!showLattice || !latticeGroupRef.current) return;
+    const hostAtoms = latticeGroupRef.current.getObjectByName('LatticeHostAtoms');
+    const restSites = hostAtoms?.userData?.restSites;
+    if (!hostAtoms?.instanceColor || !restSites?.length) return;
+    const scratchColor = new THREE.Color();
+    const hostHex = hostAtoms.userData?.hostHex ?? 0x8b8b8b;
+    const temperatureK = physicsData?.temperature ?? 300;
+    const mode = normalizeLatticeColorMode(latticeColorMode);
+    for (let i = 0; i < restSites.length; i += 1) {
+      const rgb = resolveLatticeHostInstanceRgb({
+        mode,
+        hostHex,
+        occupied: restSites[i]?.occupied,
+        temperatureK,
+        modeEnergy: 0,
+        opticalWeight: 0.4,
+      });
+      scratchColor.setRGB(rgb.r, rgb.g, rgb.b);
+      hostAtoms.setColorAt(i, scratchColor);
+    }
+    hostAtoms.instanceColor.needsUpdate = true;
+    if (canvasRef.current?.dataset) {
+      canvasRef.current.dataset.latticeColorMode = mode;
+    }
+  }, [latticeColorMode, showLattice, physicsData?.temperature]);
 
   // Animation update function
   const updateAnimation = useCallback((deltaTime) => {
@@ -2661,6 +2703,10 @@ const UnifiedBubbleLatticeVisualization = ({
           sites: restSites,
           displacements: null,
           hostHex: hostAtoms.userData?.hostHex ?? 0x8b8b8b,
+          colorMode: latticeColorModeRef.current,
+          temperatureK: temperature,
+          modeEnergies: null,
+          opticalWeight: phononModeMix({ phononFactor: enhancements?.phonon ?? 1 }).opticalWeight,
           setMatrixAt: (index, elements) => {
             const m = new THREE.Matrix4();
             m.fromArray(elements);
@@ -3902,6 +3948,52 @@ const UnifiedBubbleLatticeVisualization = ({
                     control={<Switch checked={showLegend} onChange={(e) => setShowLegend(e.target.checked)} size="small" sx={{ color: '#88ff88' }} />}
                     label={<Typography variant="caption" color="white">Legend</Typography>}
                   />
+                  <Box sx={{ mt: 1, px: 0.5 }} data-testid="ublv-lattice-color-mode">
+                    <Tooltip title="Host instanceColor mode — mutually exclusive. Species = exclusive Pd/Ni palette; Loading = schematic occupancy; T = temperature_k warm lift; Phonon = contested mode-energy tint. Schematic presentation — not QM orbitals.">
+                      <Typography variant="caption" color="rgba(255,255,255,0.75)" sx={{ display: 'block', mb: 0.5 }}>
+                        Lattice color
+                      </Typography>
+                    </Tooltip>
+                    <ToggleButtonGroup
+                      exclusive
+                      size="small"
+                      value={latticeColorMode}
+                      onChange={(_e, next) => {
+                        if (next) setLatticeColorMode(normalizeLatticeColorMode(next));
+                      }}
+                      aria-label="Lattice host color mode"
+                      sx={{
+                        flexWrap: 'wrap',
+                        gap: 0.25,
+                        '& .MuiToggleButton-root': {
+                          color: 'rgba(255,255,255,0.85)',
+                          borderColor: 'rgba(255,255,255,0.25)',
+                          px: 0.75,
+                          py: 0.15,
+                          fontSize: '0.65rem',
+                          textTransform: 'none',
+                          '&.Mui-selected': {
+                            bgcolor: 'rgba(25, 118, 210, 0.55)',
+                            color: 'white',
+                          },
+                        },
+                      }}
+                    >
+                      {LATTICE_COLOR_MODES.map((mode) => (
+                        <ToggleButton
+                          key={mode}
+                          value={mode}
+                          data-testid={`ublv-color-mode-${mode}`}
+                          aria-label={LATTICE_COLOR_MODE_META[mode].honesty}
+                        >
+                          {LATTICE_COLOR_MODE_META[mode].short}
+                        </ToggleButton>
+                      ))}
+                    </ToggleButtonGroup>
+                    <Typography variant="caption" color="rgba(255,255,255,0.55)" sx={{ display: 'block', mt: 0.5, lineHeight: 1.2 }}>
+                      {LATTICE_COLOR_MODE_META[normalizeLatticeColorMode(latticeColorMode)].honesty}
+                    </Typography>
+                  </Box>
                 </FormGroup>
               </Paper>
             </Collapse>
