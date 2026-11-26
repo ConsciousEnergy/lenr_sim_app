@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>UBLV turbulent torus plasma preview (schematic · not fusion)</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #050812; overflow: hidden; font-family: system-ui, sans-serif; }
+    #c { width: 100%; height: 100%; display: block; }
+    #badge {
+      position: absolute; left: 12px; bottom: 12px; color: #cfefff;
+      background: rgba(10,20,40,0.78); padding: 8px 12px; border-radius: 8px;
+      font-size: 12px; max-width: 520px; line-height: 1.4;
+    }
+    #phase {
+      position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      color: #fff; background: rgba(20,40,70,0.85); padding: 6px 14px;
+      border-radius: 16px; font-size: 13px; letter-spacing: 0.04em;
+    }
+    #chips {
+      position: absolute; top: 52px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 90vw;
+    }
+    .chip {
+      background: rgba(120, 60, 140, 0.88); color: #fff; font-size: 11px;
+      padding: 4px 10px; border-radius: 12px;
+    }
+    .chip.alt { background: rgba(80, 90, 130, 0.9); }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="phase">COLLAPSE · scrub 93% · turbulent plasma</div>
+  <div id="chips">
+    <span class="chip">Schematic excited plasma · not fusion</span>
+    <span class="chip alt" id="specChip">Plasma tint · D/Pd/K (schematic)</span>
+  </div>
+  <div id="badge">
+    Torus window scrub <b>90.7% → 95.7%</b> — turbulent rotating gaseous excited plasma<br/>
+    Spectrum binds host / solute / electrolyte (Pd·D·K demo). Jet = transparent light.<br/>
+    Peer: Flannigan–Suslick optical / EMP chem · plasma ≠ fusion · EQ-OPEN untouched
+  </div>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.187.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.187.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    const TORUS_START = 0.907;
+    const TORUS_END = 0.957;
+    // Demo spectrum table (mirrors plasmaSpectrumViz SPECIES_EMISSION_HEX peers)
+    const SPECTRA = {
+      'Pd/D/K': { primary: 0x5ce1ff, secondary: 0xc77dff, jet: 0xb8d4ff, label: 'Plasma tint · D/Pd/K (schematic)' },
+      'Ni/H/Li': { primary: 0xff4d6d, secondary: 0x20b2aa, jet: 0xffc0a8, label: 'Plasma tint · H/Ni/Li (schematic)' },
+      'Ni/H/Na': { primary: 0xff4d6d, secondary: 0xffd166, jet: 0xffe0a0, label: 'Plasma tint · H/Ni/Na (schematic)' },
+    };
+    let spectrumKey = 'Pd/D/K';
+    let spectrum = SPECTRA[spectrumKey];
+
+    const canvas = document.getElementById('c');
+    const phaseEl = document.getElementById('phase');
+    const specChip = document.getElementById('specChip');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setClearColor(0x050812);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.95;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(3.4, 2.2, 4.6);
+    const controls = new OrbitControls(camera, canvas);
+    controls.target.set(0, -0.1, 0);
+    controls.update();
+
+    scene.add(new THREE.HemisphereLight(0x88aacc, 0x2a1810, 0.4));
+    scene.add(new THREE.AmbientLight(0xdde8ff, 0.25));
+    const key = new THREE.DirectionalLight(0xfff5e8, 0.7);
+    key.position.set(4, 6, 3);
+    scene.add(key);
+
+    // Lattice stand-ins
+    const hostMat = new THREE.MeshStandardMaterial({ color: 0x8a8a8a, metalness: 0.7, roughness: 0.35 });
+    const hostGeo = new THREE.SphereGeometry(0.14, 20, 20);
+    for (let x = -1; x <= 1; x++) {
+      for (let z = -1; z <= 1; z++) {
+        const m = new THREE.Mesh(hostGeo, hostMat);
+        m.position.set(x * 0.55, -1.15, z * 0.55);
+        scene.add(m);
+      }
+    }
+
+    const group = new THREE.Group();
+    group.position.set(0, -0.25, 0);
+    scene.add(group);
+
+    function plasmaMat(color, opacity = 0.4) {
+      return new THREE.MeshStandardMaterial({
+        color, metalness: 0.02, roughness: 0.85, transparent: true, opacity,
+        depthWrite: false, side: THREE.DoubleSide,
+        emissive: new THREE.Color(color), emissiveIntensity: 0.9,
+        blending: THREE.AdditiveBlending,
+      });
+    }
+
+    function softDisc(size = 96) {
+      const c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      const ctx = c.getContext('2d');
+      const h = size / 2;
+      const g = ctx.createRadialGradient(h, h, 0, h, h, h);
+      g.addColorStop(0, 'rgba(255,255,255,0.7)');
+      g.addColorStop(0.3, 'rgba(255,255,255,0.3)');
+      g.addColorStop(0.6, 'rgba(255,255,255,0.08)');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, size, size);
+      const tex = new THREE.CanvasTexture(c);
+      tex.needsUpdate = true;
+      return tex;
+    }
+
+    const bubble = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 48, 36),
+      new THREE.MeshPhysicalMaterial({
+        color: 0xb8e8ff, metalness: 0.02, roughness: 0.14, clearcoat: 1,
+        transparent: true, opacity: 0.28, depthWrite: false,
+        emissive: new THREE.Color(0x226688), emissiveIntensity: 0.2,
+      }),
+    );
+    group.add(bubble);
+
+    const torus = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.38, 32, 96), plasmaMat(spectrum.primary, 0.18));
+    torus.rotation.x = Math.PI / 2;
+    torus.visible = false;
+    group.add(torus);
+
+    const filament = new THREE.Mesh(new THREE.TorusGeometry(1.18, 0.16, 16, 96), plasmaMat(spectrum.secondary, 0.22));
+    filament.rotation.x = Math.PI / 2;
+    filament.visible = false;
+    group.add(filament);
+
+    // Soft Points cloud
+    const N = 380;
+    const pos = new Float32Array(N * 3);
+    const col = new Float32Array(N * 3);
+    const seeds = [];
+    for (let i = 0; i < N; i++) {
+      seeds.push({
+        theta: (i / N) * Math.PI * 2,
+        phi: Math.random() * Math.PI * 2,
+        jitter: 0.55 + Math.random() * 0.9,
+        speed: 0.7 + Math.random() * 1.6,
+      });
+    }
+    const cloudGeo = new THREE.BufferGeometry();
+    cloudGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    cloudGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    const cloudMat = new THREE.PointsMaterial({
+      color: 0xffffff, size: 0.18, map: softDisc(96), transparent: true, opacity: 0.48,
+      depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true, sizeAttenuation: true,
+    });
+    const cloud = new THREE.Points(cloudGeo, cloudMat);
+    cloud.rotation.x = Math.PI / 2;
+    cloud.visible = false;
+    group.add(cloud);
+
+    const jet = new THREE.Mesh(
+      new THREE.ConeGeometry(0.32, 3.8, 40, 1, true),
+      plasmaMat(spectrum.jet, 0.35),
+    );
+    jet.rotation.x = Math.PI;
+    jet.visible = false;
+    group.add(jet);
+
+    const glow = new THREE.PointLight(spectrum.primary, 0.75, 12, 2);
+    glow.position.set(0.2, 0.4, 0.8);
+    group.add(glow);
+
+    function applySpectrum() {
+      spectrum = SPECTRA[spectrumKey];
+      torus.material.color.setHex(spectrum.primary);
+      torus.material.emissive.setHex(spectrum.primary);
+      filament.material.color.setHex(spectrum.secondary);
+      filament.material.emissive.setHex(spectrum.secondary);
+      jet.material.color.setHex(spectrum.jet);
+      jet.material.emissive.setHex(spectrum.jet);
+      glow.color.setHex(spectrum.primary);
+      specChip.textContent = spectrum.label;
+    }
+
+    // Cycle keys every ~3 cycles for demo variety
+    let t0 = null;
+    const CYCLE = 10.0;
+    const keys = Object.keys(SPECTRA);
+
+    function updateCloud(t, strength, R = 1.15, tube = 0.42) {
+      const base = new THREE.Color(spectrum.primary);
+      for (let i = 0; i < N; i++) {
+        const s = seeds[i];
+        const theta = s.theta + t * s.speed * 0.85;
+        const phi = s.phi + t * (1.1 + s.speed * 0.4);
+        const turb = 1 + 0.18 * Math.sin(t * 3.1 + i) * strength;
+        const r = tube * s.jitter * turb * (0.75 + 0.35 * strength);
+        pos[i * 3] = (R + r * Math.cos(phi)) * Math.cos(theta);
+        pos[i * 3 + 1] = r * Math.sin(phi) * (0.85 + 0.25 * Math.sin(t * 2.2 + i * 0.07));
+        pos[i * 3 + 2] = (R + r * Math.cos(phi)) * Math.sin(theta);
+        const pulse = 0.55 + 0.45 * Math.sin(t * 4.0 + i * 0.13);
+        col[i * 3] = Math.min(1, base.r * (0.7 + pulse * 0.5));
+        col[i * 3 + 1] = Math.min(1, base.g * (0.55 + pulse * 0.4));
+        col[i * 3 + 2] = Math.min(1, base.b * (0.45 + pulse * 0.55) + 0.1);
+      }
+      cloudGeo.attributes.position.needsUpdate = true;
+      cloudGeo.attributes.color.needsUpdate = true;
+      cloudMat.opacity = 0.16 + strength * 0.4;
+      cloudMat.size = 0.12 + strength * 0.12;
+    }
+
+    function frame(now) {
+      if (t0 == null) t0 = now;
+      const elapsed = Math.max(0, (now - t0) / 1000);
+      const u = (elapsed % CYCLE) / CYCLE;
+      // Map demo cycle onto scrub: dwell longer in 90.7–95.7 for review
+      // 0–0.55 expansion, 0.55–0.82 = torus window (mapped scrub 90.7–95.7), 0.82–1 jet/rebound
+      let scrubPct;
+      let phase;
+
+      bubble.visible = true;
+      torus.visible = false;
+      filament.visible = false;
+      cloud.visible = false;
+      jet.visible = false;
+
+      const cycleIdx = Math.floor(elapsed / CYCLE) % keys.length;
+      if (keys[cycleIdx] !== spectrumKey) {
+        spectrumKey = keys[cycleIdx];
+        applySpectrum();
+      }
+
+      if (u < 0.55) {
+        phase = 'EXPANSION';
+        scrubPct = (u / 0.55) * TORUS_START * 100;
+        const p = u / 0.55;
+        const scale = 0.35 + p * 1.15;
+        bubble.scale.setScalar(scale);
+        bubble.material.opacity = 0.28;
+      } else if (u < 0.82) {
+        phase = 'COLLAPSE';
+        const p = (u - 0.55) / 0.27;
+        scrubPct = (TORUS_START + p * (TORUS_END - TORUS_START)) * 100;
+        const scale = 1.35 * (1 - p * 0.65);
+        bubble.visible = p < 0.55;
+        bubble.scale.setScalar(scale);
+        bubble.material.opacity = 0.28 * (1 - p);
+        torus.visible = true;
+        filament.visible = true;
+        cloud.visible = true;
+        const ts = 1 - p * 0.4;
+        torus.scale.set(ts, 0.7 + (1 - p) * 0.45, ts);
+        filament.scale.set(ts * 1.02, ts * 0.55, ts * 1.02);
+        torus.rotation.z += 0.045;
+        filament.rotation.z -= 0.055;
+        updateCloud(elapsed, 0.45 + p * 0.55);
+        cloud.scale.copy(torus.scale);
+        cloud.rotation.z += 0.03;
+        glow.intensity = 0.6 + p * 0.7;
+        if (p > 0.72) {
+          const jg = (p - 0.72) / 0.28;
+          jet.visible = true;
+          jet.scale.set(1.05 - jg * 0.3, 0.7 + jg * 2.0, 1.05 - jg * 0.3);
+          jet.material.opacity = 0.18 + jg * 0.4;
+          jet.position.y = -0.3;
+        }
+      } else {
+        phase = u < 0.92 ? 'MINIMUM' : 'REBOUND';
+        scrubPct = (TORUS_END + ((u - 0.82) / 0.18) * (1 - TORUS_END)) * 100;
+        const p = (u - 0.82) / 0.18;
+        bubble.visible = p > 0.55;
+        bubble.scale.setScalar(0.4 + Math.max(0, p - 0.55) * 0.8);
+        bubble.material.opacity = 0.28 * Math.min(1, Math.max(0, (p - 0.55) / 0.4));
+        jet.visible = p < 0.85;
+        jet.scale.set(1 - p * 0.3, 1 + p * 1.8, 1 - p * 0.3);
+        jet.material.opacity = 0.2 + (1 - p) * 0.35;
+        jet.position.y = -0.4;
+        if (p < 0.35) {
+          torus.visible = true;
+          filament.visible = true;
+          cloud.visible = true;
+          torus.material.opacity = 0.4 * (1 - p / 0.35);
+          updateCloud(elapsed, 0.4 * (1 - p / 0.35));
+        }
+        glow.intensity = 1.6 * (1 - p * 0.7);
+      }
+
+      phaseEl.textContent = `${phase} · scrub ${scrubPct.toFixed(1)}% · Local Calc (schematic)`;
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    }
+    applySpectrum();
+    requestAnimationFrame(frame);
+
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+  </script>
+</body>
+</html>

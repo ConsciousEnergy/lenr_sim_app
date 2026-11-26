@@ -111,10 +111,22 @@ import {
   createDoubleLayerMaterial,
   createInnerLayerMaterial,
   createJetMaterial,
+  createTorusFilamentMaterial,
+  createTorusPlasmaCloud,
   createTorusPlasmaMaterial,
   getLatticeBoundBubbleY,
   temperatureToBubbleTint,
 } from '../../utils/bubbleTorusViz';
+import {
+  PLASMA_EXCITED_CHIP,
+  PLASMA_EXCITED_CHIP_TOOLTIP,
+  TORUS_SCRUB_END,
+  TORUS_SCRUB_START,
+  applyPlasmaSpectrumTint,
+  jetLightEnvelope,
+  resolveExcitedPlasmaSpectrum,
+  torusWindowProgress,
+} from '../../utils/plasmaSpectrumViz';
 import {
   SHEATH_SURFACE_FLOW_CHIP,
   createSheathSurfaceFlowGroup,
@@ -163,12 +175,12 @@ const PROTON_STATES = {
 // Bubble collapse phases (used for animation timing reference)
 // Canonical order: Expansion → Collapse → Minimum → Rebound → repeat
 // eslint-disable-next-line no-unused-vars
-// Durations mirror PHASE_SCHEDULE (short collapse/min for torus pacing).
+// Durations mirror PHASE_SCHEDULE (torus dwell 90.7–95.7% scrub).
 const _COLLAPSE_PHASES = {
-  EXPANSION: { name: 'Expansion', duration: 0.90 },
-  COLLAPSE: { name: 'Collapse', duration: 0.055 },
+  EXPANSION: { name: 'Expansion', duration: 0.907 },
+  COLLAPSE: { name: 'Collapse', duration: 0.05 },
   MINIMUM: { name: 'Minimum', duration: 0.02 },
-  REBOUND: { name: 'Rebound', duration: 0.025 },
+  REBOUND: { name: 'Rebound', duration: 0.023 },
 };
 
 // UX Time Scale: Slow down the physics animation for user comprehension
@@ -622,8 +634,37 @@ const UnifiedBubbleLatticeVisualization = ({
     initialBubbleRadius = 10.0,
     drivingPressure = 1.5,
     frequency = 20,
-    latticeSize = 4
+    latticeSize = 4,
+    electrolyteFamily = null,
+    electrolyteSpecies = null,
   } = parameters;
+
+  const plasmaSpectrum = useMemo(
+    () => resolveExcitedPlasmaSpectrum({
+      hostMaterial,
+      electrolyteFamily:
+        electrolyteFamily
+        || simulationData?.electrolyte_diagnostics?.electrolyte_family
+        || null,
+      electrolyteSpecies:
+        electrolyteSpecies
+        || simulationData?.electrolyte_diagnostics?.electrolyte_species
+        || null,
+      loadingRatio,
+    }),
+    [
+      hostMaterial,
+      electrolyteFamily,
+      electrolyteSpecies,
+      loadingRatio,
+      simulationData?.electrolyte_diagnostics?.electrolyte_family,
+      simulationData?.electrolyte_diagnostics?.electrolyte_species,
+    ],
+  );
+  const plasmaSpectrumRef = useRef(plasmaSpectrum);
+  useEffect(() => {
+    plasmaSpectrumRef.current = plasmaSpectrum;
+  }, [plasmaSpectrum]);
 
   const materialScale = useMemo(() => getMaterialScale(hostMaterial), [hostMaterial]);
   const palladiumScale = useMemo(() => getMaterialScale('palladium'), []);
@@ -992,8 +1033,12 @@ const UnifiedBubbleLatticeVisualization = ({
     bubble.scale.setScalar(initialScale);
     bubbleGroup.add(bubble);
     
-    // Torus for collapse phase (torus-to-jet) — smoother plasma ring
-    const torusMaterial = createTorusPlasmaMaterial({ opacity: 0.82 });
+    // Torus for late-compression (90.7–95.7% scrub) — turbulent gaseous plasma ring
+    const spectrum = plasmaSpectrumRef.current;
+    const torusMaterial = createTorusPlasmaMaterial({
+      color: spectrum?.primaryHex ?? 0xff9955,
+      opacity: 0.55,
+    });
     const torus = new THREE.Mesh(geos.torus, torusMaterial);
     torus.name = 'TorusFormation';
     torus.visible = false;
@@ -1001,16 +1046,46 @@ const UnifiedBubbleLatticeVisualization = ({
     torus.renderOrder = 3;
     torus.userData = { baseRadius: 1.15, baseTubeRadius: 0.38 };
     bubbleGroup.add(torus);
-    
-    // Focused jet during minimum/rebound
-    const jetMaterial = createJetMaterial({ opacity: 0.88 });
+
+    // Secondary filament — offset tube for turbulent multi-stream read
+    const filament = new THREE.Mesh(
+      geos.torusFilament,
+      createTorusFilamentMaterial({
+        color: spectrum?.secondaryHex ?? 0xffcc88,
+        opacity: 0.42,
+      }),
+    );
+    filament.name = 'TorusPlasmaFilament';
+    filament.visible = false;
+    filament.rotation.x = Math.PI / 2;
+    filament.renderOrder = 3;
+    filament.userData = { baseRadius: 1.18, baseTubeRadius: 0.16 };
+    bubbleGroup.add(filament);
+
+    // Soft Points cloud — rotating gaseous excited plasma (not glass)
+    const plasmaCloud = createTorusPlasmaCloud({
+      count: 360,
+      color: spectrum?.primaryHex ?? 0xff8855,
+      majorRadius: 1.15,
+      tubeRadius: 0.48,
+    });
+    bubbleGroup.add(plasmaCloud.points);
+    bubbleGroup.userData.torusPlasmaCloud = plasmaCloud;
+
+    // Focused jet — transparent light cone into lattice (species-tintable)
+    const jetMaterial = createJetMaterial({
+      color: spectrum?.jetHex ?? 0xffee88,
+      opacity: 0.42,
+    });
     const jet = new THREE.Mesh(geos.jet, jetMaterial);
     jet.name = 'FocusedJet';
     jet.visible = false;
     jet.rotation.x = Math.PI;
     jet.renderOrder = 3;
-    jet.userData = { baseRadius: 0.28, baseHeight: 3.6 };
+    jet.userData = { baseRadius: 0.32, baseHeight: 3.8 };
     bubbleGroup.add(jet);
+
+    if (spectrum) applyPlasmaSpectrumTint(bubbleGroup, spectrum);
     
     // Ionic double-layer membrane (outer) — primary readable bubble silhouette
     const doubleLayer = new THREE.Mesh(geos.doubleLayer, createDoubleLayerMaterial({ opacity: 0.52 }));
@@ -2897,14 +2972,21 @@ const UnifiedBubbleLatticeVisualization = ({
       const doubleLayerWire = bubbleGroupRef.current.getObjectByName('DoubleLayerWire');
       const innerLayer = bubbleGroupRef.current.getObjectByName('InnerLayer');
       
-      // Torus-to-jet formation visualization (always update, visibility controlled by phase)
+      // Torus-to-jet: Diadon window TORUS_SCRUB_START→END (90.7–95.7%) + jet light after
       const torus = bubbleGroupRef.current.getObjectByName('TorusFormation');
+      const filament = bubbleGroupRef.current.getObjectByName('TorusPlasmaFilament');
       const jet = bubbleGroupRef.current.getObjectByName('FocusedJet');
+      const plasmaCloudApi = bubbleGroupRef.current.userData?.torusPlasmaCloud;
+      const plasmaCloud = plasmaCloudApi?.points
+        || bubbleGroupRef.current.getObjectByName('TorusPlasmaCloud');
 
       // Phase progress for nucleation storytelling + scene-safe display scale.
       // Prefer timeline segment progress when API data is driving the mesh.
       const clockForPhase = liveActive ? normalizedTimeRef.current : normalizedTime;
       const phaseProgress = phaseProgressInCycle(clockForPhase);
+      // Explicit scrub-window progress (matches PHASE_SCHEDULE COLLAPSE after 90.7/95.7 align)
+      const scrubTorus = torusWindowProgress(clockForPhase);
+      const inTorusWindow = scrubTorus > 0;
       // While live-streaming, map R/R0 directly so the mesh visibly tracks the
       // WS frames (phase-envelope blending can hide collapse against a stale RAF clock).
       const displayScale = liveActive
@@ -2914,7 +2996,7 @@ const UnifiedBubbleLatticeVisualization = ({
           phase,
           phaseProgress,
         });
-      
+
       // Determine which geometry to show based on phase
       // Main bubble visibility is controlled by showBubble toggle
       if (phase === 'EXPANSION') {
@@ -2929,15 +3011,18 @@ const UnifiedBubbleLatticeVisualization = ({
           bubble.visible = false;
         }
         if (torus) torus.visible = false;
+        if (filament) filament.visible = false;
+        if (plasmaCloud) plasmaCloud.visible = false;
         if (jet) jet.visible = false;
-      } else if (phase === 'COLLAPSE') {
-        // Flash torus morph — COLLAPSE is a tiny visual fraction (ns–µs peer pacing)
-        const collapseProgress = phaseProgress;
-        const torusProgress = Math.min(1, Math.pow(collapseProgress, 0.4) * 2.2);
+      } else if (phase === 'COLLAPSE' || inTorusWindow) {
+        // Turbulent rotating gaseous plasma torus — full 90.7–95.7% scrub dwell
+        const collapseProgress = inTorusWindow ? scrubTorus : phaseProgress;
+        // Soft morph envelope across the whole window (not a brief flash)
+        const torusProgress = Math.min(1, 0.12 + collapseProgress * 0.88);
         
         if (bubble && showBubble) {
-          bubble.visible = torusProgress < 0.45;
-          bubble.scale.setScalar(displayScale * (1 - torusProgress * 0.6));
+          bubble.visible = torusProgress < 0.55;
+          bubble.scale.setScalar(displayScale * (1 - torusProgress * 0.72));
           const baseOpacity = bubble.userData.baseOpacity ?? 0.1;
           bubble.material.opacity = baseOpacity * (1 - torusProgress);
         } else if (bubble) {
@@ -2946,46 +3031,109 @@ const UnifiedBubbleLatticeVisualization = ({
         
         if (torus) {
           // Bound to Double-layer bubble layer toggle (dies when Layers → Bubble off)
-          torus.visible = showBubble && torusProgress > 0.04 && torusProgress < 0.98;
-          const torusRadius = torus.userData.baseRadius * (1 - collapseProgress * 0.65);
-          const tubeRadius = torus.userData.baseTubeRadius * (1 - collapseProgress * 0.75);
+          torus.visible = showBubble && torusProgress > 0.02;
+          const torusRadius = torus.userData.baseRadius * (1 - collapseProgress * 0.42);
+          const tubeRadius = torus.userData.baseTubeRadius * (0.85 - collapseProgress * 0.35);
           const scaleFactor = torusRadius / torus.userData.baseRadius;
           torus.scale.setScalar(scaleFactor);
-          torus.scale.y = tubeRadius / torus.userData.baseTubeRadius;
-          torus.material.opacity = 0.55 + collapseProgress * 0.4;
+          torus.scale.y = Math.max(0.25, tubeRadius / torus.userData.baseTubeRadius);
+          // Turbulent spin about torus axis (gaseous plasma, not glass)
+          torus.rotation.z += deltaTime * (2.8 + collapseProgress * 4.2);
+          // Mesh is a faint guide; soft Points cloud carries the gaseous plasma read
+          torus.material.opacity = 0.12 + collapseProgress * 0.16;
           if (torus.material.emissiveIntensity !== undefined) {
-            torus.material.emissiveIntensity = 0.9 + collapseProgress * 1.4;
+            torus.material.emissiveIntensity = 0.45 + collapseProgress * 0.35;
           }
         }
-        if (jet) jet.visible = false;
+        if (filament) {
+          filament.visible = showBubble && torusProgress > 0.05;
+          const fScale = (torus?.scale.x ?? 1) * (1.02 + 0.04 * Math.sin(clockForPhase * Math.PI * 40));
+          filament.scale.setScalar(fScale);
+          filament.scale.y = (torus?.scale.y ?? 1) * 0.55;
+          filament.rotation.z -= deltaTime * (3.6 + collapseProgress * 5.0);
+          filament.material.opacity = 0.22 + collapseProgress * 0.28;
+        }
+        if (plasmaCloudApi) {
+          plasmaCloud.visible = showBubble;
+          plasmaCloudApi.update(deltaTime, 0.45 + collapseProgress * 0.55);
+          if (plasmaCloud.scale && torus) {
+            plasmaCloud.scale.copy(torus.scale);
+          }
+          plasmaCloud.rotation.x = Math.PI / 2;
+          plasmaCloud.rotation.z += deltaTime * (1.6 + collapseProgress * 2.4);
+        } else if (plasmaCloud) {
+          plasmaCloud.visible = showBubble;
+        }
+        // Late window: begin transparent light jet punch-through
+        const jetGate = jetLightEnvelope({
+          cycleFraction: clockForPhase,
+          phase,
+          phaseProgress,
+        });
+        if (jet) {
+          jet.visible = showBubble && jetGate > 0.05;
+          if (jet.visible) {
+            const jetRadius = jet.userData.baseRadius * (1.1 - jetGate * 0.35);
+            const jetHeight = jet.userData.baseHeight * (0.6 + jetGate * 2.2);
+            jet.scale.set(
+              jetRadius / jet.userData.baseRadius,
+              jetHeight / jet.userData.baseHeight,
+              jetRadius / jet.userData.baseRadius,
+            );
+            jet.material.opacity = 0.14 + jetGate * 0.32;
+            if (jet.material.emissiveIntensity !== undefined) {
+              jet.material.emissiveIntensity = 1.0 + jetGate * 0.8;
+            }
+            jet.position.set(0, -jetHeight * 0.15, 0);
+          }
+        }
       } else if (phase === 'MINIMUM' || phase === 'REBOUND') {
-        // Brief jet flash at min-R; dies with Double-layer off
-        const minStart = phaseSegment('MINIMUM').start;
-        const minWidth = Math.max(phaseSegment('MINIMUM').end - minStart, 1e-12);
-        const jetProgress = phase === 'MINIMUM'
-          ? Math.min(1, phaseProgress * 1.8)
-          : Math.max(0, 1 - (normalizedTime - minStart) / minWidth);
+        // Transparent light jet into lattice; torus fades out of window
+        const jetProgress = jetLightEnvelope({
+          cycleFraction: clockForPhase,
+          phase,
+          phaseProgress,
+        });
         
-        if (bubble) bubble.visible = false; // Always hide bubble during minimum/rebound
+        if (bubble) bubble.visible = false;
         if (torus) {
-          torus.visible = showBubble && phase === 'MINIMUM' && jetProgress < 0.55;
-          torus.material.opacity = 0.8 * (1 - jetProgress);
+          torus.visible = showBubble && phase === 'MINIMUM' && jetProgress < 0.45;
+          torus.material.opacity = 0.4 * (1 - jetProgress);
+          torus.rotation.z += deltaTime * 1.2;
+        }
+        if (filament) {
+          filament.visible = showBubble && phase === 'MINIMUM' && jetProgress < 0.4;
+          filament.material.opacity = 0.3 * (1 - jetProgress);
+          filament.rotation.z -= deltaTime * 1.5;
+        }
+        if (plasmaCloudApi) {
+          const cloudStr = phase === 'MINIMUM' ? Math.max(0, 0.55 * (1 - jetProgress)) : 0;
+          plasmaCloud.visible = showBubble && cloudStr > 0.05;
+          if (plasmaCloud.visible) plasmaCloudApi.update(deltaTime, cloudStr);
+        } else if (plasmaCloud) {
+          plasmaCloud.visible = false;
         }
         
         if (jet) {
-          // Short jet flash only — dies with Double-layer off and after min-R flash
-          jet.visible = showBubble && jetProgress > 0.08 && jetProgress < 0.92;
-          const jetRadius = jet.userData.baseRadius * (1 - jetProgress * 0.4);
-          const jetHeight = jet.userData.baseHeight * (1 + jetProgress * 2.0);
-          jet.scale.set(jetRadius / jet.userData.baseRadius, jetHeight / jet.userData.baseHeight, jetRadius / jet.userData.baseRadius);
-          jet.material.opacity = 0.8 + jetProgress * 0.2;
+          jet.visible = showBubble && jetProgress > 0.05;
+          const jetRadius = jet.userData.baseRadius * (1 - jetProgress * 0.35);
+          const jetHeight = jet.userData.baseHeight * (0.8 + jetProgress * 2.2);
+          jet.scale.set(
+            jetRadius / jet.userData.baseRadius,
+            jetHeight / jet.userData.baseHeight,
+            jetRadius / jet.userData.baseRadius,
+          );
+          // Transparent light — lattice stays readable through the cone
+          jet.material.opacity = 0.14 + jetProgress * 0.3;
           if (jet.material.emissiveIntensity !== undefined) {
-            jet.material.emissiveIntensity = 1.5 + jetProgress * 2.5;
+            jet.material.emissiveIntensity = 1.05 + jetProgress * 0.7;
           }
-          jet.position.set(0, 0, 0);
+          jet.position.set(0, -jetHeight * 0.18, 0);
         }
       } else {
         if (torus) torus.visible = false;
+        if (filament) filament.visible = false;
+        if (plasmaCloud) plasmaCloud.visible = false;
         if (jet) jet.visible = false;
       }
       
@@ -3166,19 +3314,32 @@ const UnifiedBubbleLatticeVisualization = ({
 
       // Temperature tint from engine/API samples (temperature_k / collapse path).
       // local_fallback chip already covers schematic RAF when samples absent.
+      // Membranes only — torus/jet spectrum applied next (species SOT).
       const tint = applyBubbleTemperatureTint(
         bubbleGroupRef.current,
         physicsData.temperature ?? temperature,
       );
+      const spectrum = plasmaSpectrumRef.current;
+      if (spectrum) applyPlasmaSpectrumTint(bubbleGroupRef.current, spectrum);
       const bubbleKey = bubbleGroupRef.current.getObjectByName('BubbleKeyLight');
       if (bubbleKey && tint) {
         bubbleKey.intensity = 0.55 + tint.heatNorm * 1.4;
-        bubbleKey.color.copy(tint.color);
+        // Prefer spectrum primary during torus/jet window so key light matches plasma tint
+        if (spectrum && (phase === 'COLLAPSE' || phase === 'MINIMUM' || phase === 'REBOUND')) {
+          bubbleKey.color.setHex(spectrum.primaryHex);
+          bubbleKey.intensity = 0.7 + tint.heatNorm * 1.2;
+        } else {
+          bubbleKey.color.copy(tint.color);
+        }
       }
       const warmFill = bubbleGroupRef.current.getObjectByName('BubbleWarmFill');
       if (warmFill && tint) {
         warmFill.intensity = 0.25 + tint.heatNorm * 1.1;
-        warmFill.color.copy(tint.emissive);
+        if (spectrum && (phase === 'COLLAPSE' || phase === 'MINIMUM')) {
+          warmFill.color.setHex(spectrum.emissiveHex);
+        } else {
+          warmFill.color.copy(tint.emissive);
+        }
       }
     }
 
@@ -4795,6 +4956,32 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
+              <Tooltip title={PLASMA_EXCITED_CHIP_TOOLTIP}>
+                <Chip
+                  label={PLASMA_EXCITED_CHIP}
+                  size="small"
+                  data-testid="ublv-excited-plasma-chip"
+                  sx={{
+                    bgcolor: 'rgba(120, 60, 140, 0.88)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                  }}
+                />
+              </Tooltip>
+              {plasmaSpectrum?.label && (
+                <Tooltip title={`Presentation tint from host/solute/electrolyte fields (${TORUS_SCRUB_START * 100}–${TORUS_SCRUB_END * 100}% scrub). Schematic EMP chem / optical peer — not a spectrometer claim.`}>
+                  <Chip
+                    label={plasmaSpectrum.label}
+                    size="small"
+                    data-testid="ublv-plasma-spectrum-chip"
+                    sx={{
+                      bgcolor: 'rgba(80, 90, 130, 0.9)',
+                      color: 'white',
+                      fontSize: '0.58rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
               <Tooltip title="Acoustic (long-λ in-phase) + optical (short-λ antiphase) standing waves across material-size lattice from enhancement_breakdown.phonon / temperature_k / compression / loading_ratio. Schematic modes — not MD eigenvectors. Dual-laser phonon→heat stays contested; never 'highly reproducible'.">
                 <Chip
                   label={PHONON_STANDING_CHIP}
@@ -5186,7 +5373,9 @@ UnifiedBubbleLatticeVisualization.propTypes = {
     initialBubbleRadius: PropTypes.number,
     drivingPressure: PropTypes.number,
     frequency: PropTypes.number,
-    latticeSize: PropTypes.number
+    latticeSize: PropTypes.number,
+    electrolyteFamily: PropTypes.string,
+    electrolyteSpecies: PropTypes.string,
   }),
   simulationData: PropTypes.object,
   streamLatest: PropTypes.object,

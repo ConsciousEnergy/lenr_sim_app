@@ -24,7 +24,7 @@ describe('bubbleTorusViz (presentation materials)', () => {
     expect(hot.emissiveIntensity).toBeGreaterThan(cool.emissiveIntensity);
   });
 
-  test('membrane materials stay MeshPhysical and readable (not wire-primary)', () => {
+  test('membrane materials stay MeshPhysical; torus/jet are gaseous additive (not glass)', () => {
     const gas = createBubbleGasMaterial();
     const shell = createDoubleLayerMaterial();
     const torus = createTorusPlasmaMaterial();
@@ -32,7 +32,10 @@ describe('bubbleTorusViz (presentation materials)', () => {
     expect(gas.transparent).toBe(true);
     expect(gas.opacity).toBeGreaterThanOrEqual(0.28);
     expect(shell.opacity).toBeGreaterThanOrEqual(0.45);
+    expect(torus.type).toBe('MeshStandardMaterial');
+    expect(torus.blending).toBe(THREE.AdditiveBlending);
     expect(torus.emissiveIntensity).toBeGreaterThan(0.5);
+    expect(torus.roughness).toBeGreaterThan(0.5);
     expect(DOUBLE_LAYER_WIRE_OPACITY_EXPANSION).toBeLessThan(0.15);
     expect(DOUBLE_LAYER_WIRE_OPACITY_COLLAPSE).toBeLessThan(0.2);
     gas.dispose();
@@ -53,10 +56,12 @@ describe('bubbleTorusViz (presentation materials)', () => {
     expect(bubble.material.emissiveIntensity).toBeGreaterThan(0.12);
   });
 
-  test('geometries expose high-segment bubble and torus', () => {
+  test('geometries expose high-segment bubble, torus, filament, and jet', () => {
     const geos = createBubbleTorusGeometries();
     expect(geos.gas.parameters.widthSegments).toBeGreaterThanOrEqual(48);
     expect(geos.torus.type).toBe('TorusGeometry');
+    expect(geos.torusFilament.type).toBe('TorusGeometry');
+    expect(geos.jet.type).toBe('ConeGeometry');
     Object.values(geos).forEach((g) => g.dispose());
   });
 });
