@@ -221,7 +221,7 @@ export function isInTorusWindow(cycleFraction) {
 
 /**
  * Jet / cone light envelope after torus window (MINIMUM → early REBOUND peer).
- * Returns 0..1 strength for transparent light cone.
+ * Returns 0..1 strength for transparent light cone ("maser-like" optical peer).
  */
 export function jetLightEnvelope({
   cycleFraction,
@@ -232,17 +232,81 @@ export function jetLightEnvelope({
   if (frac >= TORUS_SCRUB_START && frac < TORUS_SCRUB_END) {
     // Late torus → beginning of jet punch-through
     const tw = torusWindowProgress(frac);
-    return clamp01((tw - 0.72) / 0.28);
+    return clamp01((tw - 0.65) / 0.35);
   }
   const name = String(phase || '').toUpperCase();
   if (name === 'MINIMUM') {
-    return clamp01(0.35 + clamp01(phaseProgress) * 0.65);
+    return clamp01(0.45 + clamp01(phaseProgress) * 0.55);
   }
   if (name === 'REBOUND') {
     return clamp01(0.85 * (1 - clamp01(phaseProgress)));
   }
   return 0;
 }
+
+/**
+ * Late COLLAPSE → MINIMUM: primary plasma ring collapses onto the jetting
+ * "maser" moment (schematic optical peer — not a claimed maser LENR step).
+ * Returns 0..1 tighten factor (0 = open torus, 1 = ring on jet axis).
+ */
+export function maserCollapseProgress({
+  cycleFraction,
+  phase = null,
+  phaseProgress = 0,
+} = {}) {
+  const frac = wrapCycle(cycleFraction);
+  if (frac >= TORUS_SCRUB_START && frac < TORUS_SCRUB_END) {
+    const tw = torusWindowProgress(frac);
+    return clamp01((tw - 0.55) / 0.45);
+  }
+  const name = String(phase || '').toUpperCase();
+  if (name === 'MINIMUM') {
+    return clamp01(0.85 + clamp01(phaseProgress) * 0.15);
+  }
+  if (name === 'REBOUND') {
+    return clamp01(1 - clamp01(phaseProgress) * 0.35);
+  }
+  return 0;
+}
+
+/**
+ * After maser jet: shed secondary turbulent tori + micro-bubbles.
+ * Peaks mid-MINIMUM, fades through early REBOUND.
+ */
+export function shedDebrisProgress({
+  cycleFraction,
+  phase = null,
+  phaseProgress = 0,
+} = {}) {
+  const frac = wrapCycle(cycleFraction);
+  if (frac >= TORUS_SCRUB_START && frac < TORUS_SCRUB_END) {
+    const tw = torusWindowProgress(frac);
+    // Shed begins in the last ~20% of the torus window
+    return clamp01((tw - 0.82) / 0.18) * 0.35;
+  }
+  const name = String(phase || '').toUpperCase();
+  if (name === 'MINIMUM') {
+    const p = clamp01(phaseProgress);
+    // Rise then hold — debris lands on lattice during MINIMUM
+    return clamp01(0.35 + p * 0.65);
+  }
+  if (name === 'REBOUND') {
+    return clamp01(0.9 * (1 - clamp01(phaseProgress)));
+  }
+  return 0;
+}
+
+export const MASER_JET_CHIP = 'Schematic maser-like jet · not fusion';
+export const MASER_JET_CHIP_TOOLTIP =
+  'Late-compression plasma ring collapses onto a transparent light jet '
+  + '(optical / Flannigan–Suslick peer). "Maser-like" is presentation language '
+  + 'only — not a verified LENR maser step; plasma ≠ fusion; EQ-OPEN untouched.';
+
+export const SHED_DEBRIS_CHIP = 'Counter-rotating shed · schematic';
+export const SHED_DEBRIS_CHIP_TOOLTIP =
+  'After the maser-like jet punch, secondary turbulent tori + micro-bubbles '
+  + 'shed with opposite spin and settle toward the lattice surface. Hydro / '
+  + 'optical morphology peer only — not continuum CFD / not fusion.';
 
 /**
  * Apply spectrum tint to TorusFormation / FocusedJet / TorusPlasmaCloud.
@@ -292,6 +356,18 @@ export function applyPlasmaSpectrumTint(group, spectrum) {
         Math.max(focusedJet.material.emissiveIntensity ?? 1.0, 1.2),
       );
     }
+  }
+
+  const shed = group.getObjectByName('ShedPlasmaDebris');
+  if (shed) {
+    shed.children.forEach((child, idx) => {
+      const mat = child?.material;
+      if (!mat) return;
+      const useSecondary = idx % 2 === 1;
+      const tint = useSecondary ? secondary : primary;
+      if (mat.color) mat.color.copy(tint);
+      if (mat.emissive) mat.emissive.copy(emissive);
+    });
   }
 
   return spectrum;

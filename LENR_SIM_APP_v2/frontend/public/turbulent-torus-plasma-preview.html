@@ -33,9 +33,11 @@
   <div id="chips">
     <span class="chip">Schematic excited plasma · not fusion</span>
     <span class="chip alt" id="specChip">Plasma tint · D/Pd/K (schematic)</span>
+    <span class="chip" style="background:rgba(90,70,150,0.9)">Schematic maser-like jet · not fusion</span>
+    <span class="chip alt">Counter-rotating shed · schematic</span>
   </div>
   <div id="badge">
-    Torus window scrub <b>90.7% → 95.7%</b> — turbulent rotating gaseous excited plasma<br/>
+    Torus window scrub <b>90.7% → 95.7%</b> → collapses onto maser-like jet → counter-rotating shed onto lattice<br/>
     Spectrum binds host / solute / electrolyte (Pd·D·K demo). Jet = transparent light.<br/>
     Peer: Flannigan–Suslick optical / EMP chem · plasma ≠ fusion · EQ-OPEN untouched
   </div>
@@ -179,6 +181,60 @@
     jet.visible = false;
     group.add(jet);
 
+    // Counter-rotating shed debris → lattice
+    const shedGroup = new THREE.Group();
+    shedGroup.name = 'ShedPlasmaDebris';
+    shedGroup.visible = false;
+    group.add(shedGroup);
+    const shedTorusGeo = new THREE.TorusGeometry(0.42, 0.12, 12, 48);
+    const shedBubbleGeo = new THREE.SphereGeometry(0.18, 16, 12);
+    const shedItems = [];
+    for (let i = 0; i < 3; i++) {
+      const m = new THREE.Mesh(shedTorusGeo, plasmaMat(i % 2 ? spectrum.secondary : spectrum.primary, 0.28));
+      m.rotation.x = Math.PI / 2 + (i - 1) * 0.18;
+      m.visible = false;
+      m.userData = {
+        kind: 'torus', azimuth: (i / 3) * Math.PI * 2 + 0.4,
+        radialStart: 0.15 + i * 0.08, radialEnd: 0.9 + i * 0.3,
+        yStart: 0.05, yEnd: -1.05 - i * 0.12, delay: i * 0.12, scale0: 0.55 + i * 0.12, spinRate: 2.4 + i * 0.5,
+      };
+      shedGroup.add(m);
+      shedItems.push(m);
+    }
+    for (let i = 0; i < 5; i++) {
+      const m = new THREE.Mesh(shedBubbleGeo, plasmaMat(i % 2 ? spectrum.primary : spectrum.secondary, 0.22));
+      m.visible = false;
+      m.userData = {
+        kind: 'bubble', azimuth: (i / 5) * Math.PI * 2 + 1.1,
+        radialStart: 0.1, radialEnd: 0.55 + (i % 3) * 0.28,
+        yStart: 0.1, yEnd: -0.95 - (i % 3) * 0.15, delay: 0.08 + i * 0.09,
+        scale0: 0.35 + (i % 3) * 0.12, spinRate: 1.5 + i * 0.3,
+      };
+      shedGroup.add(m);
+      shedItems.push(m);
+    }
+
+    function updateShed(progress) {
+      const s = Math.min(1, Math.max(0, progress));
+      shedGroup.visible = s > 0.02;
+      shedItems.forEach((child) => {
+        const d = child.userData;
+        const local = Math.min(1, Math.max(0, (s - d.delay) / Math.max(1e-6, 1 - d.delay)));
+        if (local <= 0) { child.visible = false; return; }
+        child.visible = true;
+        const ease = local * local * (3 - 2 * local);
+        const r = d.radialStart + (d.radialEnd - d.radialStart) * ease;
+        const y = d.yStart + (d.yEnd - d.yStart) * ease;
+        const az = d.azimuth - ease * 0.55;
+        child.position.set(r * Math.cos(az), y, r * Math.sin(az));
+        const sc = d.scale0 * (0.55 + 0.55 * (1 - ease * 0.35));
+        if (d.kind === 'torus') child.scale.set(sc, sc * 0.75, sc);
+        else child.scale.setScalar(sc * (1 - ease * 0.25));
+        child.rotation.z -= 0.04 * d.spinRate; // counter-rotate vs primary +Z
+        child.material.opacity = 0.14 + (1 - ease) * 0.22 + s * 0.08;
+      });
+    }
+
     const glow = new THREE.PointLight(spectrum.primary, 0.75, 12, 2);
     glow.position.set(0.2, 0.4, 0.8);
     group.add(glow);
@@ -192,6 +248,11 @@
       jet.material.color.setHex(spectrum.jet);
       jet.material.emissive.setHex(spectrum.jet);
       glow.color.setHex(spectrum.primary);
+      shedItems.forEach((m, i) => {
+        const hex = i % 2 ? spectrum.secondary : spectrum.primary;
+        m.material.color.setHex(hex);
+        m.material.emissive.setHex(hex);
+      });
       specChip.textContent = spectrum.label;
     }
 
@@ -236,6 +297,7 @@
       filament.visible = false;
       cloud.visible = false;
       jet.visible = false;
+      updateShed(0);
 
       const cycleIdx = Math.floor(elapsed / CYCLE) % keys.length;
       if (keys[cycleIdx] !== spectrumKey) {
@@ -243,59 +305,68 @@
         applySpectrum();
       }
 
-      if (u < 0.55) {
+      if (u < 0.50) {
         phase = 'EXPANSION';
-        scrubPct = (u / 0.55) * TORUS_START * 100;
-        const p = u / 0.55;
+        scrubPct = (u / 0.50) * TORUS_START * 100;
+        const p = u / 0.50;
         const scale = 0.35 + p * 1.15;
         bubble.scale.setScalar(scale);
         bubble.material.opacity = 0.28;
-      } else if (u < 0.82) {
+      } else if (u < 0.78) {
         phase = 'COLLAPSE';
-        const p = (u - 0.55) / 0.27;
+        const p = (u - 0.50) / 0.28;
         scrubPct = (TORUS_START + p * (TORUS_END - TORUS_START)) * 100;
+        // Late window: tighten onto maser-like jet
+        const tighten = Math.max(0, (p - 0.55) / 0.45);
         const scale = 1.35 * (1 - p * 0.65);
         bubble.visible = p < 0.55;
         bubble.scale.setScalar(scale);
         bubble.material.opacity = 0.28 * (1 - p);
-        torus.visible = true;
-        filament.visible = true;
-        cloud.visible = true;
-        const ts = 1 - p * 0.4;
-        torus.scale.set(ts, 0.7 + (1 - p) * 0.45, ts);
+        torus.visible = tighten < 0.98;
+        filament.visible = tighten < 0.95;
+        cloud.visible = tighten < 0.97;
+        const ts = (1 - p * 0.35) * (1 - tighten * 0.78);
+        torus.scale.set(Math.max(0.08, ts), Math.max(0.12, 0.55 * (1 - tighten * 0.45)), Math.max(0.08, ts));
         filament.scale.set(ts * 1.02, ts * 0.55, ts * 1.02);
-        torus.rotation.z += 0.045;
+        torus.rotation.z += 0.045 + tighten * 0.04;
         filament.rotation.z -= 0.055;
-        updateCloud(elapsed, 0.45 + p * 0.55);
+        updateCloud(elapsed, (0.45 + p * 0.55) * (1 - tighten * 0.7), 1.15 * (1 - tighten * 0.7), 0.42);
         cloud.scale.copy(torus.scale);
         cloud.rotation.z += 0.03;
-        glow.intensity = 0.6 + p * 0.7;
-        if (p > 0.72) {
-          const jg = (p - 0.72) / 0.28;
+        glow.intensity = 0.6 + p * 0.7 + tighten * 0.4;
+        if (p > 0.65) {
+          const jg = (p - 0.65) / 0.35;
           jet.visible = true;
-          jet.scale.set(1.05 - jg * 0.3, 0.7 + jg * 2.0, 1.05 - jg * 0.3);
+          jet.scale.set(1.05 - jg * 0.3, 0.7 + jg * 2.2, 1.05 - jg * 0.3);
           jet.material.opacity = 0.18 + jg * 0.4;
           jet.position.y = -0.3;
         }
+        if (p > 0.82) updateShed(((p - 0.82) / 0.18) * 0.35);
       } else {
-        phase = u < 0.92 ? 'MINIMUM' : 'REBOUND';
-        scrubPct = (TORUS_END + ((u - 0.82) / 0.18) * (1 - TORUS_END)) * 100;
-        const p = (u - 0.82) / 0.18;
-        bubble.visible = p > 0.55;
-        bubble.scale.setScalar(0.4 + Math.max(0, p - 0.55) * 0.8);
-        bubble.material.opacity = 0.28 * Math.min(1, Math.max(0, (p - 0.55) / 0.4));
-        jet.visible = p < 0.85;
+        phase = u < 0.90 ? 'MINIMUM' : 'REBOUND';
+        scrubPct = (TORUS_END + ((u - 0.78) / 0.22) * (1 - TORUS_END)) * 100;
+        const p = (u - 0.78) / 0.22;
+        bubble.visible = p > 0.65;
+        bubble.scale.setScalar(0.4 + Math.max(0, p - 0.65) * 0.8);
+        bubble.material.opacity = 0.28 * Math.min(1, Math.max(0, (p - 0.65) / 0.35));
+        jet.visible = p < 0.88;
         jet.scale.set(1 - p * 0.3, 1 + p * 1.8, 1 - p * 0.3);
         jet.material.opacity = 0.2 + (1 - p) * 0.35;
         jet.position.y = -0.4;
-        if (p < 0.35) {
+        // Primary ring collapses onto jet then sheds
+        if (p < 0.45) {
+          const ts = Math.max(0.06, 0.28 * (1 - p / 0.45));
           torus.visible = true;
-          filament.visible = true;
           cloud.visible = true;
-          torus.material.opacity = 0.4 * (1 - p / 0.35);
-          updateCloud(elapsed, 0.4 * (1 - p / 0.35));
+          torus.scale.set(ts, ts * 0.5, ts);
+          torus.rotation.z += 0.06;
+          updateCloud(elapsed, 0.35 * (1 - p / 0.45), 0.4, 0.2);
+          cloud.scale.copy(torus.scale);
         }
-        glow.intensity = 1.6 * (1 - p * 0.7);
+        // Counter-rotating shed onto lattice
+        const shed = p < 0.15 ? 0.35 + p * 2 : Math.min(1, 0.65 + p * 0.45);
+        updateShed(phase === 'REBOUND' ? Math.max(0, 0.9 * (1 - (p - 0.55) / 0.45)) : shed);
+        glow.intensity = 1.2 * (1 - p * 0.7);
       }
 
       phaseEl.textContent = `${phase} · scrub ${scrubPct.toFixed(1)}% · Local Calc (schematic)`;

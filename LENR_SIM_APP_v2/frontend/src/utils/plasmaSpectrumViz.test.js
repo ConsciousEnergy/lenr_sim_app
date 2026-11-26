@@ -1,15 +1,19 @@
 import {
+  MASER_JET_CHIP,
   PLASMA_EXCITED_CHIP,
   PLASMA_SPECTRUM_FIDELITY,
+  SHED_DEBRIS_CHIP,
   SPECIES_EMISSION_HEX,
   TORUS_SCRUB_END,
   TORUS_SCRUB_START,
   applyPlasmaSpectrumTint,
   isInTorusWindow,
   jetLightEnvelope,
+  maserCollapseProgress,
   normalizePlasmaSpeciesKey,
   resolveExcitedPlasmaSpectrum,
   resolvePlasmaSoluteKey,
+  shedDebrisProgress,
   torusWindowProgress,
 } from './plasmaSpectrumViz';
 import * as THREE from 'three';
@@ -86,6 +90,24 @@ describe('plasmaSpectrumViz (schematic excited plasma)', () => {
       .toBeGreaterThan(0.5);
     expect(jetLightEnvelope({ phase: 'REBOUND', phaseProgress: 0.9 }))
       .toBeLessThan(0.2);
+  });
+
+  test('maserCollapseProgress tightens late COLLAPSE → MINIMUM', () => {
+    expect(maserCollapseProgress({ cycleFraction: 0.92 })).toBe(0);
+    expect(maserCollapseProgress({ cycleFraction: 0.95 })).toBeGreaterThan(0.4);
+    expect(maserCollapseProgress({ phase: 'MINIMUM', phaseProgress: 0.2 }))
+      .toBeGreaterThan(0.8);
+    expect(MASER_JET_CHIP.toLowerCase()).toContain('not fusion');
+  });
+
+  test('shedDebrisProgress rises after maser jet and through MINIMUM', () => {
+    expect(shedDebrisProgress({ cycleFraction: 0.93 })).toBe(0);
+    expect(shedDebrisProgress({ cycleFraction: 0.955 })).toBeGreaterThan(0);
+    expect(shedDebrisProgress({ phase: 'MINIMUM', phaseProgress: 0.6 }))
+      .toBeGreaterThan(0.6);
+    expect(shedDebrisProgress({ phase: 'REBOUND', phaseProgress: 0.95 }))
+      .toBeLessThan(0.15);
+    expect(SHED_DEBRIS_CHIP.toLowerCase()).toContain('counter-rotating');
   });
 
   test('applyPlasmaSpectrumTint updates torus and jet materials', () => {

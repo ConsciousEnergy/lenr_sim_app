@@ -368,3 +368,143 @@ export function createBubbleTorusGeometries() {
     jet: new THREE.ConeGeometry(0.32, 3.8, 40, 1, true),
   };
 }
+
+/**
+ * Secondary turbulent tori + micro-bubbles that shed after the maser-like jet.
+ * Counter-rotate relative to the primary torus and settle toward the lattice.
+ *
+ * Honesty: schematic hydro / optical morphology — not CFD, not fusion.
+ *
+ * @returns {{ group: THREE.Group, update: Function, dispose: Function }}
+ */
+export function createShedPlasmaDebrisGroup({
+  torusCount = 3,
+  bubbleCount = 5,
+  primaryColor = 0x5ce1ff,
+  secondaryColor = 0xc77dff,
+} = {}) {
+  const group = new THREE.Group();
+  group.name = 'ShedPlasmaDebris';
+  group.visible = false;
+  group.renderOrder = 5;
+  group.userData = {
+    fidelity: BUBBLE_TORUS_FIDELITY,
+    source: BUBBLE_TORUS_SOURCE,
+  };
+
+  const torusGeo = new THREE.TorusGeometry(0.42, 0.12, 12, 48);
+  const bubbleGeo = new THREE.SphereGeometry(0.18, 16, 12);
+  const disposables = [torusGeo, bubbleGeo];
+
+  const nT = Math.max(1, torusCount | 0);
+  for (let i = 0; i < nT; i += 1) {
+    const mat = createTorusPlasmaMaterial({
+      color: i % 2 === 0 ? primaryColor : secondaryColor,
+      opacity: 0.28,
+    });
+    disposables.push(mat);
+    const mesh = new THREE.Mesh(torusGeo, mat);
+    mesh.name = `ShedTorus${i}`;
+    mesh.rotation.x = Math.PI / 2 + (i - 1) * 0.18;
+    mesh.visible = false;
+    const azimuth = (i / nT) * Math.PI * 2 + 0.4;
+    mesh.userData = {
+      kind: 'torus',
+      // Opposite spin vs primary torus (primary spins +Z)
+      spinSign: -1,
+      spinRate: 2.2 + i * 0.55,
+      azimuth,
+      radialStart: 0.15 + i * 0.08,
+      radialEnd: 0.85 + i * 0.35,
+      // Local Y falls toward lattice (bubble group nest sits above surface)
+      yStart: 0.05,
+      yEnd: -1.05 - i * 0.12,
+      delay: i * 0.12,
+      scale0: 0.55 + i * 0.12,
+    };
+    group.add(mesh);
+  }
+
+  const nB = Math.max(1, bubbleCount | 0);
+  for (let i = 0; i < nB; i += 1) {
+    const mat = createBubbleGasMaterial({
+      color: i % 2 === 0 ? secondaryColor : primaryColor,
+      opacity: 0.22,
+    });
+    mat.blending = THREE.AdditiveBlending;
+    mat.emissive = new THREE.Color(i % 2 === 0 ? secondaryColor : primaryColor);
+    mat.emissiveIntensity = 0.65;
+    disposables.push(mat);
+    const mesh = new THREE.Mesh(bubbleGeo, mat);
+    mesh.name = `ShedBubble${i}`;
+    mesh.visible = false;
+    const azimuth = (i / nB) * Math.PI * 2 + 1.1;
+    mesh.userData = {
+      kind: 'bubble',
+      spinSign: -1,
+      spinRate: 1.4 + i * 0.35,
+      azimuth,
+      radialStart: 0.1,
+      radialEnd: 0.55 + (i % 3) * 0.28,
+      yStart: 0.1,
+      yEnd: -0.95 - (i % 3) * 0.15,
+      delay: 0.08 + i * 0.09,
+      scale0: 0.35 + (i % 3) * 0.12,
+    };
+    group.add(mesh);
+  }
+
+  /**
+   * @param {number} deltaTime
+   * @param {number} shedProgress 0..1
+   * @param {{ primarySpin?: number }} [opts] primary torus Z-spin direction cue
+   */
+  const update = (deltaTime = 0.016, shedProgress = 0, opts = {}) => {
+    const s = Math.min(1, Math.max(0, Number(shedProgress) || 0));
+    group.visible = s > 0.02;
+    if (!group.visible) {
+      group.children.forEach((child) => {
+        child.visible = false;
+      });
+      return;
+    }
+    const primarySpin = Number.isFinite(opts.primarySpin) ? Math.sign(opts.primarySpin) || 1 : 1;
+    group.children.forEach((child) => {
+      const d = child.userData;
+      if (!d) return;
+      const local = Math.min(1, Math.max(0, (s - d.delay) / Math.max(1e-6, 1 - d.delay)));
+      if (local <= 0) {
+        child.visible = false;
+        return;
+      }
+      child.visible = true;
+      const ease = local * local * (3 - 2 * local);
+      const r = d.radialStart + (d.radialEnd - d.radialStart) * ease;
+      const y = d.yStart + (d.yEnd - d.yStart) * ease;
+      const az = d.azimuth + ease * 0.55 * d.spinSign;
+      child.position.set(r * Math.cos(az), y, r * Math.sin(az));
+      const sc = d.scale0 * (0.55 + 0.55 * (1 - ease * 0.35));
+      if (d.kind === 'torus') {
+        child.scale.set(sc, sc * (0.7 + 0.3 * (1 - ease)), sc);
+      } else {
+        child.scale.setScalar(sc * (1 - ease * 0.25));
+      }
+      const spinDir = -primarySpin * (d.spinSign || -1);
+      child.rotation.z += deltaTime * d.spinRate * spinDir * (0.7 + s);
+      if (child.material) {
+        child.material.opacity = (d.kind === 'torus' ? 0.18 : 0.14)
+          + (1 - ease) * 0.22
+          + s * 0.08;
+      }
+    });
+  };
+
+  const dispose = () => {
+    while (group.children.length) {
+      group.remove(group.children[0]);
+    }
+    disposables.forEach((item) => item.dispose?.());
+  };
+
+  return { group, update, dispose };
+}
