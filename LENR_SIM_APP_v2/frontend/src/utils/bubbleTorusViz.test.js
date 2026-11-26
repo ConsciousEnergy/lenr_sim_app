@@ -12,6 +12,7 @@ import {
   COLLAPSE_FOCUS_CHIP,
   FOLD_IN_TORUS_MAJOR,
   FOLD_IN_TORUS_TUBE,
+  MAIN_TORUS_INWARD_SPIN,
   SCHWINGER_HINT_CHIP,
   applySphereFoldInDimple,
   computeBubbleTorusMorph,
@@ -21,6 +22,7 @@ import {
   ensureSphereRestPositions,
   applyBubbleTemperatureTint,
   createBubbleTorusGeometries,
+  shedTorusRestRotation,
 } from './bubbleTorusViz';
 
 describe('bubbleTorusViz (presentation materials)', () => {
@@ -184,9 +186,30 @@ describe('bubbleTorusViz (presentation materials)', () => {
     expect(s.worldY).toBeGreaterThan(-3 + 0.5); // above spawn
   });
 
+  test('shedTorusRestRotation is ~90° to horizontal main torus', () => {
+    expect(MAIN_TORUS_INWARD_SPIN).toBe(-1);
+    const rest = shedTorusRestRotation(0.4);
+    // Main torus uses rotation.x = π/2 (XZ plane); shed leaves x≈0 (vertical)
+    expect(Math.abs(rest.x)).toBeLessThan(0.05);
+    expect(Math.abs(rest.x - Math.PI / 2)).toBeGreaterThan(1.4);
+    expect(rest.y).toBeCloseTo(0.4 + Math.PI / 2, 5);
+  });
+
   test('shed debris group: world Y rises even when parent nest drops; fades; never reverses', () => {
-    const debris = createShedPlasmaDebrisGroup({ torusCount: 2, bubbleCount: 3 });
+    const debris = createShedPlasmaDebrisGroup({
+      torusCount: 2,
+      bubbleCount: 3,
+      latticeTorusCount: 2,
+      latticeBubbleCount: 2,
+    });
     expect(debris.group.name).toBe('ShedPlasmaDebris');
+    const risingTori = debris.group.children.filter((c) => c.userData?.kind === 'torus');
+    expect(risingTori.length).toBe(2);
+    risingTori.forEach((t) => {
+      expect(Math.abs(t.rotation.x)).toBeLessThan(0.05);
+    });
+    const latticeKids = debris.group.children.filter((c) => c.userData?.path === 'lattice');
+    expect(latticeKids.length).toBe(4);
     debris.update(0.016, 0, { parentWorldY: -3.0 });
     expect(debris.group.visible).toBe(false);
 
@@ -194,29 +217,49 @@ describe('bubbleTorusViz (presentation materials)', () => {
     const parentPath = [-3.0, -3.2, -3.4, -3.55, -3.6, -3.45, -3.3];
     const progPath = [0.2, 0.4, 0.55, 0.75, 0.95, 0.3, 1.0];
     progPath.forEach((p, i) => {
-      debris.update(0.016, p, { primarySpin: 1, parentWorldY: parentPath[i] });
+      debris.update(0.016, p, {
+        primarySpin: MAIN_TORUS_INWARD_SPIN,
+        parentWorldY: parentPath[i],
+      });
       const kids = debris.group.children.filter((c) => c.visible);
       if (!kids.length) {
         frames.push(null);
         return;
       }
-      const worldYs = kids.map((c) => c.userData.lastWorldY);
+      const rising = kids.filter((c) => c.userData.path === 'rise');
+      const lattice = kids.filter((c) => c.userData.path === 'lattice');
+      const risingYs = rising.map((c) => c.userData.lastWorldY);
       const opacities = kids.map((c) => c.material.opacity);
       frames.push({
-        maxWorldY: Math.max(...worldYs),
-        minWorldY: Math.min(...worldYs),
+        risingMaxY: risingYs.length ? Math.max(...risingYs) : null,
+        risingMinY: risingYs.length ? Math.min(...risingYs) : null,
         maxOpacity: Math.max(...opacities),
+        risingCount: rising.length,
+        latticeCount: lattice.length,
+        latticeRadial: lattice.map((c) => Math.hypot(c.position.x, c.position.z)),
       });
     });
     const live = frames.filter(Boolean);
     expect(live.length).toBeGreaterThan(3);
-    for (let i = 1; i < live.length; i += 1) {
-      expect(live[i].maxWorldY).toBeGreaterThanOrEqual(live[i - 1].maxWorldY - 1e-9);
+    // Rising cohort: world Y monotonic
+    const risingFrames = live.filter((f) => f.risingCount > 0 && f.risingMaxY != null);
+    for (let i = 1; i < risingFrames.length; i += 1) {
+      expect(risingFrames[i].risingMaxY).toBeGreaterThanOrEqual(
+        risingFrames[i - 1].risingMaxY - 1e-9,
+      );
+    }
+    expect(live.some((f) => f.latticeCount > 0)).toBe(true);
+    // Lattice travelers move outward in XZ
+    const withLattice = live.filter((f) => f.latticeRadial.length);
+    if (withLattice.length >= 2) {
+      const firstR = Math.max(...withLattice[0].latticeRadial);
+      const lastR = Math.max(...withLattice[withLattice.length - 1].latticeRadial);
+      expect(lastR).toBeGreaterThanOrEqual(firstR - 1e-6);
     }
     expect(live[0].maxOpacity).toBeGreaterThan(0.15);
     expect(live[live.length - 1].maxOpacity).toBeLessThan(live[0].maxOpacity);
-    // Spawned debris stay above deeply nested lattice surface (~-3.5)
-    expect(live[0].minWorldY).toBeGreaterThan(-3.0 + 0.4);
+    // Rising debris stay above deeply nested lattice surface
+    expect(risingFrames[0].risingMinY).toBeGreaterThan(-3.0 + 0.4);
     debris.dispose();
   });
 });

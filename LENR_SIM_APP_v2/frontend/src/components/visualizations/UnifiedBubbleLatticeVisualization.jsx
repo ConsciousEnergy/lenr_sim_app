@@ -120,6 +120,7 @@ import {
   SCHWINGER_HINT_CHIP_TOOLTIP,
   applySphereFoldInDimple,
   computeBubbleTorusMorph,
+  MAIN_TORUS_INWARD_SPIN,
   createCollapseFocusPinGroup,
   createJetMaterial,
   createShedPlasmaDebrisGroup,
@@ -1125,10 +1126,12 @@ const UnifiedBubbleLatticeVisualization = ({
     bubbleGroup.add(collapseFocus.group);
     bubbleGroup.userData.collapseFocusPin = collapseFocus;
 
-    // Counter-rotating shed tori + micro-bubbles rise/fade away from lattice
+    // Shed: rising (world +Y) + lattice-plane travelers; tori ~90° to main
     const shedDebris = createShedPlasmaDebrisGroup({
-      torusCount: 3,
-      bubbleCount: 5,
+      torusCount: 5,
+      bubbleCount: 8,
+      latticeTorusCount: 4,
+      latticeBubbleCount: 6,
       primaryColor: spectrum?.primaryHex ?? 0x5ce1ff,
       secondaryColor: spectrum?.secondaryHex ?? 0xc77dff,
     });
@@ -3067,7 +3070,10 @@ const UnifiedBubbleLatticeVisualization = ({
       // Lattice is below (LATTICE_Y_OFFSET=-5); away-from-lattice = +world Y.
       const nestWorldY = getBubbleYFromPhase(phase, phaseProgress, displayScale);
       bubbleGroupRef.current.position.y = nestWorldY;
-      const shedUpdateOpts = { primarySpin: 1, parentWorldY: nestWorldY };
+      const shedUpdateOpts = {
+        primarySpin: MAIN_TORUS_INWARD_SPIN,
+        parentWorldY: nestWorldY,
+      };
       // Schematic fluid look: advective UV scroll on torus / jet / shed maps
       if (showBubble && (inTorusWindow || phase === 'MINIMUM' || phase === 'REBOUND'
         || phase === 'COLLAPSE')) {
@@ -3132,9 +3138,10 @@ const UnifiedBubbleLatticeVisualization = ({
             const scaleFactor = Math.max(0.08, torusRadius / torus.userData.baseRadius);
             torus.scale.setScalar(scaleFactor);
             torus.scale.y = Math.max(0.12, tubeRadius / torus.userData.baseTubeRadius);
-            torus.rotation.z += deltaTime * (4.2 + collapseProgress * 5.5 + tighten * 4.5
-              + morph.torusBirth * 2.5);
-            torus.userData.spinSign = 1;
+            // Main spins inward (toward hole); shed counter-rotates
+            torus.rotation.z += MAIN_TORUS_INWARD_SPIN * deltaTime
+              * (4.2 + collapseProgress * 5.5 + tighten * 4.5 + morph.torusBirth * 2.5);
+            torus.userData.spinSign = MAIN_TORUS_INWARD_SPIN;
             torus.material.opacity = (0.12 + morph.torusOpacityMul * 0.32)
               * (1 - tighten * 0.55);
             if (torus.material.emissiveIntensity !== undefined) {
@@ -3150,7 +3157,8 @@ const UnifiedBubbleLatticeVisualization = ({
               * (1.02 + 0.06 * Math.sin(clockForPhase * Math.PI * 48));
             filament.scale.setScalar(fScale);
             filament.scale.y = (torus?.scale.y ?? 1) * 0.55;
-            filament.rotation.z -= deltaTime * (5.2 + collapseProgress * 6.5 + tighten * 5.0);
+            filament.rotation.z += (-MAIN_TORUS_INWARD_SPIN) * deltaTime
+              * (5.2 + collapseProgress * 6.5 + tighten * 5.0);
             filament.material.opacity = (0.12 + morph.torusBirth * 0.32) * (1 - tighten * 0.6);
           }
         }
@@ -3225,15 +3233,16 @@ const UnifiedBubbleLatticeVisualization = ({
             torus.scale.setScalar(scaleFactor);
             torus.scale.y = Math.max(0.1, scaleFactor * 0.55);
             torus.material.opacity = 0.28 * (1 - jetProgress);
-            torus.rotation.z += deltaTime * (1.2 + maserTighten * 2.5);
-            torus.userData.spinSign = 1;
+            torus.rotation.z += MAIN_TORUS_INWARD_SPIN * deltaTime
+              * (1.2 + maserTighten * 2.5);
+            torus.userData.spinSign = MAIN_TORUS_INWARD_SPIN;
           }
         }
         if (filament) {
           filament.visible = showBubble && primaryStillCollapsing && jetProgress < 0.35;
           if (filament.visible) {
             filament.material.opacity = 0.22 * (1 - jetProgress);
-            filament.rotation.z -= deltaTime * 1.5;
+            filament.rotation.z += (-MAIN_TORUS_INWARD_SPIN) * deltaTime * 1.5;
           }
         }
         if (plasmaCloudApi) {
