@@ -638,26 +638,29 @@ const UnifiedBubbleLatticeVisualization = ({
     });
     
     const hostGeometry = new THREE.SphereGeometry(hostAtomRadiusVisUnits, 20, 20);
-    // vertexColors off — per-instance colors via InstancedMesh.instanceColor
-    // Metallic host look (presentation; Pd/Ni exclusive colors still via setColorAt)
-    const hostMaterial3D = new THREE.MeshStandardMaterial({
+    // Phong (not high-metalness Standard): Standard@metalness≈0.85 with no envMap
+    // paints near-black on the dark HSE canvas even when instanceColor matches
+    // exclusive Pd/Ni legend hexes. Per-instance colors via InstancedMesh.instanceColor.
+    const hostEmissive = new THREE.Color(hostColor).multiplyScalar(0.18);
+    const hostMaterial3D = new THREE.MeshPhongMaterial({
       color: 0xffffff,
-      metalness: 0.85,
-      roughness: 0.28,
-      envMapIntensity: 1.0,
-      // Required for InstancedMesh.instanceColor / phonon mode tint
+      shininess: 72,
+      specular: 0x445566,
+      emissive: hostEmissive,
+      // InstanceColor / phonon tint path (three r152+ USE_INSTANCING_COLOR)
       vertexColors: true,
     });
-    
-    // Hydrogen / solute atoms — slightly softer emissive beads
+
+    // Solute beads: match VisualizationLegend LENR swatches (Pd run → D teal; else H green).
+    // Schematic species label only — not isotopic proof / not QM orbitals.
+    const soluteIsDeuterium = hostMaterial === 'palladium';
+    const soluteHex = soluteIsDeuterium ? 0x00ced1 : 0x32cd32;
     const hydrogenRadius = Math.max(0.06, hostAtomRadiusVisUnits * 0.5);
     const hydrogenGeometry = new THREE.SphereGeometry(hydrogenRadius, 14, 14);
-    const hydrogenMaterial = new THREE.MeshStandardMaterial({
-      color: 0x5ee0a0,
-      emissive: 0x0a3a1a,
-      emissiveIntensity: 0.35,
-      metalness: 0.15,
-      roughness: 0.35,
+    const hydrogenMaterial = new THREE.MeshPhongMaterial({
+      color: soluteHex,
+      emissive: new THREE.Color(soluteHex).multiplyScalar(0.22),
+      shininess: 80,
     });
     
     // Bond material
@@ -758,10 +761,11 @@ const UnifiedBubbleLatticeVisualization = ({
       hydrogenAtoms.instanceMatrix.needsUpdate = true;
       hydrogenAtoms.computeBoundingSphere();
       hydrogenAtoms.userData = {
-        type: 'hydrogen',
+        type: soluteIsDeuterium ? 'deuterium' : 'hydrogen',
+        legendHex: soluteHex,
         state: 'FREE',
         fidelity: DYNAMIC_LATTICE_FIDELITY,
-        note: 'Schematic interstitial from loading mask (not flux trajectories)',
+        note: 'Schematic interstitial from loading mask (not flux trajectories; not QM orbitals)',
       };
       latticeGroup.add(hydrogenAtoms);
     }
