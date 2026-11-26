@@ -54,9 +54,9 @@ function finitePositive(value: unknown, fallback: number): number {
 export function buildCollapseRibbonPositions({
   trajectory,
   initialRadiusUm = null,
-  spanX = 3.4,
+  spanX = 4.6,
   nestY = 0,
-  planeZ = 1.65,
+  planeZ = 2.35,
 }: CollapseRibbonBuildArgs): CollapseRibbonBuildResult | null {
   const times = trajectory?.time_s;
   const radii = trajectory?.radius_um;

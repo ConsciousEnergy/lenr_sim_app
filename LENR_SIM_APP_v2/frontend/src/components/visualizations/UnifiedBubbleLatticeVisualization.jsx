@@ -2264,35 +2264,49 @@ const UnifiedBubbleLatticeVisualization = ({
     }
     group = new THREE.Group();
     group.name = 'CollapseRibbonGroup';
-    const ribbonGeom = new THREE.BufferGeometry();
-    const posAttr = new THREE.BufferAttribute(built.positions, 3);
-    ribbonGeom.setAttribute('position', posAttr);
-    ribbonGeom.setDrawRange(0, built.sampleCount);
-    const ribbonLine = new THREE.Line(
-      ribbonGeom,
-      new THREE.LineBasicMaterial({
-        color: 0xffc266,
+    // Fat tube so the ODE path reads at HSE zoom (LineBasic is too thin).
+    const curvePts = [];
+    for (let i = 0; i < built.sampleCount; i += 1) {
+      curvePts.push(new THREE.Vector3(
+        built.positions[i * 3],
+        built.positions[i * 3 + 1],
+        built.positions[i * 3 + 2],
+      ));
+    }
+    const curve = new THREE.CatmullRomCurve3(curvePts);
+    const tubeGeom = new THREE.TubeGeometry(
+      curve,
+      Math.min(160, Math.max(32, built.sampleCount * 2)),
+      0.055,
+      8,
+      false,
+    );
+    const ribbonTube = new THREE.Mesh(
+      tubeGeom,
+      new THREE.MeshBasicMaterial({
+        color: 0xffb84d,
         transparent: true,
-        opacity: 0.62,
+        opacity: 0.9,
         depthWrite: false,
       }),
     );
-    ribbonLine.name = 'CollapseTrajectoryRibbon';
-    ribbonLine.frustumCulled = false;
-    ribbonLine.userData = {
+    ribbonTube.name = 'CollapseTrajectoryRibbon';
+    ribbonTube.frustumCulled = false;
+    ribbonTube.userData = {
       sampleCount: built.sampleCount,
       minIndex: built.minIndex,
       source: built.source,
       fidelity: built.fidelity,
+      positions: built.positions,
     };
-    group.add(ribbonLine);
+    group.add(ribbonTube);
 
     const playhead = new THREE.Mesh(
-      new THREE.SphereGeometry(0.07, 12, 12),
+      new THREE.SphereGeometry(0.12, 14, 14),
       new THREE.MeshBasicMaterial({
-        color: 0xffee88,
+        color: 0xfff3a0,
         transparent: true,
-        opacity: 0.95,
+        opacity: 1,
         depthWrite: false,
       }),
     );
@@ -2301,11 +2315,11 @@ const UnifiedBubbleLatticeVisualization = ({
     group.add(playhead);
 
     const minMark = new THREE.Mesh(
-      new THREE.SphereGeometry(0.09, 12, 12),
+      new THREE.SphereGeometry(0.14, 14, 14),
       new THREE.MeshBasicMaterial({
-        color: 0xff6644,
+        color: 0xff5533,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.95,
         depthWrite: false,
       }),
     );
@@ -2377,14 +2391,14 @@ const UnifiedBubbleLatticeVisualization = ({
     if (!occupiedSites.length) return;
     const glow = occupancyGlowRgb(plan.engineBound);
     const geom = new THREE.SphereGeometry(
-      Math.max(0.08, hostAtomRadiusVisUnits * 1.15),
-      12,
-      12,
+      Math.max(0.12, hostAtomRadiusVisUnits * 1.55),
+      14,
+      14,
     );
     const mat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(glow.r, glow.g, glow.b),
       transparent: true,
-      opacity: 0.22 + glow.intensity * 0.25,
+      opacity: 0.38 + glow.intensity * 0.35,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
@@ -2394,7 +2408,7 @@ const UnifiedBubbleLatticeVisualization = ({
     const scratch = new THREE.Object3D();
     occupiedSites.forEach((site, index) => {
       scratch.position.set(site.x, site.y, site.z);
-      scratch.scale.setScalar(1);
+      scratch.scale.setScalar(1.15);
       scratch.updateMatrix();
       mesh.setMatrixAt(index, scratch.matrix);
     });
@@ -2865,11 +2879,11 @@ const UnifiedBubbleLatticeVisualization = ({
       const ribbonGroup = sceneRef.current?.getObjectByName('CollapseRibbonGroup');
       const ribbon = ribbonGroup?.getObjectByName('CollapseTrajectoryRibbon');
       const playhead = ribbonGroup?.getObjectByName('CollapseRibbonPlayhead');
-      if (ribbon && playhead && ribbon.geometry?.attributes?.position) {
+      if (ribbon && playhead) {
         const count = ribbon.userData?.sampleCount || 0;
+        const arr = ribbon.userData?.positions;
         const idx = collapseRibbonPlayheadIndex(count, normalizedTime);
-        const arr = ribbon.geometry.attributes.position.array;
-        if (count > 0 && arr.length >= (idx + 1) * 3) {
+        if (arr && count > 0 && arr.length >= (idx + 1) * 3) {
           playhead.position.set(arr[idx * 3], arr[idx * 3 + 1], arr[idx * 3 + 2]);
           playhead.visible = showCollapseRibbon && showBubble;
         }
