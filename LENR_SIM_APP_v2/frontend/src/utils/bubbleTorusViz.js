@@ -321,18 +321,23 @@ export function createTorusPlasmaCloud({
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-  const softMap = createSoftDiscTexture(96);
-  const material = new THREE.PointsMaterial({
+  const softMap = createSoftDiscTexture(128);
+  if (softMap) {
+    softMap.minFilter = THREE.LinearFilter;
+    softMap.magFilter = THREE.LinearFilter;
+  }
+  const cloudMatOpts = {
     color: 0xffffff,
-    size: 0.16,
-    map: softMap,
+    size: 0.22,
     transparent: true,
-    opacity: 0.48,
+    opacity: 0.28,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     sizeAttenuation: true,
     vertexColors: true,
-  });
+  };
+  if (softMap) cloudMatOpts.map = softMap;
+  const material = new THREE.PointsMaterial(cloudMatOpts);
 
   const points = new THREE.Points(geometry, material);
   points.name = 'TorusPlasmaCloud';
@@ -376,8 +381,8 @@ export function createTorusPlasmaCloud({
     }
     geometry.attributes.position.needsUpdate = true;
     geometry.attributes.color.needsUpdate = true;
-    material.opacity = 0.2 + s * 0.5;
-    material.size = 0.11 + s * 0.18;
+    material.opacity = 0.1 + s * 0.22;
+    material.size = 0.16 + s * 0.1;
   };
 
   const dispose = () => {
@@ -898,7 +903,7 @@ export function createShedPlasmaDebrisGroup({
   void primaryColor;
   void secondaryColor;
 
-  const eddyCloud = createShedEddyCloud({ count: 140, color: SHED_NEUTRAL_COLOR });
+  const eddyCloud = createShedEddyCloud({ count: 56, color: SHED_NEUTRAL_COLOR });
   group.add(eddyCloud.points);
   disposables.push({ dispose: eddyCloud.dispose });
 

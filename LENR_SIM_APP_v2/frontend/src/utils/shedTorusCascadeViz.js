@@ -140,19 +140,20 @@ export function applyShedTorusTwistFold(geometry, cues = {}) {
  * @returns {{ points: THREE.Points, update: Function, dispose: Function }}
  */
 export function createShedEddyCloud({
-  count = 120,
+  count = 56,
   color = 0xb8c0c8,
 } = {}) {
-  const n = Math.max(24, count | 0);
+  // Fewer, larger soft discs — hard tiny points read as random pixelation
+  const n = Math.max(16, count | 0);
   const positions = new Float32Array(n * 3);
   const colors = new Float32Array(n * 3);
   const seeds = new Float32Array(n * 4);
   const base = new THREE.Color(color);
   for (let i = 0; i < n; i += 1) {
     seeds[i * 4] = Math.random() * Math.PI * 2;
-    seeds[i * 4 + 1] = 0.2 + Math.random() * 1.2;
-    seeds[i * 4 + 2] = (Math.random() - 0.5) * 1.4;
-    seeds[i * 4 + 3] = 0.6 + Math.random() * 1.4;
+    seeds[i * 4 + 1] = 0.25 + Math.random() * 0.95;
+    seeds[i * 4 + 2] = (Math.random() - 0.5) * 1.0;
+    seeds[i * 4 + 3] = 0.45 + Math.random() * 0.9;
     colors[i * 3] = base.r;
     colors[i * 3 + 1] = base.g;
     colors[i * 3 + 2] = base.b;
@@ -160,18 +161,22 @@ export function createShedEddyCloud({
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  const softMap = createSoftDiscTexture(48);
+  const softMap = createSoftDiscTexture(96);
   const matOpts = {
     color: 0xffffff,
-    size: 0.08,
+    size: 0.16,
     transparent: true,
-    opacity: 0.35,
+    opacity: 0.18,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     sizeAttenuation: true,
     vertexColors: true,
   };
-  if (softMap) matOpts.map = softMap;
+  if (softMap) {
+    softMap.minFilter = THREE.LinearFilter;
+    softMap.magFilter = THREE.LinearFilter;
+    matOpts.map = softMap;
+  }
   const mat = new THREE.PointsMaterial(matOpts);
   const points = new THREE.Points(geo, mat);
   points.name = 'ShedEddyCloud';
@@ -181,34 +186,34 @@ export function createShedEddyCloud({
 
   const update = (centers = [], eddyStrength = 0, deltaTime = 0.016) => {
     const e = Math.min(1, Math.max(0, Number(eddyStrength) || 0));
-    points.visible = e > 0.05 && centers.length > 0;
+    points.visible = e > 0.08 && centers.length > 0;
     if (!points.visible) {
       mat.opacity = 0;
       return;
     }
-    points.userData.time += deltaTime * (1.2 + e * 2.4);
+    points.userData.time += deltaTime * (0.7 + e * 1.2);
     const t = points.userData.time;
     const pos = geo.attributes.position.array;
     const col = geo.attributes.color.array;
     for (let i = 0; i < n; i += 1) {
       const c = centers[i % centers.length];
-      const az = seeds[i * 4] + t * seeds[i * 4 + 3] * 0.9;
-      const rad = seeds[i * 4 + 1] * (0.35 + e * 0.85);
-      const yOff = seeds[i * 4 + 2] * (0.25 + e * 0.4);
-      // Small-eddy swirl (sub-ring scale peer)
-      const swirl = 0.08 * Math.sin(t * 4.2 + i) * e;
+      const az = seeds[i * 4] + t * seeds[i * 4 + 3] * 0.55;
+      const rad = seeds[i * 4 + 1] * (0.4 + e * 0.55);
+      const yOff = seeds[i * 4 + 2] * (0.2 + e * 0.28);
+      const swirl = 0.05 * Math.sin(t * 2.4 + i) * e;
       pos[i * 3] = c.x + rad * Math.cos(az) + swirl;
       pos[i * 3 + 1] = c.y + yOff;
       pos[i * 3 + 2] = c.z + rad * Math.sin(az) - swirl;
-      const pulse = 0.55 + 0.45 * Math.sin(t * 5 + i * 0.2);
+      // Gentle pulse — avoid hard flicker
+      const pulse = 0.78 + 0.22 * Math.sin(t * 1.8 + i * 0.15);
       col[i * 3] = Math.min(1, base.r * pulse);
       col[i * 3 + 1] = Math.min(1, base.g * pulse);
-      col[i * 3 + 2] = Math.min(1, base.b * (0.85 + pulse * 0.15));
+      col[i * 3 + 2] = Math.min(1, base.b * (0.9 + pulse * 0.1));
     }
     geo.attributes.position.needsUpdate = true;
     geo.attributes.color.needsUpdate = true;
-    mat.opacity = 0.12 + e * 0.4;
-    mat.size = 0.05 + e * 0.1;
+    mat.opacity = 0.06 + e * 0.16;
+    mat.size = 0.12 + e * 0.1;
   };
 
   const dispose = () => {

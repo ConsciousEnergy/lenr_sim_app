@@ -56,31 +56,44 @@ export function fbmNoise2D(x, y, {
 function wrapFluidTexture(tex, kind) {
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
+  // Soft filtering — high-frequency texel sparkle reads as “random pixelation”
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = true;
+  tex.anisotropy = 4;
   tex.needsUpdate = true;
   tex.userData = { kind, fidelity: PLASMA_FLUID_LOOK_FIDELITY };
   return tex;
 }
 
+/** Soft contrast curve — kills mid-band grain without killing structure. */
+function softContrast(t, amount = 0.55) {
+  const x = Math.min(1, Math.max(0, t));
+  const s = x * x * (3 - 2 * x);
+  return x * (1 - amount) + s * amount;
+}
+
 function fillTurbulentRgba(data, size, seed, warm) {
+  // Soft large-scale mottling (was octaves:6 + freq 18–22 → pixel sparkle)
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
       const u = x / size;
       const v = y / size;
-      const n = fbmNoise2D(u * 7.5, v * 7.5, { seed, octaves: 6 });
-      const filament = fbmNoise2D(u * 18 + 2.1, v * 3.4, { seed: seed + 9, octaves: 4 });
-      const swirl = fbmNoise2D(u * 22 + v * 9, v * 11, { seed: seed + 21, octaves: 3 });
-      const t = Math.min(1, Math.max(0, n * 0.55 + filament * 0.28 + swirl * 0.17));
+      const n = fbmNoise2D(u * 3.2, v * 3.2, { seed, octaves: 3, gain: 0.45 });
+      const filament = fbmNoise2D(u * 5.5 + 1.1, v * 2.0, { seed: seed + 9, octaves: 2, gain: 0.4 });
+      const t = softContrast(n * 0.72 + filament * 0.28, 0.65);
       const i = (y * size + x) * 4;
       if (warm) {
-        data[i] = Math.floor(130 + t * 125);
-        data[i + 1] = Math.floor(55 + t * 100);
-        data[i + 2] = Math.floor(30 + t * 55);
+        data[i] = Math.floor(145 + t * 85);
+        data[i + 1] = Math.floor(75 + t * 70);
+        data[i + 2] = Math.floor(45 + t * 40);
       } else {
-        data[i] = Math.floor(50 + t * 100);
-        data[i + 1] = Math.floor(130 + t * 110);
-        data[i + 2] = Math.floor(170 + t * 85);
+        data[i] = Math.floor(70 + t * 70);
+        data[i + 1] = Math.floor(145 + t * 75);
+        data[i + 2] = Math.floor(180 + t * 55);
       }
-      data[i + 3] = Math.floor(85 + t * 170);
+      // Narrower alpha swing → less additive sparkle
+      data[i + 3] = Math.floor(110 + t * 90);
     }
   }
 }
@@ -91,20 +104,20 @@ function fillLaminarRgba(data, size, seed, warm) {
     for (let x = 0; x < size; x += 1) {
       const u = x / size;
       const v = y / size;
-      const band = 0.5 + 0.5 * Math.sin((v * 9 + u * 0.6) * Math.PI * 2 + seed * 0.1);
-      const soft = fbmNoise2D(u * 2.2, v * 3.5, { seed, octaves: 2, gain: 0.45 });
-      const t = Math.min(1, Math.max(0, band * 0.72 + soft * 0.28));
+      const band = 0.5 + 0.5 * Math.sin((v * 5.5 + u * 0.45) * Math.PI * 2 + seed * 0.1);
+      const soft = fbmNoise2D(u * 1.4, v * 2.0, { seed, octaves: 2, gain: 0.4 });
+      const t = softContrast(band * 0.78 + soft * 0.22, 0.5);
       const i = (y * size + x) * 4;
       if (warm) {
-        data[i] = Math.floor(160 + t * 70);
-        data[i + 1] = Math.floor(120 + t * 60);
-        data[i + 2] = Math.floor(90 + t * 40);
+        data[i] = Math.floor(165 + t * 55);
+        data[i + 1] = Math.floor(130 + t * 50);
+        data[i + 2] = Math.floor(100 + t * 35);
       } else {
-        data[i] = Math.floor(150 + t * 70);
-        data[i + 1] = Math.floor(160 + t * 60);
-        data[i + 2] = Math.floor(175 + t * 55);
+        data[i] = Math.floor(160 + t * 50);
+        data[i + 1] = Math.floor(168 + t * 45);
+        data[i + 2] = Math.floor(180 + t * 40);
       }
-      data[i + 3] = Math.floor(70 + t * 110);
+      data[i + 3] = Math.floor(90 + t * 80);
     }
   }
 }
@@ -118,20 +131,20 @@ function fillLiquidRgba(data, size, seed, warm) {
     for (let x = 0; x < size; x += 1) {
       const u = x / size;
       const v = y / size;
-      const meniscus = 0.5 + 0.5 * Math.sin((v * 5.5 + u * 1.2) * Math.PI * 2 + seed * 0.07);
-      const caustic = fbmNoise2D(u * 6.5, v * 4.2, { seed: seed + 3, octaves: 3, gain: 0.48 });
-      const t = Math.min(1, Math.max(0, meniscus * 0.55 + caustic * 0.45));
+      const meniscus = 0.5 + 0.5 * Math.sin((v * 3.8 + u * 0.9) * Math.PI * 2 + seed * 0.07);
+      const caustic = fbmNoise2D(u * 3.2, v * 2.4, { seed: seed + 3, octaves: 2, gain: 0.42 });
+      const t = softContrast(meniscus * 0.7 + caustic * 0.3, 0.55);
       const i = (y * size + x) * 4;
       if (warm) {
-        data[i] = Math.floor(170 + t * 55);
-        data[i + 1] = Math.floor(140 + t * 70);
-        data[i + 2] = Math.floor(100 + t * 50);
+        data[i] = Math.floor(175 + t * 45);
+        data[i + 1] = Math.floor(150 + t * 55);
+        data[i + 2] = Math.floor(115 + t * 40);
       } else {
-        data[i] = Math.floor(140 + t * 50);
-        data[i + 1] = Math.floor(175 + t * 55);
-        data[i + 2] = Math.floor(200 + t * 45);
+        data[i] = Math.floor(155 + t * 40);
+        data[i + 1] = Math.floor(180 + t * 40);
+        data[i + 2] = Math.floor(205 + t * 35);
       }
-      data[i + 3] = Math.floor(90 + t * 130);
+      data[i + 3] = Math.floor(110 + t * 90);
     }
   }
 }
@@ -145,20 +158,20 @@ function fillGasRgba(data, size, seed, warm) {
     for (let x = 0; x < size; x += 1) {
       const u = x / size;
       const v = y / size;
-      const wisp = fbmNoise2D(u * 4.5, v * 9.5, { seed, octaves: 4, gain: 0.52 });
-      const veil = fbmNoise2D(u * 1.8 + 1.1, v * 2.4, { seed: seed + 11, octaves: 2 });
-      const t = Math.min(1, Math.max(0, wisp * 0.65 + veil * 0.35));
+      const wisp = fbmNoise2D(u * 2.2, v * 4.0, { seed, octaves: 2, gain: 0.42 });
+      const veil = fbmNoise2D(u * 1.2 + 1.1, v * 1.6, { seed: seed + 11, octaves: 2, gain: 0.4 });
+      const t = softContrast(wisp * 0.55 + veil * 0.45, 0.6);
       const i = (y * size + x) * 4;
       if (warm) {
-        data[i] = Math.floor(180 + t * 60);
-        data[i + 1] = Math.floor(150 + t * 50);
-        data[i + 2] = Math.floor(120 + t * 40);
+        data[i] = Math.floor(185 + t * 45);
+        data[i + 1] = Math.floor(160 + t * 40);
+        data[i + 2] = Math.floor(135 + t * 30);
       } else {
-        data[i] = Math.floor(170 + t * 55);
-        data[i + 1] = Math.floor(185 + t * 45);
-        data[i + 2] = Math.floor(200 + t * 40);
+        data[i] = Math.floor(180 + t * 40);
+        data[i + 1] = Math.floor(190 + t * 35);
+        data[i + 2] = Math.floor(205 + t * 30);
       }
-      data[i + 3] = Math.floor(35 + t * 90);
+      data[i + 3] = Math.floor(50 + t * 70);
     }
   }
 }
@@ -278,15 +291,16 @@ export function createLaminarNoiseTexture({
 
 function fillNormalRgba(data, size, seed) {
   const eps = 1 / size;
+  // Low-frequency soft bump only — strong high-freq normals sparkle as grain
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
       const u = x / size;
       const v = y / size;
-      const h = fbmNoise2D(u * 5, v * 5, { seed, octaves: 4 });
-      const hx = fbmNoise2D((u + eps) * 5, v * 5, { seed, octaves: 4 });
-      const hy = fbmNoise2D(u * 5, (v + eps) * 5, { seed, octaves: 4 });
-      const dx = (hx - h) * 8;
-      const dy = (hy - h) * 8;
+      const h = fbmNoise2D(u * 2.2, v * 2.2, { seed, octaves: 2, gain: 0.4 });
+      const hx = fbmNoise2D((u + eps) * 2.2, v * 2.2, { seed, octaves: 2, gain: 0.4 });
+      const hy = fbmNoise2D(u * 2.2, (v + eps) * 2.2, { seed, octaves: 2, gain: 0.4 });
+      const dx = (hx - h) * 3.2;
+      const dy = (hy - h) * 3.2;
       const len = Math.sqrt(dx * dx + dy * dy + 1) || 1;
       const i = (y * size + x) * 4;
       data[i] = Math.floor(128 + (dx / len) * 127);
@@ -324,14 +338,14 @@ function fillStreakRgba(data, size, seed) {
     for (let x = 0; x < size; x += 1) {
       const u = x / size;
       const v = y / size;
-      const n = fbmNoise2D(u * 10, v * 2.2, { seed, octaves: 4 });
-      const streak = Math.pow(n, 1.35);
-      const glow = 0.35 + 0.65 * streak;
+      const n = fbmNoise2D(u * 4.5, v * 1.4, { seed, octaves: 2, gain: 0.42 });
+      const streak = softContrast(Math.pow(n, 1.15), 0.5);
+      const glow = 0.45 + 0.5 * streak;
       const i = (y * size + x) * 4;
-      data[i] = Math.floor(200 + glow * 55);
-      data[i + 1] = Math.floor(220 + glow * 35);
+      data[i] = Math.floor(205 + glow * 40);
+      data[i + 1] = Math.floor(225 + glow * 25);
       data[i + 2] = 255;
-      data[i + 3] = Math.floor(40 + glow * 200);
+      data[i + 3] = Math.floor(55 + glow * 140);
     }
   }
 }
@@ -386,51 +400,57 @@ export function applyPlasmaFluidLook(material, {
     noise: resolvedPhase === 'liquid' || resolvedPhase === 'gas'
       ? createPhaseNoiseTexture({
         phase: resolvedPhase,
-        size: 128,
+        size: 160,
         seed: kind === 'shed' ? 7 : kind === 'bubble' ? 4 : 3,
         warm: false,
       })
       : (isLaminar
         ? createLaminarNoiseTexture({
-          size: 128,
+          size: 160,
           seed: kind === 'shed' ? 7 : 5,
           warm,
         })
         : createTurbulentNoiseTexture({
-          size: 128,
+          size: 160,
           seed: kind === 'bubble' ? 4 : 3,
           warm,
         })),
-    normal: createSoftRefractionNormalMap({
-      size: 96,
-      seed: resolvedPhase === 'liquid' ? 23 : isLaminar ? 19 : kind === 'jet' ? 15 : 11,
-    }),
-    streak: kind === 'jet' ? createAdvectiveStreakTexture({ size: 128 }) : null,
+    // Soft low-freq normals only; skip on shed/gas to cut grain
+    normal: (resolvedPhase === 'gas' || kind === 'shed')
+      ? null
+      : createSoftRefractionNormalMap({
+        size: 128,
+        seed: resolvedPhase === 'liquid' ? 23 : isLaminar ? 19 : kind === 'jet' ? 15 : 11,
+      }),
+    streak: kind === 'jet' ? createAdvectiveStreakTexture({ size: 160 }) : null,
   };
   if (!pack.noise && !pack.streak) return null;
   const map = kind === 'jet' && pack.streak ? pack.streak : pack.noise;
   if (map) {
     material.map = map;
     material.emissiveMap = map;
-    if (kind === 'torus') map.repeat.set(isLaminar ? 2.4 : 5.2, isLaminar ? 1.4 : 2.6);
-    if (kind === 'shed') map.repeat.set(isLaminar ? 2.0 : 3.2, isLaminar ? 3.6 : 3.2);
-    if (kind === 'bubble') map.repeat.set(isLaminar ? 1.8 : 3.4, isLaminar ? 1.8 : 3.4);
+    // Lower UV tiling — high repeats magnify texel sparkle into “pixelation”
+    if (kind === 'torus') map.repeat.set(isLaminar ? 1.4 : 2.2, isLaminar ? 1.0 : 1.3);
+    if (kind === 'shed') map.repeat.set(1.2, 1.6);
+    if (kind === 'bubble') map.repeat.set(1.1, 1.1);
   }
-  if (material.roughnessMap !== undefined && pack.noise) {
-    material.roughnessMap = pack.noise;
+  // Do not bind noise as roughnessMap — that re-introduces grain under lighting
+  if (material.roughnessMap !== undefined) {
+    material.roughnessMap = null;
   }
   if (material.normalMap !== undefined && kind !== 'jet' && pack.normal) {
     material.normalMap = pack.normal;
-    // Liquid: stronger soft refraction; gas: weaker bump; plasma turb: strong
     let n;
-    if (resolvedPhase === 'liquid') n = 0.72;
-    else if (resolvedPhase === 'gas') n = kind === 'bubble' ? 0.2 : 0.14;
+    if (resolvedPhase === 'liquid') n = 0.28;
+    else if (resolvedPhase === 'gas') n = 0.08;
     else {
       n = isLaminar
-        ? (kind === 'bubble' ? 0.22 : 0.18)
-        : (kind === 'bubble' ? 0.62 : 0.55);
+        ? (kind === 'bubble' ? 0.12 : 0.1)
+        : (kind === 'bubble' ? 0.22 : 0.18);
     }
     material.normalScale = new THREE.Vector2(n, n);
+  } else if (material.normalMap !== undefined && !pack.normal) {
+    material.normalMap = null;
   }
   // Phase presentation: liquid more specular; gas thinner / less metal
   if (material.metalness !== undefined) {
