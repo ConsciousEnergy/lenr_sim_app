@@ -3027,6 +3027,12 @@ const UnifiedBubbleLatticeVisualization = ({
           phaseProgress,
         });
 
+      // Nest bubble on lattice BEFORE shed update so parentWorldY is current.
+      // Lattice is below (LATTICE_Y_OFFSET=-5); away-from-lattice = +world Y.
+      const nestWorldY = getBubbleYFromPhase(phase, phaseProgress, displayScale);
+      bubbleGroupRef.current.position.y = nestWorldY;
+      const shedUpdateOpts = { primarySpin: 1, parentWorldY: nestWorldY };
+
       // Determine which geometry to show based on phase
       // Main bubble visibility is controlled by showBubble toggle
       if (phase === 'EXPANSION') {
@@ -3044,7 +3050,7 @@ const UnifiedBubbleLatticeVisualization = ({
         if (filament) filament.visible = false;
         if (plasmaCloud) plasmaCloud.visible = false;
         if (jet) jet.visible = false;
-        if (shedDebrisApi) shedDebrisApi.update(deltaTime, 0);
+        if (shedDebrisApi) shedDebrisApi.update(deltaTime, 0, shedUpdateOpts);
         else if (shedDebrisGroup) shedDebrisGroup.visible = false;
       } else if (phase === 'COLLAPSE' || inTorusWindow) {
         // Turbulent rotating gaseous plasma torus — full 90.7–95.7% scrub dwell
@@ -3129,7 +3135,7 @@ const UnifiedBubbleLatticeVisualization = ({
           }
         }
         if (shedDebrisApi) {
-          shedDebrisApi.update(deltaTime, showBubble ? shedProg : 0, { primarySpin: 1 });
+          shedDebrisApi.update(deltaTime, showBubble ? shedProg : 0, shedUpdateOpts);
         }
       } else if (phase === 'MINIMUM' || phase === 'REBOUND') {
         // Maser-like jet into lattice; primary ring collapses then sheds counter-rotating debris
@@ -3140,27 +3146,32 @@ const UnifiedBubbleLatticeVisualization = ({
         });
         
         if (bubble) bubble.visible = false;
+        // Primary maser-collapse is separate from shed: hide primary as soon as
+        // debris starts so the ring shrink is never read as shed falling.
+        const primaryStillCollapsing = phase === 'MINIMUM'
+          && maserTighten > 0.2
+          && shedProg < 0.08;
         if (torus) {
-          // Ring collapses onto jet then vanishes as debris sheds
-          const stillTight = maserTighten > 0.2 && shedProg < 0.55;
-          torus.visible = showBubble && phase === 'MINIMUM' && stillTight;
+          torus.visible = showBubble && primaryStillCollapsing;
           if (torus.visible) {
             const scaleFactor = Math.max(0.06, 0.35 * (1 - maserTighten * 0.85));
             torus.scale.setScalar(scaleFactor);
             torus.scale.y = Math.max(0.1, scaleFactor * 0.55);
-            torus.material.opacity = 0.28 * (1 - jetProgress) * (1 - shedProg);
+            torus.material.opacity = 0.28 * (1 - jetProgress);
             torus.rotation.z += deltaTime * (1.2 + maserTighten * 2.5);
             torus.userData.spinSign = 1;
           }
         }
         if (filament) {
-          filament.visible = showBubble && phase === 'MINIMUM' && jetProgress < 0.35 && shedProg < 0.4;
-          filament.material.opacity = 0.22 * (1 - jetProgress);
-          filament.rotation.z -= deltaTime * 1.5;
+          filament.visible = showBubble && primaryStillCollapsing && jetProgress < 0.35;
+          if (filament.visible) {
+            filament.material.opacity = 0.22 * (1 - jetProgress);
+            filament.rotation.z -= deltaTime * 1.5;
+          }
         }
         if (plasmaCloudApi) {
-          const cloudStr = phase === 'MINIMUM'
-            ? Math.max(0, 0.45 * (1 - jetProgress) * (1 - shedProg * 0.8))
+          const cloudStr = primaryStillCollapsing
+            ? Math.max(0, 0.45 * (1 - jetProgress))
             : 0;
           plasmaCloud.visible = showBubble && cloudStr > 0.05;
           if (plasmaCloud.visible) {
@@ -3187,9 +3198,9 @@ const UnifiedBubbleLatticeVisualization = ({
           }
           jet.position.set(0, -jetHeight * 0.18, 0);
         }
-        // Counter-rotating shed rises away from lattice and fades in the flow
+        // Counter-rotating shed: world +Y rise + opacity fade (parentWorldY compensated)
         if (shedDebrisApi) {
-          shedDebrisApi.update(deltaTime, showBubble ? shedProg : 0, { primarySpin: 1 });
+          shedDebrisApi.update(deltaTime, showBubble ? shedProg : 0, shedUpdateOpts);
         } else if (shedDebrisGroup) {
           shedDebrisGroup.visible = showBubble && shedProg > 0.02;
         }
@@ -3198,7 +3209,7 @@ const UnifiedBubbleLatticeVisualization = ({
         if (filament) filament.visible = false;
         if (plasmaCloud) plasmaCloud.visible = false;
         if (jet) jet.visible = false;
-        if (shedDebrisApi) shedDebrisApi.update(deltaTime, 0);
+        if (shedDebrisApi) shedDebrisApi.update(deltaTime, 0, shedUpdateOpts);
         else if (shedDebrisGroup) shedDebrisGroup.visible = false;
       }
       
@@ -3371,11 +3382,7 @@ const UnifiedBubbleLatticeVisualization = ({
         ribbonGroup.visible = showCollapseRibbon && showBubble;
       }
       
-      // ========================================================================
-      // HETEROGENEOUS NUCLEATION — nest bubble underside on lattice boundary
-      // (scale-aware; not a free-floating center offset)
-      // ========================================================================
-      bubbleGroupRef.current.position.y = getBubbleYFromPhase(phase, phaseProgress, displayScale);
+      // Nest Y already applied before shed update (world +Y away from lattice).
 
       // Temperature tint from engine/API samples (temperature_k / collapse path).
       // local_fallback chip already covers schematic RAF when samples absent.

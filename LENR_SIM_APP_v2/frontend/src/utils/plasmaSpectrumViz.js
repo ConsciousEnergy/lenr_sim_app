@@ -271,8 +271,9 @@ export function maserCollapseProgress({
 
 /**
  * After maser jet: shed secondary turbulent tori + micro-bubbles.
- * Progress is monotonic 0→1 once shed starts (MINIMUM → REBOUND stays at 1).
- * Opacity fade is handled in the mesh update — never reverse +Y / bounce.
+ * Starts only after primary ring has mostly collapsed onto the jet so the
+ * maser-collapse shrink cannot be misread as shed falling.
+ * Progress is monotonic 0→1 (MINIMUM → REBOUND stays at 1). Never reverses.
  */
 export function shedDebrisProgress({
   cycleFraction,
@@ -282,17 +283,17 @@ export function shedDebrisProgress({
   const frac = wrapCycle(cycleFraction);
   if (frac >= TORUS_SCRUB_START && frac < TORUS_SCRUB_END) {
     const tw = torusWindowProgress(frac);
-    // Shed begins in the last ~20% of the torus window
-    return clamp01((tw - 0.82) / 0.18) * 0.35;
+    // Shed only in the final ~12% of the torus window (after maser tighten)
+    return clamp01((tw - 0.88) / 0.12) * 0.22;
   }
   const name = String(phase || '').toUpperCase();
   if (name === 'MINIMUM') {
     const p = clamp01(phaseProgress);
-    // Monotonic rise through MINIMUM (debris drifts up, not onto lattice)
-    return clamp01(0.35 + p * 0.65);
+    // Monotonic rise through MINIMUM
+    return clamp01(0.22 + p * 0.78);
   }
   if (name === 'REBOUND') {
-    // Hold at fully shed — no +Y reverse / bounce / settle on surface
+    // Hold at fully shed — opacity already faded; Y stays latched high
     return 1;
   }
   return 0;

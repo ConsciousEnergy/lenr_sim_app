@@ -7,6 +7,7 @@ import {
   createBubbleGasMaterial,
   createDoubleLayerMaterial,
   createShedPlasmaDebrisGroup,
+  computeShedRiseSample,
   createTorusPlasmaMaterial,
   applyBubbleTemperatureTint,
   createBubbleTorusGeometries,
@@ -66,35 +67,91 @@ describe('bubbleTorusViz (presentation materials)', () => {
     Object.values(geos).forEach((g) => g.dispose());
   });
 
-  test('shed debris counter-rotates, rises away from lattice, and fades', () => {
+  test('computeShedRiseSample: world Y monotonic, opacity falls with riseT', () => {
+    let latch = null;
+    let spawn = null;
+    let progLatch = 0;
+    const worldYs = [];
+    const opacities = [];
+    // Parent nest drops toward lattice (simulates UBLV getBubbleYFromPhase)
+    const parentYs = [-3.2, -3.35, -3.5, -3.55, -3.6, -3.5, -3.4];
+    const progresses = [0.15, 0.3, 0.5, 0.7, 0.9, 0.4, 1.0]; // includes reverse
+    progresses.forEach((p, i) => {
+      const sample = computeShedRiseSample({
+        shedProgress: p,
+        progressLatched: progLatch,
+        delay: 0,
+        spawnLocalY: 0.7,
+        riseDistance: 2.0,
+        parentWorldY: parentYs[i],
+        peakOpacity: 0.42,
+        worldYLatched: latch,
+        spawnWorldY: spawn,
+      });
+      progLatch = sample.progress;
+      latch = sample.worldYLatched;
+      spawn = sample.spawnWorldY;
+      if (sample.active || sample.riseT > 0) {
+        worldYs.push(sample.worldY);
+        opacities.push(sample.opacity);
+      }
+    });
+    for (let i = 1; i < worldYs.length; i += 1) {
+      expect(worldYs[i]).toBeGreaterThanOrEqual(worldYs[i - 1] - 1e-9);
+    }
+    expect(opacities[opacities.length - 1]).toBeLessThan(opacities[0]);
+    // Opacity decreases as rise progresses (compare early vs mid active samples)
+    expect(opacities[2]).toBeLessThan(opacities[0]);
+  });
+
+  test('computeShedRiseSample: opacity is peak*(1-riseT)', () => {
+    const s = computeShedRiseSample({
+      shedProgress: 0.5,
+      delay: 0,
+      peakOpacity: 0.5,
+      riseDistance: 1,
+      spawnLocalY: 0.5,
+      parentWorldY: -3,
+    });
+    expect(s.opacity).toBeCloseTo(0.5 * (1 - s.riseT), 5);
+    expect(s.riseT).toBeGreaterThan(0);
+    expect(s.riseT).toBeLessThan(1);
+    expect(s.worldY).toBeGreaterThan(-3 + 0.5); // above spawn
+  });
+
+  test('shed debris group: world Y rises even when parent nest drops; fades; never reverses', () => {
     const debris = createShedPlasmaDebrisGroup({ torusCount: 2, bubbleCount: 3 });
     expect(debris.group.name).toBe('ShedPlasmaDebris');
-    expect(debris.group.children.length).toBe(5);
-    debris.update(0.016, 0);
+    debris.update(0.016, 0, { parentWorldY: -3.0 });
     expect(debris.group.visible).toBe(false);
-    debris.update(0.016, 0.55, { primarySpin: 1 });
-    expect(debris.group.visible).toBe(true);
-    const mid = debris.group.children.filter((c) => c.visible);
-    expect(mid.length).toBeGreaterThan(0);
-    // Rise away from lattice (+Y), not settle onto surface
-    expect(mid.some((c) => c.position.y > 0.3)).toBe(true);
-    const midY = Math.max(...mid.map((c) => c.position.y));
-    const midOpacity = Math.max(...mid.map((c) => c.material.opacity));
-    debris.update(0.016, 1.0, { primarySpin: 1 });
-    const late = debris.group.children.filter((c) => c.visible);
-    const lateY = Math.max(
-      ...debris.group.children.map((c) => c.position.y),
-      midY,
-    );
-    expect(lateY).toBeGreaterThanOrEqual(midY);
-    const lateOpacity = late.length
-      ? Math.max(...late.map((c) => c.material.opacity))
-      : 0;
-    expect(lateOpacity).toBeLessThan(midOpacity);
-    // Decreasing progress must not pull debris back down (latch)
-    debris.update(0.016, 0.2, { primarySpin: 1 });
-    const afterReverse = Math.max(...debris.group.children.map((c) => c.position.y));
-    expect(afterReverse).toBeGreaterThanOrEqual(lateY - 1e-6);
+
+    const frames = [];
+    const parentPath = [-3.0, -3.2, -3.4, -3.55, -3.6, -3.45, -3.3];
+    const progPath = [0.2, 0.4, 0.55, 0.75, 0.95, 0.3, 1.0];
+    progPath.forEach((p, i) => {
+      debris.update(0.016, p, { primarySpin: 1, parentWorldY: parentPath[i] });
+      const kids = debris.group.children.filter((c) => c.visible);
+      if (!kids.length) {
+        frames.push(null);
+        return;
+      }
+      const worldYs = kids.map((c) => c.userData.lastWorldY);
+      const opacities = kids.map((c) => c.material.opacity);
+      frames.push({
+        maxWorldY: Math.max(...worldYs),
+        minWorldY: Math.min(...worldYs),
+        maxOpacity: Math.max(...opacities),
+      });
+    });
+    const live = frames.filter(Boolean);
+    expect(live.length).toBeGreaterThan(3);
+    for (let i = 1; i < live.length; i += 1) {
+      expect(live[i].maxWorldY).toBeGreaterThanOrEqual(live[i - 1].maxWorldY - 1e-9);
+    }
+    expect(live[0].maxOpacity).toBeGreaterThan(0.15);
+    expect(live[live.length - 1].maxOpacity).toBeLessThan(live[0].maxOpacity);
+    // Spawned debris stay above deeply nested lattice surface (~-3.5)
+    expect(live[0].minWorldY).toBeGreaterThan(-3.0 + 0.4);
     debris.dispose();
   });
 });

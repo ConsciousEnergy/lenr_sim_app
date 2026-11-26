@@ -102,15 +102,21 @@ describe('plasmaSpectrumViz (schematic excited plasma)', () => {
 
   test('shedDebrisProgress rises after maser jet and stays monotonic through REBOUND', () => {
     expect(shedDebrisProgress({ cycleFraction: 0.93 })).toBe(0);
+    // Shed only after late maser tighten (final ~12% of torus window)
+    expect(shedDebrisProgress({ cycleFraction: 0.95 })).toBe(0);
     expect(shedDebrisProgress({ cycleFraction: 0.955 })).toBeGreaterThan(0);
     expect(shedDebrisProgress({ phase: 'MINIMUM', phaseProgress: 0.6 }))
       .toBeGreaterThan(0.6);
-    // REBOUND holds at 1 — no +Y reverse / bounce
+    // REBOUND holds at 1 — never lowers progress (no scrub reverse)
     expect(shedDebrisProgress({ phase: 'REBOUND', phaseProgress: 0.05 })).toBe(1);
     expect(shedDebrisProgress({ phase: 'REBOUND', phaseProgress: 0.95 })).toBe(1);
-    const earlyMin = shedDebrisProgress({ phase: 'MINIMUM', phaseProgress: 0.1 });
-    const lateMin = shedDebrisProgress({ phase: 'MINIMUM', phaseProgress: 0.9 });
-    expect(lateMin).toBeGreaterThanOrEqual(earlyMin);
+    const samples = [0, 0.2, 0.4, 0.6, 0.8, 1].map((p) =>
+      shedDebrisProgress({ phase: 'MINIMUM', phaseProgress: p }),
+    );
+    for (let i = 1; i < samples.length; i += 1) {
+      expect(samples[i]).toBeGreaterThanOrEqual(samples[i - 1]);
+    }
+    expect(samples[samples.length - 1]).toBe(1);
     expect(SHED_DEBRIS_CHIP.toLowerCase()).toContain('counter-rotating');
   });
 

@@ -370,9 +370,90 @@ export function createBubbleTorusGeometries() {
 }
 
 /**
+ * Pure shed-rise sample (testable). Lattice is below the bubble in world +Y
+ * (UBLV: LATTICE_Y_OFFSET=-5, bubble nests above). Away-from-lattice = +world Y.
+ *
+ * Compensates parentWorldY motion (bubble nest drops toward lattice) so world Y
+ * never decreases once spawned. Opacity falls as riseProgress rises.
+ *
+ * @returns {{
+ *   active: boolean,
+ *   progress: number,
+ *   riseT: number,
+ *   worldY: number,
+ *   localY: number,
+ *   opacity: number,
+ *   worldYLatched: number|null,
+ *   spawnWorldY: number|null,
+ * }}
+ */
+export function computeShedRiseSample({
+  shedProgress = 0,
+  progressLatched = 0,
+  delay = 0,
+  spawnLocalY = 0.6,
+  riseDistance = 1.8,
+  parentWorldY = 0,
+  peakOpacity = 0.42,
+  worldYLatched = null,
+  spawnWorldY = null,
+} = {}) {
+  const raw = Math.min(1, Math.max(0, Number(shedProgress) || 0));
+  const prevProg = Math.min(1, Math.max(0, Number(progressLatched) || 0));
+  // Reset only when progress is cleared for a new cycle
+  if (raw < 0.02 && prevProg < 0.02) {
+    return {
+      active: false,
+      progress: 0,
+      riseT: 0,
+      worldY: parentWorldY + spawnLocalY,
+      localY: spawnLocalY,
+      opacity: 0,
+      worldYLatched: null,
+      spawnWorldY: null,
+    };
+  }
+  const progress = Math.max(prevProg, raw);
+  const local = Math.min(1, Math.max(0, (progress - delay) / Math.max(1e-6, 1 - delay)));
+  if (local <= 0) {
+    return {
+      active: false,
+      progress,
+      riseT: 0,
+      worldY: parentWorldY + spawnLocalY,
+      localY: spawnLocalY,
+      opacity: 0,
+      worldYLatched,
+      spawnWorldY,
+    };
+  }
+  // Ease-out: leave nest quickly (no sin / no negative Y term)
+  const riseT = 1 - (1 - local) * (1 - local);
+  const spawnW = Number.isFinite(spawnWorldY)
+    ? spawnWorldY
+    : (Number(parentWorldY) || 0) + spawnLocalY;
+  const worldDesired = spawnW + riseDistance * riseT;
+  const prevWorld = Number.isFinite(worldYLatched) ? worldYLatched : worldDesired;
+  // Hard latch: world +Y never decreases once spawned
+  const worldY = Math.max(prevWorld, worldDesired);
+  const localY = worldY - (Number(parentWorldY) || 0);
+  const opacity = Math.max(0, peakOpacity * (1 - riseT));
+  return {
+    active: opacity >= 0.02,
+    progress,
+    riseT,
+    worldY,
+    localY,
+    opacity,
+    worldYLatched: worldY,
+    spawnWorldY: spawnW,
+  };
+}
+
+/**
  * Secondary turbulent tori + micro-bubbles that shed after the maser-like jet.
- * Counter-rotate relative to the primary torus, rise away from the lattice,
- * and fade out in the fluid flow (not landing on the surface).
+ * Counter-rotate relative to the primary torus; rise monotonically in world +Y
+ * away from the lattice; fade opacity while rising. Never fall / bounce / settle.
  *
  * Honesty: schematic hydro / optical morphology — not CFD, not fusion.
  *
@@ -391,6 +472,7 @@ export function createShedPlasmaDebrisGroup({
   group.userData = {
     fidelity: BUBBLE_TORUS_FIDELITY,
     source: BUBBLE_TORUS_SOURCE,
+    shedProgressMax: 0,
   };
 
   const torusGeo = new THREE.TorusGeometry(0.42, 0.12, 12, 48);
@@ -401,7 +483,7 @@ export function createShedPlasmaDebrisGroup({
   for (let i = 0; i < nT; i += 1) {
     const mat = createTorusPlasmaMaterial({
       color: i % 2 === 0 ? primaryColor : secondaryColor,
-      opacity: 0.28,
+      opacity: 0.42,
     });
     disposables.push(mat);
     const mesh = new THREE.Mesh(torusGeo, mat);
@@ -411,17 +493,18 @@ export function createShedPlasmaDebrisGroup({
     const azimuth = (i / nT) * Math.PI * 2 + 0.4;
     mesh.userData = {
       kind: 'torus',
-      // Opposite spin vs primary torus (primary spins +Z)
       spinSign: -1,
       spinRate: 2.2 + i * 0.55,
       azimuth,
-      radialStart: 0.15 + i * 0.08,
-      radialEnd: 1.05 + i * 0.4,
-      // Rise away from lattice (+Y) and fade in the fluid flow
-      yStart: 0.05,
-      yEnd: 1.35 + i * 0.35,
-      delay: i * 0.12,
+      radialStart: 0.35 + i * 0.12,
+      radialEnd: 0.85 + i * 0.28,
+      spawnLocalY: 0.7 + i * 0.12,
+      riseDistance: 1.9 + i * 0.35,
+      delay: i * 0.1,
       scale0: 0.55 + i * 0.12,
+      peakOpacity: 0.42,
+      worldYLatched: null,
+      spawnWorldY: null,
     };
     group.add(mesh);
   }
@@ -430,7 +513,7 @@ export function createShedPlasmaDebrisGroup({
   for (let i = 0; i < nB; i += 1) {
     const mat = createBubbleGasMaterial({
       color: i % 2 === 0 ? secondaryColor : primaryColor,
-      opacity: 0.22,
+      opacity: 0.36,
     });
     mat.blending = THREE.AdditiveBlending;
     mat.emissive = new THREE.Color(i % 2 === 0 ? secondaryColor : primaryColor);
@@ -445,69 +528,85 @@ export function createShedPlasmaDebrisGroup({
       spinSign: -1,
       spinRate: 1.4 + i * 0.35,
       azimuth,
-      radialStart: 0.1,
-      radialEnd: 0.75 + (i % 3) * 0.35,
-      yStart: 0.1,
-      yEnd: 1.15 + (i % 3) * 0.4,
-      delay: 0.08 + i * 0.09,
+      radialStart: 0.25 + (i % 3) * 0.08,
+      radialEnd: 0.7 + (i % 3) * 0.22,
+      spawnLocalY: 0.75 + (i % 3) * 0.1,
+      riseDistance: 1.7 + (i % 3) * 0.3,
+      delay: 0.06 + i * 0.08,
       scale0: 0.35 + (i % 3) * 0.12,
+      peakOpacity: 0.36,
+      worldYLatched: null,
+      spawnWorldY: null,
     };
     group.add(mesh);
   }
 
   /**
    * @param {number} deltaTime
-   * @param {number} shedProgress 0..1
-   * @param {{ primarySpin?: number }} [opts] primary torus Z-spin direction cue
+   * @param {number} shedProgress 0..1 (latched internally — never reverses)
+   * @param {{ primarySpin?: number, parentWorldY?: number }} [opts]
    */
   const update = (deltaTime = 0.016, shedProgress = 0, opts = {}) => {
     const raw = Math.min(1, Math.max(0, Number(shedProgress) || 0));
-    // Latch peak progress so +Y never reverses mid-cycle (opacity fades only)
-    if (raw < 0.02) group.userData.shedProgressMax = 0;
+    const parentWorldY = Number.isFinite(opts.parentWorldY) ? opts.parentWorldY : 0;
+    if (raw < 0.02) {
+      group.userData.shedProgressMax = 0;
+      group.children.forEach((child) => {
+        if (!child.userData) return;
+        child.userData.worldYLatched = null;
+        child.userData.spawnWorldY = null;
+        child.visible = false;
+      });
+      group.visible = false;
+      return;
+    }
     const prevMax = Number(group.userData.shedProgressMax) || 0;
     const s = Math.max(prevMax, raw);
     group.userData.shedProgressMax = s;
-    group.visible = s > 0.02;
-    if (!group.visible) {
-      group.children.forEach((child) => {
-        child.visible = false;
-      });
-      return;
-    }
+    group.visible = true;
     const primarySpin = Number.isFinite(opts.primarySpin) ? Math.sign(opts.primarySpin) || 1 : 1;
+    let anyVisible = false;
     group.children.forEach((child) => {
       const d = child.userData;
       if (!d) return;
-      const local = Math.min(1, Math.max(0, (s - d.delay) / Math.max(1e-6, 1 - d.delay)));
-      if (local <= 0) {
+      const sample = computeShedRiseSample({
+        shedProgress: s,
+        progressLatched: s,
+        delay: d.delay,
+        spawnLocalY: d.spawnLocalY,
+        riseDistance: d.riseDistance,
+        parentWorldY,
+        peakOpacity: d.peakOpacity,
+        worldYLatched: d.worldYLatched,
+        spawnWorldY: d.spawnWorldY,
+      });
+      d.worldYLatched = sample.worldYLatched;
+      d.spawnWorldY = sample.spawnWorldY;
+      if (!sample.active) {
         child.visible = false;
         return;
       }
       child.visible = true;
-      // Monotonic ease-in-out: y only increases with s; fade via opacity only
-      const ease = local * local * (3 - 2 * local);
-      const r = d.radialStart + (d.radialEnd - d.radialStart) * ease;
-      const y = d.yStart + (d.yEnd - d.yStart) * ease;
-      const az = d.azimuth + ease * 0.55 * d.spinSign;
-      child.position.set(r * Math.cos(az), y, r * Math.sin(az));
-      const sc = d.scale0 * (0.55 + 0.55 * (1 - ease * 0.35));
-      if (d.kind === 'torus') {
-        child.scale.set(sc, sc * (0.7 + 0.3 * (1 - ease)), sc);
-      } else {
-        child.scale.setScalar(sc * (1 - ease * 0.25));
-      }
+      anyVisible = true;
+      const r = d.radialStart + (d.radialEnd - d.radialStart) * sample.riseT;
+      const az = d.azimuth + sample.riseT * 0.18 * d.spinSign;
+      child.position.set(r * Math.cos(az), sample.localY, r * Math.sin(az));
+      child.userData.lastWorldY = sample.worldY;
+      child.userData.lastRiseT = sample.riseT;
+      const sc = d.scale0;
+      if (d.kind === 'torus') child.scale.set(sc, sc * 0.85, sc);
+      else child.scale.setScalar(sc);
       const spinDir = -primarySpin * (d.spinSign || -1);
       child.rotation.z += deltaTime * d.spinRate * spinDir * (0.7 + s);
       if (child.material) {
-        // Fade out as debris rises away from the lattice (no Y reverse)
-        const peak = d.kind === 'torus' ? 0.38 : 0.32;
-        child.material.opacity = peak * (1 - ease) * (0.55 + 0.45 * Math.min(1, s));
+        child.material.opacity = sample.opacity;
         if (child.material.emissiveIntensity !== undefined) {
-          child.material.emissiveIntensity = (d.kind === 'torus' ? 1.0 : 0.7) * (1 - ease);
+          child.material.emissiveIntensity = (d.kind === 'torus' ? 1.0 : 0.7)
+            * (sample.opacity / Math.max(1e-6, d.peakOpacity));
         }
       }
-      if ((child.material?.opacity ?? 0) < 0.02) child.visible = false;
     });
+    group.visible = anyVisible || s > 0.02;
   };
 
   const dispose = () => {

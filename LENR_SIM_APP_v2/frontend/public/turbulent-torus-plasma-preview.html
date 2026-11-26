@@ -39,7 +39,7 @@
   <div id="badge">
     Torus window scrub <b>90.7% → 95.7%</b> → collapses onto maser-like jet → counter-rotating shed rises &amp; fades<br/>
     Spectrum binds host / solute / electrolyte (Pd·D·K demo). Jet = transparent light.<br/>
-    Shed rises away from lattice and fades in the flow (not surface landing).<br/>
+    Shed: monotonic world +Y rise (lattice below) + opacity fade — no reverse / bounce.<br/>
     Peer: Flannigan–Suslick optical / EMP chem · plasma ≠ fusion · EQ-OPEN untouched
   </div>
   <script type="importmap">
@@ -76,10 +76,11 @@
     renderer.toneMappingExposure = 0.95;
 
     const scene = new THREE.Scene();
+    // Elevated camera so +Y rise reads clearly upward (lattice at bottom)
     const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 0.1, 100);
-    camera.position.set(3.4, 2.2, 4.6);
+    camera.position.set(2.6, 3.6, 4.4);
     const controls = new OrbitControls(camera, canvas);
-    controls.target.set(0, -0.1, 0);
+    controls.target.set(0, 0.45, 0);
     controls.update();
 
     scene.add(new THREE.HemisphereLight(0x88aacc, 0x2a1810, 0.4));
@@ -182,7 +183,7 @@
     jet.visible = false;
     group.add(jet);
 
-    // Counter-rotating shed debris: monotonic rise away from lattice + fade
+    // Counter-rotating shed: world +Y rise (lattice below at y=-1.15) + opacity fade
     const shedGroup = new THREE.Group();
     shedGroup.name = 'ShedPlasmaDebris';
     shedGroup.visible = false;
@@ -192,25 +193,29 @@
     const shedBubbleGeo = new THREE.SphereGeometry(0.18, 16, 12);
     const shedItems = [];
     for (let i = 0; i < 3; i++) {
-      const m = new THREE.Mesh(shedTorusGeo, plasmaMat(i % 2 ? spectrum.secondary : spectrum.primary, 0.28));
+      const m = new THREE.Mesh(shedTorusGeo, plasmaMat(i % 2 ? spectrum.secondary : spectrum.primary, 0.42));
       m.rotation.x = Math.PI / 2 + (i - 1) * 0.18;
       m.visible = false;
       m.userData = {
         kind: 'torus', azimuth: (i / 3) * Math.PI * 2 + 0.4,
-        radialStart: 0.15 + i * 0.08, radialEnd: 0.9 + i * 0.3,
-        yStart: 0.05, yEnd: 1.35 + i * 0.35, delay: i * 0.12, scale0: 0.55 + i * 0.12, spinRate: 2.4 + i * 0.5,
+        radialStart: 0.35 + i * 0.12, radialEnd: 0.85 + i * 0.28,
+        spawnLocalY: 0.7 + i * 0.12, riseDistance: 1.9 + i * 0.35,
+        delay: i * 0.1, scale0: 0.55 + i * 0.12, spinRate: 2.4 + i * 0.5,
+        peakOpacity: 0.42, worldYLatched: null, spawnWorldY: null,
       };
       shedGroup.add(m);
       shedItems.push(m);
     }
     for (let i = 0; i < 5; i++) {
-      const m = new THREE.Mesh(shedBubbleGeo, plasmaMat(i % 2 ? spectrum.primary : spectrum.secondary, 0.22));
+      const m = new THREE.Mesh(shedBubbleGeo, plasmaMat(i % 2 ? spectrum.primary : spectrum.secondary, 0.36));
       m.visible = false;
       m.userData = {
         kind: 'bubble', azimuth: (i / 5) * Math.PI * 2 + 1.1,
-        radialStart: 0.1, radialEnd: 0.55 + (i % 3) * 0.28,
-        yStart: 0.1, yEnd: 1.15 + (i % 3) * 0.4, delay: 0.08 + i * 0.09,
-        scale0: 0.35 + (i % 3) * 0.12, spinRate: 1.5 + i * 0.3,
+        radialStart: 0.25 + (i % 3) * 0.08, radialEnd: 0.7 + (i % 3) * 0.22,
+        spawnLocalY: 0.75 + (i % 3) * 0.1, riseDistance: 1.7 + (i % 3) * 0.3,
+        delay: 0.06 + i * 0.08, scale0: 0.35 + (i % 3) * 0.12,
+        spinRate: 1.5 + i * 0.3, peakOpacity: 0.36,
+        worldYLatched: null, spawnWorldY: null,
       };
       shedGroup.add(m);
       shedItems.push(m);
@@ -218,28 +223,45 @@
 
     function updateShed(progress) {
       const raw = Math.min(1, Math.max(0, progress));
-      if (raw < 0.02) shedGroup.userData.shedProgressMax = 0;
+      const parentWorldY = group.position.y; // lattice spheres at y=-1.15; +Y = away
+      if (raw < 0.02) {
+        shedGroup.userData.shedProgressMax = 0;
+        shedItems.forEach((c) => {
+          c.userData.worldYLatched = null;
+          c.userData.spawnWorldY = null;
+          c.visible = false;
+        });
+        shedGroup.visible = false;
+        return;
+      }
       const s = Math.max(shedGroup.userData.shedProgressMax || 0, raw);
       shedGroup.userData.shedProgressMax = s;
-      shedGroup.visible = s > 0.02;
+      let any = false;
       shedItems.forEach((child) => {
         const d = child.userData;
         const local = Math.min(1, Math.max(0, (s - d.delay) / Math.max(1e-6, 1 - d.delay)));
         if (local <= 0) { child.visible = false; return; }
+        const riseT = 1 - (1 - local) * (1 - local);
+        if (!Number.isFinite(d.spawnWorldY)) d.spawnWorldY = parentWorldY + d.spawnLocalY;
+        const worldDesired = d.spawnWorldY + d.riseDistance * riseT;
+        const prevW = Number.isFinite(d.worldYLatched) ? d.worldYLatched : worldDesired;
+        const worldY = Math.max(prevW, worldDesired); // never reverse world +Y
+        d.worldYLatched = worldY;
+        const localY = worldY - parentWorldY;
+        const opacity = d.peakOpacity * (1 - riseT); // fade while rising
+        if (opacity < 0.02) { child.visible = false; return; }
         child.visible = true;
-        const ease = local * local * (3 - 2 * local);
-        const r = d.radialStart + (d.radialEnd - d.radialStart) * ease;
-        const y = d.yStart + (d.yEnd - d.yStart) * ease; // monotonic +Y only
-        const az = d.azimuth - ease * 0.55;
-        child.position.set(r * Math.cos(az), y, r * Math.sin(az));
-        const sc = d.scale0 * (0.55 + 0.55 * (1 - ease * 0.35));
-        if (d.kind === 'torus') child.scale.set(sc, sc * 0.75, sc);
-        else child.scale.setScalar(sc * (1 - ease * 0.25));
-        child.rotation.z -= 0.04 * d.spinRate; // counter-rotate vs primary +Z
-        const peak = d.kind === 'torus' ? 0.38 : 0.32;
-        child.material.opacity = peak * (1 - ease) * (0.55 + 0.45 * s);
-        if (child.material.opacity < 0.02) child.visible = false;
+        any = true;
+        const r = d.radialStart + (d.radialEnd - d.radialStart) * riseT;
+        const az = d.azimuth - riseT * 0.18;
+        child.position.set(r * Math.cos(az), localY, r * Math.sin(az));
+        const sc = d.scale0;
+        if (d.kind === 'torus') child.scale.set(sc, sc * 0.85, sc);
+        else child.scale.setScalar(sc);
+        child.rotation.z -= 0.04 * d.spinRate;
+        child.material.opacity = opacity;
       });
+      shedGroup.visible = any;
     }
 
     const glow = new THREE.PointLight(spectrum.primary, 0.75, 12, 2);
@@ -304,7 +326,6 @@
       filament.visible = false;
       cloud.visible = false;
       jet.visible = false;
-      updateShed(0);
 
       const cycleIdx = Math.floor(elapsed / CYCLE) % keys.length;
       if (keys[cycleIdx] !== spectrumKey) {
@@ -319,6 +340,7 @@
         const scale = 0.35 + p * 1.15;
         bubble.scale.setScalar(scale);
         bubble.material.opacity = 0.28;
+        updateShed(0);
       } else if (u < 0.78) {
         phase = 'COLLAPSE';
         const p = (u - 0.50) / 0.28;
@@ -329,9 +351,11 @@
         bubble.visible = p < 0.55;
         bubble.scale.setScalar(scale);
         bubble.material.opacity = 0.28 * (1 - p);
-        torus.visible = tighten < 0.98;
-        filament.visible = tighten < 0.95;
-        cloud.visible = tighten < 0.97;
+        // Hide primary before shed so collapse shrink ≠ falling debris
+        const shedEarly = p > 0.88 ? ((p - 0.88) / 0.12) * 0.22 : 0;
+        torus.visible = tighten < 0.98 && shedEarly < 0.08;
+        filament.visible = tighten < 0.95 && shedEarly < 0.08;
+        cloud.visible = tighten < 0.97 && shedEarly < 0.08;
         const ts = (1 - p * 0.35) * (1 - tighten * 0.78);
         torus.scale.set(Math.max(0.08, ts), Math.max(0.12, 0.55 * (1 - tighten * 0.45)), Math.max(0.08, ts));
         filament.scale.set(ts * 1.02, ts * 0.55, ts * 1.02);
@@ -348,7 +372,7 @@
           jet.material.opacity = 0.18 + jg * 0.4;
           jet.position.y = -0.3;
         }
-        if (p > 0.82) updateShed(((p - 0.82) / 0.18) * 0.35);
+        updateShed(shedEarly);
       } else {
         phase = u < 0.90 ? 'MINIMUM' : 'REBOUND';
         scrubPct = (TORUS_END + ((u - 0.78) / 0.22) * (1 - TORUS_END)) * 100;
@@ -360,18 +384,18 @@
         jet.scale.set(1 - p * 0.3, 1 + p * 1.8, 1 - p * 0.3);
         jet.material.opacity = 0.2 + (1 - p) * 0.35;
         jet.position.y = -0.4;
-        // Primary ring collapses onto jet then sheds
-        if (p < 0.45) {
-          const ts = Math.max(0.06, 0.28 * (1 - p / 0.45));
+        // Primary collapse finishes before shed (strict separation)
+        const shed = Math.min(1, 0.22 + p * 1.1);
+        if (p < 0.12 && shed < 0.08) {
+          const ts = Math.max(0.06, 0.28 * (1 - p / 0.12));
           torus.visible = true;
           cloud.visible = true;
           torus.scale.set(ts, ts * 0.5, ts);
           torus.rotation.z += 0.06;
-          updateCloud(elapsed, 0.35 * (1 - p / 0.45), 0.4, 0.2);
+          updateCloud(elapsed, 0.35 * (1 - p / 0.12), 0.4, 0.2);
           cloud.scale.copy(torus.scale);
         }
-        // Counter-rotating shed: monotonic rise + fade (never reverse in REBOUND)
-        const shed = Math.min(1, 0.35 + p * 1.15);
+        // Monotonic rise + fade (REBOUND holds progress; Y latched)
         updateShed(shed);
         glow.intensity = 1.2 * (1 - p * 0.7);
       }
