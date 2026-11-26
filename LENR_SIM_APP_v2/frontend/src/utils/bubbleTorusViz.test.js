@@ -7,9 +7,15 @@ import {
   createBubbleGasMaterial,
   createDoubleLayerMaterial,
   createShedPlasmaDebrisGroup,
+  BUBBLE_FOLD_IN_CHIP,
+  CLIFFORD_TORUS_ASPECT,
+  FOLD_IN_TORUS_MAJOR,
+  FOLD_IN_TORUS_TUBE,
+  applySphereFoldInDimple,
   computeBubbleTorusMorph,
   computeShedRiseSample,
   createTorusPlasmaMaterial,
+  ensureSphereRestPositions,
   applyBubbleTemperatureTint,
   createBubbleTorusGeometries,
 } from './bubbleTorusViz';
@@ -59,19 +65,38 @@ describe('bubbleTorusViz (presentation materials)', () => {
     expect(bubble.material.emissiveIntensity).toBeGreaterThan(0.12);
   });
 
-  test('computeBubbleTorusMorph: torus births mid-collapse, not at window open', () => {
-    const early = computeBubbleTorusMorph(0.05);
+  test('computeBubbleTorusMorph: fold-in dimple then puncture before torus', () => {
+    const early = computeBubbleTorusMorph(0.08);
     expect(early.bubbleVisible).toBe(true);
     expect(early.torusVisible).toBe(false);
-    expect(early.torusBirth).toBeLessThan(0.05);
-    const mid = computeBubbleTorusMorph(0.4);
-    expect(mid.bubbleVisible).toBe(true);
-    expect(mid.torusBirth).toBeGreaterThan(0.2);
-    expect(mid.bubbleScaleY).toBeLessThan(mid.bubbleScaleXY);
-    const late = computeBubbleTorusMorph(0.85);
-    expect(late.torusBirth).toBeGreaterThan(0.9);
-    expect(late.bubbleOpacityMul).toBeLessThan(0.25);
-    expect(late.torusTubeMul).toBeLessThan(early.torusTubeMul || 1.55);
+    expect(early.dimple).toBeGreaterThan(0);
+    expect(early.punctured).toBe(false);
+    const prePuncture = computeBubbleTorusMorph(0.45);
+    expect(prePuncture.dimple).toBeGreaterThan(0.7);
+    expect(prePuncture.wallsMeet).toBeGreaterThan(0.2);
+    expect(prePuncture.torusBirth).toBeLessThan(0.2);
+    const postPuncture = computeBubbleTorusMorph(0.62);
+    expect(postPuncture.punctured).toBe(true);
+    expect(postPuncture.torusVisible).toBe(true);
+    expect(postPuncture.torusBirth).toBeGreaterThan(0.4);
+    const late = computeBubbleTorusMorph(0.9);
+    expect(late.torusBirth).toBeGreaterThan(0.95);
+    expect(late.cliffordAspect).toBeCloseTo(Math.SQRT2, 5);
+    expect(BUBBLE_FOLD_IN_CHIP.toLowerCase()).toContain('puncture');
+    expect(FOLD_IN_TORUS_MAJOR / FOLD_IN_TORUS_TUBE).toBeCloseTo(CLIFFORD_TORUS_ASPECT, 5);
+  });
+
+  test('applySphereFoldInDimple caves rear +Y toward lattice (−Y)', () => {
+    const geo = new THREE.SphereGeometry(1, 16, 12);
+    ensureSphereRestPositions(geo);
+    const arr = geo.attributes.position.array;
+    let northBefore = -Infinity;
+    for (let i = 1; i < arr.length; i += 3) northBefore = Math.max(northBefore, arr[i]);
+    applySphereFoldInDimple(geo, 0.9, 0.6);
+    let northAfter = -Infinity;
+    for (let i = 1; i < arr.length; i += 3) northAfter = Math.max(northAfter, arr[i]);
+    expect(northAfter).toBeLessThan(northBefore - 0.15);
+    geo.dispose();
   });
 
   test('geometries expose high-segment bubble, torus, filament, and jet', () => {

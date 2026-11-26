@@ -370,22 +370,28 @@ export function applyBubbleTemperatureTint(group, temperatureK) {
 }
 
 /**
- * Bubble → torus morph across the scrub window (presentation).
- * Torus must *form* as the bubble collapses — not appear as a ready-made ring.
+ * Clifford / CMC aspect peer: major / tube ≈ √2 (schematic cyclide-ish ring).
+ * Not a solved mean-curvature evolution — presentation only.
+ */
+export const CLIFFORD_TORUS_ASPECT = Math.SQRT2;
+export const FOLD_IN_TORUS_MAJOR = 0.95;
+export const FOLD_IN_TORUS_TUBE = FOLD_IN_TORUS_MAJOR / CLIFFORD_TORUS_ASPECT;
+
+export const BUBBLE_FOLD_IN_CHIP = 'fold-in torus · puncture · schematic';
+export const BUBBLE_FOLD_IN_CHIP_TOOLTIP =
+  'Genus-0 bubble → genus-1 torus needs puncture/coalesce (χ drops by 2) — not a '
+  + 'smooth homeomorphism. Schematic rear→front dimple / jet pin-through '
+  + '(PoF spherical-cap→toroidal peer; CMC/Clifford R/a≈√2). Young–Laplace / '
+  + 'buoyancy-jetting motif only — not continuum CFD; plasma ≠ fusion.';
+
+/**
+ * Bubble fold-in → puncture → through-hole torus across the scrub window.
+ * Topology honesty: genus change via puncture/coalesce, not flatten+spawn.
+ *
+ * Stages (collapseProgress 0..1):
+ *   dimple → walls meet → puncture → Clifford-ish torus → jet tighten (caller)
  *
  * @param {number} collapseProgress 0..1 across torus scrub window
- * @returns {{
- *   bubbleVisible: boolean,
- *   bubbleOpacityMul: number,
- *   bubbleScaleXY: number,
- *   bubbleScaleY: number,
- *   torusVisible: boolean,
- *   torusBirth: number,
- *   torusMajorMul: number,
- *   torusTubeMul: number,
- *   torusOpacityMul: number,
- *   cloudStrength: number,
- * }}
  */
 export function computeBubbleTorusMorph(collapseProgress = 0) {
   const p = Math.min(1, Math.max(0, Number(collapseProgress) || 0));
@@ -393,36 +399,102 @@ export function computeBubbleTorusMorph(collapseProgress = 0) {
     const t = Math.min(1, Math.max(0, (x - a) / Math.max(1e-6, b - a)));
     return t * t * (3 - 2 * t);
   };
-  // Sphere stays dominant early; flattens into an equatorial belt
-  const bubbleOpacityMul = 1 - smooth(0.12, 0.72, p);
-  const bubbleVisible = bubbleOpacityMul > 0.04;
-  const flatten = smooth(0.05, 0.65, p);
-  const bubbleScaleXY = 1 - flatten * 0.22;
-  const bubbleScaleY = 1 - flatten * 0.72;
-  // Torus births mid-collapse from the flattened equator (fat → ring)
-  const torusBirth = smooth(0.22, 0.62, p);
-  const torusVisible = torusBirth > 0.04;
-  const torusMajorMul = 0.42 + torusBirth * 0.58; // grows out of bubble waist
-  const torusTubeMul = 1.55 - torusBirth * 0.7; // thick blob → thinner tube
+  // Rear→front dimple depth (jet pin-through cue)
+  const dimple = smooth(0.0, 0.5, p);
+  const wallsMeet = smooth(0.4, 0.55, p);
+  const punctured = p >= 0.5;
+  // Torus only after puncture/coalesce — cyclide-ish birth
+  const torusBirth = smooth(0.48, 0.7, p);
+  const torusVisible = torusBirth > 0.05;
+  // Bubble remains while folding in; fades hard at puncture
+  const bubbleOpacityMul = (1 - smooth(0.45, 0.72, p)) * (1 - wallsMeet * 0.35);
+  const bubbleVisible = bubbleOpacityMul > 0.03 && torusBirth < 0.97;
+  // Mild equatorial swell as dimple caves the rear pole
+  const bubbleScaleXY = 1 + dimple * 0.12 - torusBirth * 0.08;
+  const bubbleScaleY = 1 - dimple * 0.15;
+  // Clifford aspect at birth (fat ring / small hole), then thin slightly
+  const torusMajorMul = 0.55 + torusBirth * 0.45;
+  const torusTubeMul = 1.35 - torusBirth * 0.35;
   const torusOpacityMul = torusBirth;
-  const cloudStrength = torusBirth * (0.35 + p * 0.65);
+  const cloudStrength = Math.max(dimple * 0.25, torusBirth * (0.4 + p * 0.6));
   return {
     bubbleVisible,
     bubbleOpacityMul,
     bubbleScaleXY,
     bubbleScaleY,
+    dimple,
+    wallsMeet,
+    punctured,
     torusVisible,
     torusBirth,
     torusMajorMul,
     torusTubeMul,
     torusOpacityMul,
     cloudStrength,
+    cliffordAspect: CLIFFORD_TORUS_ASPECT,
   };
 }
 
 /**
+ * Capture rest positions once for fold-in deformation.
+ * @param {THREE.BufferGeometry} geometry
+ */
+export function ensureSphereRestPositions(geometry) {
+  if (!geometry?.attributes?.position) return null;
+  if (geometry.userData.foldInRest) return geometry.userData.foldInRest;
+  const src = geometry.attributes.position.array;
+  const rest = new Float32Array(src.length);
+  rest.set(src);
+  geometry.userData.foldInRest = rest;
+  return rest;
+}
+
+/**
+ * Rear (+Y) → front (−Y) dimple / jet pin-through on a unit sphere.
+ * When dimple→1, the rear caves through toward the lattice-facing pole.
+ * Presentation only — not a CMC solver.
+ *
+ * @param {THREE.BufferGeometry} geometry
+ * @param {number} dimpleAmount 0..1
+ * @param {number} [wallsMeet=0] 0..1 coalesce cue (pinches waist)
+ */
+export function applySphereFoldInDimple(geometry, dimpleAmount = 0, wallsMeet = 0) {
+  const rest = ensureSphereRestPositions(geometry);
+  const pos = geometry?.attributes?.position;
+  if (!rest || !pos) return;
+  const d = Math.min(1, Math.max(0, Number(dimpleAmount) || 0));
+  const w = Math.min(1, Math.max(0, Number(wallsMeet) || 0));
+  const arr = pos.array;
+  for (let i = 0; i < arr.length; i += 3) {
+    const x0 = rest[i];
+    const y0 = rest[i + 1];
+    const z0 = rest[i + 2];
+    // Rear hemisphere (+Y) caves toward −Y (lattice / jet pin-through)
+    const rear = Math.max(0, y0); // 0..1 on unit sphere
+    const falloff = rear * rear;
+    const cave = d * 1.85 * falloff;
+    let y = y0 - cave;
+    // Walls-meet: pull radial waist inward near the dimple axis (puncture prep)
+    const radial = Math.sqrt(x0 * x0 + z0 * z0) || 1e-6;
+    const waist = Math.exp(-((y0 - (1 - d)) ** 2) / 0.18);
+    const pinch = 1 - w * 0.55 * waist * (0.35 + 0.65 * d);
+    const x = x0 * pinch;
+    const z = z0 * pinch;
+    // Keep roughly on a deformed shell (soft normalize blend)
+    const len = Math.sqrt(x * x + y * y + z * z) || 1;
+    const targetR = 1 - d * 0.08 * falloff;
+    const blend = 0.35 + 0.45 * d;
+    arr[i] = x * (1 - blend) + (x / len) * targetR * blend;
+    arr[i + 1] = y * (1 - blend) + (y / len) * targetR * blend;
+    arr[i + 2] = z * (1 - blend) + (z / len) * targetR * blend;
+  }
+  pos.needsUpdate = true;
+  geometry.computeVertexNormals();
+}
+
+/**
  * Build high-segment bubble + torus geometries for a smoother silhouette.
- * Filament = thinner tube for turbulent plasma read during 90.7–95.7% scrub.
+ * Torus uses Clifford-ish aspect R/a≈√2 for fold-in birth read.
  */
 export function createBubbleTorusGeometries() {
   return {
@@ -430,9 +502,19 @@ export function createBubbleTorusGeometries() {
     doubleLayer: new THREE.SphereGeometry(1.12, 64, 48),
     doubleLayerWire: new THREE.SphereGeometry(1.135, 32, 20),
     innerLayer: new THREE.SphereGeometry(0.92, 48, 36),
-    // Major / tube radii tuned for a readable collapse ring
-    torus: new THREE.TorusGeometry(1.15, 0.38, 48, 128),
-    torusFilament: new THREE.TorusGeometry(1.18, 0.16, 24, 112),
+    // Clifford / CMC aspect peer (schematic cyclide-ish through-hole)
+    torus: new THREE.TorusGeometry(
+      FOLD_IN_TORUS_MAJOR,
+      FOLD_IN_TORUS_TUBE,
+      48,
+      128,
+    ),
+    torusFilament: new THREE.TorusGeometry(
+      FOLD_IN_TORUS_MAJOR * 1.04,
+      FOLD_IN_TORUS_TUBE * 0.42,
+      24,
+      112,
+    ),
     // Open cone reads as transparent light punch into the lattice
     jet: new THREE.ConeGeometry(0.32, 3.8, 48, 1, true),
   };

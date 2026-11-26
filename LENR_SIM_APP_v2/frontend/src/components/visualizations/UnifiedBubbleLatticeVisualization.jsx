@@ -110,12 +110,18 @@ import {
   createBubbleTorusGeometries,
   createDoubleLayerMaterial,
   createInnerLayerMaterial,
+  BUBBLE_FOLD_IN_CHIP,
+  BUBBLE_FOLD_IN_CHIP_TOOLTIP,
+  FOLD_IN_TORUS_MAJOR,
+  FOLD_IN_TORUS_TUBE,
+  applySphereFoldInDimple,
   computeBubbleTorusMorph,
   createJetMaterial,
   createShedPlasmaDebrisGroup,
   createTorusFilamentMaterial,
   createTorusPlasmaCloud,
   createTorusPlasmaMaterial,
+  ensureSphereRestPositions,
   getLatticeBoundBubbleY,
   temperatureToBubbleTint,
 } from '../../utils/bubbleTorusViz';
@@ -1057,8 +1063,12 @@ const UnifiedBubbleLatticeVisualization = ({
     torus.visible = false;
     torus.rotation.x = Math.PI / 2;
     torus.renderOrder = 3;
-    torus.userData = { baseRadius: 1.15, baseTubeRadius: 0.38 };
+    torus.userData = {
+      baseRadius: FOLD_IN_TORUS_MAJOR,
+      baseTubeRadius: FOLD_IN_TORUS_TUBE,
+    };
     bubbleGroup.add(torus);
+    ensureSphereRestPositions(geos.gas);
 
     // Secondary filament — offset tube for turbulent multi-stream read
     const filament = new THREE.Mesh(
@@ -1072,7 +1082,10 @@ const UnifiedBubbleLatticeVisualization = ({
     filament.visible = false;
     filament.rotation.x = Math.PI / 2;
     filament.renderOrder = 3;
-    filament.userData = { baseRadius: 1.18, baseTubeRadius: 0.16 };
+    filament.userData = {
+      baseRadius: FOLD_IN_TORUS_MAJOR * 1.04,
+      baseTubeRadius: FOLD_IN_TORUS_TUBE * 0.42,
+    };
     bubbleGroup.add(filament);
 
     // Soft Points cloud — rotating gaseous excited plasma (not glass)
@@ -3051,6 +3064,7 @@ const UnifiedBubbleLatticeVisualization = ({
         if (bubble && showBubble) {
           bubble.visible = true;
           bubble.scale.setScalar(displayScale);
+          applySphereFoldInDimple(bubble.geometry, 0, 0);
           // Ghost interior only — never opaque enough to hide the double-layer.
           const baseOpacity = bubble.userData.baseOpacity ?? 0.1;
           bubble.material.opacity = baseOpacity;
@@ -3064,35 +3078,34 @@ const UnifiedBubbleLatticeVisualization = ({
         if (shedDebrisApi) shedDebrisApi.update(deltaTime, 0, shedUpdateOpts);
         else if (shedDebrisGroup) shedDebrisGroup.visible = false;
       } else if (phase === 'COLLAPSE' || inTorusWindow) {
-        // Bubble → torus morph across scrub window, then ring tightens onto jet
+        // Fold-in: rear→front dimple → walls meet → puncture → through-hole torus
         const collapseProgress = inTorusWindow ? scrubTorus : phaseProgress;
         const morph = computeBubbleTorusMorph(collapseProgress);
         const tighten = maserTighten;
         
         if (bubble && showBubble) {
-          // Flatten sphere into equatorial belt as torus births (not a cut-to-ring)
-          bubble.visible = morph.bubbleVisible && morph.torusBirth < 0.98;
-          const s = displayScale * (0.92 + morph.bubbleScaleXY * 0.08);
+          bubble.visible = morph.bubbleVisible;
+          const s = displayScale * (0.95 + morph.bubbleScaleXY * 0.05);
           bubble.scale.set(
             s * morph.bubbleScaleXY,
-            Math.max(0.08, s * morph.bubbleScaleY),
+            Math.max(0.12, s * morph.bubbleScaleY),
             s * morph.bubbleScaleXY,
           );
+          applySphereFoldInDimple(bubble.geometry, morph.dimple, morph.wallsMeet);
           const baseOpacity = bubble.userData.baseOpacity ?? 0.1;
           bubble.material.opacity = baseOpacity * morph.bubbleOpacityMul;
-          // Mild spin so collapse reads as flowing fluid, not a static ball
-          bubble.rotation.y += deltaTime * (0.6 + collapseProgress * 1.8);
+          bubble.rotation.y += deltaTime * (0.5 + collapseProgress * 1.4 + morph.dimple * 1.2);
         } else if (bubble) {
           bubble.visible = false;
         }
         
         if (torus) {
-          // Torus forms from bubble waist mid-collapse — not present at window open
+          // Torus only after puncture/coalesce (genus change) — not a cut-to-ring
           torus.visible = showBubble && morph.torusVisible && tighten < 0.98;
           if (torus.visible) {
             const torusRadius = torus.userData.baseRadius
               * morph.torusMajorMul
-              * (1 - collapseProgress * 0.2)
+              * (1 - collapseProgress * 0.15)
               * (1 - tighten * 0.78);
             const tubeRadius = torus.userData.baseTubeRadius
               * morph.torusTubeMul
@@ -3100,20 +3113,19 @@ const UnifiedBubbleLatticeVisualization = ({
             const scaleFactor = Math.max(0.08, torusRadius / torus.userData.baseRadius);
             torus.scale.setScalar(scaleFactor);
             torus.scale.y = Math.max(0.12, tubeRadius / torus.userData.baseTubeRadius);
-            // Stronger turbulent spin (fluid advection cue)
             torus.rotation.z += deltaTime * (4.2 + collapseProgress * 5.5 + tighten * 4.5
               + morph.torusBirth * 2.5);
             torus.userData.spinSign = 1;
-            torus.material.opacity = (0.1 + morph.torusOpacityMul * 0.28)
+            torus.material.opacity = (0.12 + morph.torusOpacityMul * 0.32)
               * (1 - tighten * 0.55);
             if (torus.material.emissiveIntensity !== undefined) {
-              torus.material.emissiveIntensity = 0.4 + morph.torusBirth * 0.55
+              torus.material.emissiveIntensity = 0.45 + morph.torusBirth * 0.55
                 + tighten * 0.35;
             }
           }
         }
         if (filament) {
-          filament.visible = showBubble && morph.torusBirth > 0.25 && tighten < 0.95;
+          filament.visible = showBubble && morph.torusBirth > 0.35 && tighten < 0.95;
           if (filament.visible) {
             const fScale = (torus?.scale.x ?? 1)
               * (1.02 + 0.06 * Math.sin(clockForPhase * Math.PI * 48));
@@ -3124,7 +3136,8 @@ const UnifiedBubbleLatticeVisualization = ({
           }
         }
         if (plasmaCloudApi) {
-          plasmaCloud.visible = showBubble && morph.torusVisible && tighten < 0.97;
+          plasmaCloud.visible = showBubble && (morph.dimple > 0.2 || morph.torusVisible)
+            && tighten < 0.97;
           const cloudStr = morph.cloudStrength * (1 - tighten * 0.7);
           plasmaCloudApi.update(deltaTime, cloudStr);
           if (plasmaCloud.scale && torus?.visible) {
@@ -5109,6 +5122,18 @@ const UnifiedBubbleLatticeVisualization = ({
                   data-testid="ublv-plasma-fluid-look-chip"
                   sx={{
                     bgcolor: 'rgba(70, 90, 110, 0.92)',
+                    color: 'white',
+                    fontSize: '0.58rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title={BUBBLE_FOLD_IN_CHIP_TOOLTIP}>
+                <Chip
+                  label={BUBBLE_FOLD_IN_CHIP}
+                  size="small"
+                  data-testid="ublv-bubble-fold-in-chip"
+                  sx={{
+                    bgcolor: 'rgba(100, 70, 90, 0.92)',
                     color: 'white',
                     fontSize: '0.58rem',
                   }}

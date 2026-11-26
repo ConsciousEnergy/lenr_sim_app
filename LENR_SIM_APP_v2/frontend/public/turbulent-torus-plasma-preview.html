@@ -36,13 +36,15 @@
     <span class="chip" style="background:rgba(90,70,150,0.9)">Schematic maser-like jet · not fusion</span>
     <span class="chip alt">Counter-rotating shed · schematic</span>
     <span class="chip alt">fluid look · schematic · not CFD</span>
+    <span class="chip" style="background:rgba(100,50,120,0.92)">fold-in torus · puncture · schematic</span>
   </div>
   <div id="badge">
     Torus window scrub <b>90.7% → 95.7%</b> → collapses onto maser-like jet → counter-rotating shed rises &amp; fades<br/>
     Spectrum binds host / solute / electrolyte (Pd·D·K demo). Jet = transparent light + advective streaks.<br/>
     Shed: monotonic world +Y rise (lattice below) + opacity fade — no reverse / bounce.<br/>
     Fluid look: procedural noise / soft refraction / UV advection · schematic · not CFD · plasma ≠ fusion<br/>
-    Bubble flattens → torus births mid-collapse → jet (morph, not a cut-to-ring).
+    Fold-in: rear→front dimple → walls meet → puncture → Clifford R/a≈√2 torus → jet
+    (genus change needs puncture — not flatten+spawn; PoF/CMC peers · not CFD).
   </div>
   <script type="importmap">
   {
@@ -190,42 +192,82 @@
       return tex;
     }
 
-    const bubble = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 48, 36),
-      plasmaMat(0xb8e8ff, 0.28, 'bubble'),
-    );
-    // MeshPhysical-like softness via standard + fluid map (preview)
+    const CLIFFORD_ASPECT = Math.SQRT2;
+    const FOLD_MAJOR = 0.95;
+    const FOLD_TUBE = FOLD_MAJOR / CLIFFORD_ASPECT;
+
+    const bubbleGeo = new THREE.SphereGeometry(1, 48, 36);
+    const bubbleRest = new Float32Array(bubbleGeo.attributes.position.array);
+    const bubble = new THREE.Mesh(bubbleGeo, plasmaMat(0xb8e8ff, 0.28, 'bubble'));
     bubble.material.roughness = 0.2;
     group.add(bubble);
+
+    function applyFoldInDimple(amount, wallsMeet) {
+      const d = Math.min(1, Math.max(0, amount));
+      const w = Math.min(1, Math.max(0, wallsMeet));
+      const arr = bubbleGeo.attributes.position.array;
+      for (let i = 0; i < arr.length; i += 3) {
+        const x0 = bubbleRest[i];
+        const y0 = bubbleRest[i + 1];
+        const z0 = bubbleRest[i + 2];
+        const rear = Math.max(0, y0);
+        const falloff = rear * rear;
+        const cave = d * 1.85 * falloff;
+        let y = y0 - cave;
+        const waist = Math.exp(-((y0 - (1 - d)) ** 2) / 0.18);
+        const pinch = 1 - w * 0.55 * waist * (0.35 + 0.65 * d);
+        const x = x0 * pinch;
+        const z = z0 * pinch;
+        const len = Math.sqrt(x * x + y * y + z * z) || 1;
+        const targetR = 1 - d * 0.08 * falloff;
+        const blend = 0.35 + 0.45 * d;
+        arr[i] = x * (1 - blend) + (x / len) * targetR * blend;
+        arr[i + 1] = y * (1 - blend) + (y / len) * targetR * blend;
+        arr[i + 2] = z * (1 - blend) + (z / len) * targetR * blend;
+      }
+      bubbleGeo.attributes.position.needsUpdate = true;
+      bubbleGeo.computeVertexNormals();
+    }
 
     function morphFromCollapse(p) {
       const smooth = (a, b, x) => {
         const t = Math.min(1, Math.max(0, (x - a) / Math.max(1e-6, b - a)));
         return t * t * (3 - 2 * t);
       };
-      const bubbleOpacityMul = 1 - smooth(0.12, 0.72, p);
-      const flatten = smooth(0.05, 0.65, p);
-      const torusBirth = smooth(0.22, 0.62, p);
+      const dimple = smooth(0.0, 0.5, p);
+      const wallsMeet = smooth(0.4, 0.55, p);
+      const punctured = p >= 0.5;
+      const torusBirth = smooth(0.48, 0.7, p);
+      const bubbleOpacityMul = (1 - smooth(0.45, 0.72, p)) * (1 - wallsMeet * 0.35);
       return {
-        bubbleVisible: bubbleOpacityMul > 0.04,
+        bubbleVisible: bubbleOpacityMul > 0.03 && torusBirth < 0.97,
         bubbleOpacityMul,
-        bubbleScaleXY: 1 - flatten * 0.22,
-        bubbleScaleY: 1 - flatten * 0.72,
-        torusVisible: torusBirth > 0.04,
+        bubbleScaleXY: 1 + dimple * 0.12 - torusBirth * 0.08,
+        bubbleScaleY: 1 - dimple * 0.15,
+        dimple,
+        wallsMeet,
+        punctured,
+        torusVisible: torusBirth > 0.05,
         torusBirth,
-        torusMajorMul: 0.42 + torusBirth * 0.58,
-        torusTubeMul: 1.55 - torusBirth * 0.7,
+        torusMajorMul: 0.55 + torusBirth * 0.45,
+        torusTubeMul: 1.35 - torusBirth * 0.35,
         torusOpacityMul: torusBirth,
-        cloudStrength: torusBirth * (0.35 + p * 0.65),
+        cloudStrength: Math.max(dimple * 0.25, torusBirth * (0.4 + p * 0.6)),
       };
     }
 
-    const torus = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.38, 48, 128), plasmaMat(spectrum.primary, 0.22, 'torus'));
+    const torus = new THREE.Mesh(
+      new THREE.TorusGeometry(FOLD_MAJOR, FOLD_TUBE, 48, 128),
+      plasmaMat(spectrum.primary, 0.22, 'torus'),
+    );
     torus.rotation.x = Math.PI / 2;
     torus.visible = false;
     group.add(torus);
 
-    const filament = new THREE.Mesh(new THREE.TorusGeometry(1.18, 0.16, 24, 112), plasmaMat(spectrum.secondary, 0.26, 'torus'));
+    const filament = new THREE.Mesh(
+      new THREE.TorusGeometry(FOLD_MAJOR * 1.04, FOLD_TUBE * 0.42, 24, 112),
+      plasmaMat(spectrum.secondary, 0.26, 'torus'),
+    );
     filament.rotation.x = Math.PI / 2;
     filament.visible = false;
     group.add(filament);
@@ -421,6 +463,7 @@
         phase = 'EXPANSION';
         scrubPct = (u / 0.50) * TORUS_START * 100;
         const p = u / 0.50;
+        applyFoldInDimple(0, 0);
         const scale = 0.35 + p * 1.15;
         bubble.scale.setScalar(scale);
         bubble.material.opacity = 0.28;
@@ -431,29 +474,35 @@
         scrubPct = (TORUS_START + p * (TORUS_END - TORUS_START)) * 100;
         const morph = morphFromCollapse(p);
         const tighten = Math.max(0, (p - 0.55) / 0.45);
-        // Bubble flattens into equator; torus births mid-collapse (not a cut-to-ring)
-        const baseScale = 1.35 * (1 - p * 0.35);
+        // Fold-in: rear→front dimple → walls meet → puncture → Clifford torus
+        applyFoldInDimple(morph.dimple, morph.wallsMeet);
+        const baseScale = 1.35 * (1 - p * 0.28);
         bubble.visible = morph.bubbleVisible && morph.torusBirth < 0.98;
         bubble.scale.set(
           baseScale * morph.bubbleScaleXY,
-          Math.max(0.08, baseScale * morph.bubbleScaleY),
+          Math.max(0.12, baseScale * morph.bubbleScaleY),
           baseScale * morph.bubbleScaleXY,
         );
         bubble.material.opacity = 0.28 * morph.bubbleOpacityMul;
-        bubble.rotation.y += 0.02 + p * 0.03;
+        bubble.rotation.y += 0.015 + morph.dimple * 0.03;
         const shedEarly = p > 0.88 ? ((p - 0.88) / 0.12) * 0.22 : 0;
         torus.visible = morph.torusVisible && tighten < 0.98 && shedEarly < 0.08;
         filament.visible = morph.torusBirth > 0.25 && tighten < 0.95 && shedEarly < 0.08;
-        cloud.visible = morph.torusVisible && tighten < 0.97 && shedEarly < 0.08;
-        const major = morph.torusMajorMul * (1 - p * 0.2) * (1 - tighten * 0.78);
+        cloud.visible = (morph.dimple > 0.25 || morph.torusVisible) && tighten < 0.97 && shedEarly < 0.08;
+        const major = morph.torusMajorMul * (1 - p * 0.15) * (1 - tighten * 0.78);
         const tube = morph.torusTubeMul * (1 - tighten * 0.45);
         const ts = Math.max(0.08, major);
-        torus.scale.set(ts, Math.max(0.12, 0.35 * tube), ts);
+        torus.scale.set(ts, Math.max(0.12, 0.45 * tube), ts);
         filament.scale.set(ts * 1.02, ts * 0.55, ts * 1.02);
         torus.rotation.z += 0.07 + tighten * 0.06 + morph.torusBirth * 0.04;
         filament.rotation.z -= 0.08;
         torus.material.opacity = (0.1 + morph.torusOpacityMul * 0.28) * (1 - tighten * 0.55);
-        updateCloud(elapsed, morph.cloudStrength * (1 - tighten * 0.7), 1.15 * major, 0.42 * tube);
+        updateCloud(
+          elapsed,
+          morph.cloudStrength * (1 - tighten * 0.7),
+          FOLD_MAJOR * major,
+          FOLD_TUBE * tube,
+        );
         cloud.scale.copy(torus.scale);
         cloud.rotation.z += 0.05;
         glow.intensity = 0.6 + p * 0.7 + tighten * 0.4;
@@ -469,6 +518,7 @@
         phase = u < 0.90 ? 'MINIMUM' : 'REBOUND';
         scrubPct = (TORUS_END + ((u - 0.78) / 0.22) * (1 - TORUS_END)) * 100;
         const p = (u - 0.78) / 0.22;
+        applyFoldInDimple(0, 0);
         bubble.visible = p > 0.65;
         bubble.scale.setScalar(0.4 + Math.max(0, p - 0.65) * 0.8);
         bubble.material.opacity = 0.28 * Math.min(1, Math.max(0, (p - 0.65) / 0.35));
