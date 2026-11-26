@@ -121,6 +121,12 @@ import {
   updateSheathSurfaceFlow,
 } from '../../utils/bubbleSheathSurfaceFlow';
 import {
+  ELECTROLYTE_HALO_CHIP,
+  createElectrolyteIonizedHalo,
+  resolveElectrolyteIonizedHaloParams,
+  updateElectrolyteIonizedHalo,
+} from '../../utils/electrolyteIonizedHalo';
+import {
   ElectronMigrationCloud,
   PHONON_MELT_CHIP,
   PHONON_STANDING_CHIP,
@@ -497,6 +503,8 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showBubble, setShowBubble] = useState(true);
   /** Optional sheath tangential Points/ribbons — OFF default; not measured bubble spin. */
   const [showSheathSurfaceFlow, setShowSheathSurfaceFlow] = useState(false);
+  /** Soft electrolyte / ionized-env halo — ON with bubble; EMP chem-env (plasma ≠ fusion). */
+  const [showElectrolyteHalo, setShowElectrolyteHalo] = useState(true);
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
   // Schematic phonon jitter + e⁻ soft-flow — dedicated layer toggles
@@ -1040,6 +1048,15 @@ const UnifiedBubbleLatticeVisualization = ({
     const sheathFlow = createSheathSurfaceFlowGroup();
     sheathFlow.visible = false;
     bubbleGroup.add(sheathFlow);
+
+    // Electrolyte / ionized-env soft halo — EMP chem-env tint (plasma ≠ fusion)
+    const electrolyteHalo = createElectrolyteIonizedHalo({
+      tintHex: 0x66e8ff,
+      opacity: 0.22,
+      radius: 1.22,
+    });
+    electrolyteHalo.visible = true;
+    bubbleGroup.add(electrolyteHalo);
 
     // Soft local light so clearcoat shells catch highlights (presentation)
     const bubbleLight = new THREE.PointLight(0xb8e8ff, 0.85, 10, 2);
@@ -3040,6 +3057,43 @@ const UnifiedBubbleLatticeVisualization = ({
           pinchAmt,
         });
       }
+
+      // Electrolyte / ionized-env halo — EMP chem-env tint from family + multiplier
+      const electrolyteHalo = bubbleGroupRef.current.getObjectByName('ElectrolyteIonizedHalo');
+      if (electrolyteHalo) {
+        const diag = simulationData?.electrolyte_diagnostics || {};
+        const peak = simulationData?.peak_conditions || {};
+        const frameBreakdown = streamLatest?.enhancement_breakdown
+          || simulationData?.enhancement_breakdown
+          || {};
+        const mult = Number(
+          diag.activity_multiplier
+          ?? peak.electrolyte_multiplier
+          ?? frameBreakdown.electrolyte
+          ?? 1,
+        );
+        const haloParams = resolveElectrolyteIonizedHaloParams({
+          electrolyteFamily: parameters?.electrolyteFamily
+            || diag.electrolyte_family
+            || 'li',
+          electrolyteSpecies: parameters?.electrolyteSpecies
+            || diag.electrolyte_species
+            || null,
+          electrolyteMolarityMolL: parameters?.electrolyteMolarityMolL
+            ?? diag.electrolyte_molarity_mol_l
+            ?? 0.3,
+          electrolyteMultiplier: Number.isFinite(mult) ? mult : 1,
+        });
+        updateElectrolyteIonizedHalo(electrolyteHalo, haloParams);
+        // Keep sheath slightly outside the current membrane display scale
+        const hs = displayScale * haloParams.scale;
+        electrolyteHalo.scale.set(hs, hs, hs);
+        electrolyteHalo.visible = showBubble && showElectrolyteHalo;
+        if (canvasRef.current?.dataset) {
+          canvasRef.current.dataset.electrolyteFamily = haloParams.family;
+          canvasRef.current.dataset.electrolyteHaloIntensity = haloParams.intensity.toFixed(3);
+        }
+      }
       
       // Update pressure rings — Mach cue from collapse_results.peak_mach when present
       const machCh = collapseHudRef.current?.channels?.find(
@@ -3764,7 +3818,7 @@ const UnifiedBubbleLatticeVisualization = ({
   }, [
     frequency, initialBubbleRadius, simulationData, setUsingAPIData,
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
-    showBubble, showSheathSurfaceFlow, showProtons, showFieldLines, showVortices, showLattice, showPhonon, showElectronMig,
+    showBubble, showSheathSurfaceFlow, showElectrolyteHalo, showProtons, showFieldLines, showVortices, showLattice, showPhonon, showElectronMig,
     showCollapseRibbon,
     showCasimir, showRydberg, showHalo,
     latticeSpacingVisUnits, hostMeltMeta, loadingRatio, tickPhononStandingWaves,
@@ -4085,6 +4139,11 @@ const UnifiedBubbleLatticeVisualization = ({
             child.visible = showBubble && showSheathSurfaceFlow;
             return;
           }
+          // Electrolyte ionized-env halo — EMP chem-env; follows Bubble + layer toggle
+          if (child.name === 'ElectrolyteIonizedHalo') {
+            child.visible = showBubble && showElectrolyteHalo;
+            return;
+          }
           if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
             child.visible = showBubble;
           }
@@ -4198,7 +4257,7 @@ const UnifiedBubbleLatticeVisualization = ({
     const timeoutId = setTimeout(updateVisibility, 100);
     
     return () => clearTimeout(timeoutId);
-  }, [showLattice, showBubble, showSheathSurfaceFlow, showProtons, showFieldLines, showElectronMig, showVortices, showBoundaryPlane, showCasimir, showRydberg, showHalo]);
+  }, [showLattice, showBubble, showSheathSurfaceFlow, showElectrolyteHalo, showProtons, showFieldLines, showElectronMig, showVortices, showBoundaryPlane, showCasimir, showRydberg, showHalo]);
 
   // Camera controls
   const resetCameraToPreset = useCallback(() => {
@@ -4376,6 +4435,22 @@ const UnifiedBubbleLatticeVisualization = ({
                     label={
                       <Tooltip title={`${SHEATH_SURFACE_FLOW_CHIP}. Tangential Points/ribbons on the ionic sheath — DL / MHD peer motif only. Not macroscopic bubble spin; EQ-OPEN untouched.`}>
                         <Typography variant="caption" color="white">Sheath surface flow (schematic)</Typography>
+                      </Tooltip>
+                    }
+                  />
+                  <FormControlLabel
+                    control={(
+                      <Switch
+                        checked={showElectrolyteHalo}
+                        onChange={(e) => setShowElectrolyteHalo(e.target.checked)}
+                        size="small"
+                        color="info"
+                        data-testid="ublv-layer-electrolyte-halo"
+                      />
+                    )}
+                    label={
+                      <Tooltip title={`${ELECTROLYTE_HALO_CHIP}. Soft sheath tint from electrolyte family / species / molarity + engine electrolyte_multiplier. EMP chem-env label — plasma ≠ fusion; EQ-OPEN untouched.`}>
+                        <Typography variant="caption" color="white">Ionized env · electrolyte halo (EMP chem)</Typography>
                       </Tooltip>
                     }
                   />
@@ -4815,6 +4890,20 @@ const UnifiedBubbleLatticeVisualization = ({
                     data-testid="ublv-sheath-surface-flow-chip"
                     sx={{
                       bgcolor: 'rgba(50, 100, 130, 0.92)',
+                      color: 'white',
+                      fontSize: '0.6rem',
+                    }}
+                  />
+                </Tooltip>
+              )}
+              {showBubble && showElectrolyteHalo && (
+                <Tooltip title="Soft ionized-env sheath tint from electrolyte family / species / molarity and engine electrolyte_multiplier. EMP chem-env label — plasma ≠ fusion; does not flip lenr_proved or close EQ-OPEN.">
+                  <Chip
+                    label={ELECTROLYTE_HALO_CHIP}
+                    size="small"
+                    data-testid="ublv-electrolyte-halo-chip"
+                    sx={{
+                      bgcolor: 'rgba(40, 130, 150, 0.92)',
                       color: 'white',
                       fontSize: '0.6rem',
                     }}

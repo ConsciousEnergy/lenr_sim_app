@@ -21,6 +21,12 @@ export const UBLV_LAYER_BINDINGS = Object.freeze([
     targets: ['BubbleGroup', 'MainBubble', 'DoubleLayer', 'DoubleLayerWire', 'InnerLayer', 'TorusFormation', 'FocusedJet'],
   },
   {
+    id: 'electrolyteHalo',
+    label: 'Ionized env · electrolyte halo (EMP chem)',
+    targets: ['ElectrolyteIonizedHalo'],
+    requires: ['bubble'],
+  },
+  {
     id: 'protons',
     label: 'Protons',
     targets: ['ProtonPhaseGroup', 'ProtonWaveCompanion'],
