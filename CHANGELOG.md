@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Schematic species colors only — not QM orbitals; honesty locks unchanged.
 
 ### Added
+- **UBLV Tier-1 lattice color modes:** shared `lenrParticlePalette` SOT (legend
+  CSS ↔ WebGL hex) plus Layers HUD switch Species · Loading · T · Phonon amp
+  driving host `instanceColor`. Schematic / EMP-sample presentation only —
+  not QM orbitals; honesty locks unchanged.
 - **VIZ-06** DynamicDraw InstancedMesh host lattice: per-instance matrix/color
   path, schematic loading tint, pickable host sites, exclusive Pd/Ni colors
   (prerequisite for VIZ-08/09). **No** liquid TheoryModules; **no** EQ-OPEN close.
