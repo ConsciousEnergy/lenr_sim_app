@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Revert path = Swarm **v0.3.9-beta**. Honesty locks unchanged
   (`lenr_proved` false; all `EQ-OPEN-*` OPEN; no Kasagi flip).
 
+### Fixed
+- **UBLV host atoms black on HSE canvas:** restore `MeshPhongMaterial` for
+  lattice hosts (regression from high-metalness `MeshStandardMaterial` with no
+  envMap). Interstitial solute beads use legend-aligned D teal / H green.
+  Schematic species colors only — not QM orbitals; honesty locks unchanged.
+
 ### Added
 - **VIZ-06** DynamicDraw InstancedMesh host lattice: per-instance matrix/color
   path, schematic loading tint, pickable host sites, exclusive Pd/Ni colors
