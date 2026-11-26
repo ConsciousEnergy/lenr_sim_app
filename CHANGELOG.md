@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   envMap). Interstitial solute beads use legend-aligned D teal / H green.
   Schematic species colors only — not QM orbitals; honesty locks unchanged.
 
+### Fixed
+- **UBLV Layers default closed + softer occupancy glow:** Layers drawer starts
+  collapsed; VIZ-08 occupancy glow is more transparent and applies a faint halo
+  to every host (occupancy modulates intensity) so empty sites do not look dead.
+  Schematic / engine-bound honesty chips unchanged.
+
 ### Added
 - **UBLV Tier-2 schematic shells:** soft additive InstancedMesh electron-density
   shells (opacity ↔ `loading_ratio` / occupancy) + mild bond lift; Layers OFF by

@@ -3,6 +3,7 @@ import {
   OCCUPANCY_GLOW_SCHEMATIC_FIDELITY,
   extractEngineSiteOccupancy,
   occupancyGlowRgb,
+  occupancyGlowSiteStrength,
   resolveOccupancyGlowPlan,
 } from './occupancyGlow';
 
@@ -50,5 +51,12 @@ describe('occupancyGlow', () => {
     const eng = occupancyGlowRgb(true);
     const sch = occupancyGlowRgb(false);
     expect(eng.intensity).toBeGreaterThan(sch.intensity);
+  });
+
+  test('empty sites keep faint strength; occupied sites brighter', () => {
+    expect(occupancyGlowSiteStrength(true)).toBeGreaterThan(
+      occupancyGlowSiteStrength(false),
+    );
+    expect(occupancyGlowSiteStrength(false)).toBeGreaterThan(0);
   });
 });

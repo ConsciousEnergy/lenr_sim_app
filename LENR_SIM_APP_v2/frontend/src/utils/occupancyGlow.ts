@@ -127,7 +127,7 @@ export function resolveOccupancyGlowPlan({
   };
 }
 
-/** Soft glow RGB for an occupied host site (presentation). */
+/** Soft glow RGB for host sites (presentation; Diadon: keep translucent). */
 export function occupancyGlowRgb(engineBound: boolean): {
   r: number;
   g: number;
@@ -135,8 +135,16 @@ export function occupancyGlowRgb(engineBound: boolean): {
   intensity: number;
 } {
   if (engineBound) {
-    return { r: 0.35, g: 0.95, b: 0.85, intensity: 0.85 };
+    return { r: 0.35, g: 0.95, b: 0.85, intensity: 0.42 };
   }
   // Schematic: cooler, dimmer — still readable on dark canvas
-  return { r: 0.45, g: 0.75, b: 1.0, intensity: 0.55 };
+  return { r: 0.45, g: 0.75, b: 1.0, intensity: 0.28 };
+}
+
+/**
+ * Per-site glow strength (0..1). Empty sites keep a faint halo so the lattice
+ * does not look "dead"; occupied sites lift intensity (Diadon HSE).
+ */
+export function occupancyGlowSiteStrength(occupied: boolean): number {
+  return occupied ? 0.72 : 0.22;
 }
