@@ -2517,10 +2517,10 @@ const UnifiedBubbleLatticeVisualization = ({
     restSites.forEach((site, index) => {
       scratch.position.set(site.x, site.y, site.z);
       const lift = schematicShellSiteOpacity(1, Boolean(site.occupied));
-      scratch.scale.setScalar(0.8 + lift * 0.28);
+      scratch.scale.setScalar(0.78 + lift * 0.22);
       scratch.updateMatrix();
       mesh.setMatrixAt(index, scratch.matrix);
-      scratchColor.copy(base).multiplyScalar(0.28 + lift * 0.42);
+      scratchColor.copy(base).multiplyScalar(0.14 + lift * 0.22);
       mesh.setColorAt(index, scratchColor);
     });
     mesh.instanceMatrix.needsUpdate = true;

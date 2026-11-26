@@ -38,8 +38,8 @@ export function resolveSchematicShellSpec({
     || (hostMaterial || '').toLowerCase() === 'palladium';
   return {
     radiusScale: 1.85 + theta * 0.35,
-    // Soft additive — keep readable but translucent (Diadon: lower strength).
-    opacity: 0.05 + theta * 0.09,
+    // Soft additive — very translucent halos (Diadon: softer than 7d65f6b).
+    opacity: 0.022 + theta * 0.04,
     colorHex: isPd ? 0x5ee0ff : 0x88ffaa,
     fidelity: SCHEMATIC_SHELL_FIDELITY,
     claimTier: SCHEMATIC_SHELL_CLAIM,
@@ -55,5 +55,5 @@ export function schematicShellSiteOpacity(
   occupied: boolean,
 ): number {
   const base = Math.min(1, Math.max(0, baseOpacity));
-  return occupied ? Math.min(0.32, base * 1.25) : base * 0.22;
+  return occupied ? Math.min(0.18, base * 1.15) : base * 0.12;
 }
