@@ -5,13 +5,20 @@ import {
   PHONON_ELECTRON_FIDELITY,
   PHONON_ELECTRON_SOURCE,
   PHONON_CLAIM_TAG,
+  PHONON_STANDING_CHIP,
+  PHONON_WAVEGUIDE_CHIP,
+  PHONON_MELT_CHIP,
   phononJitterAmplitude,
   phononModeMix,
+  phononModeFrequencies,
   meltProximityNorm,
   waveguideEnvelopeNorm,
+  resolvePhononStandingWaveParams,
   buildPhononJitterDisplacements,
   buildPhononStandingWaveDisplacements,
+  neighborDisplacementPhaseProduct,
   phononModeTintRgb,
+  phononDualModeTintRgb,
   createPhononWaveguideRibbon,
   ElectronMigrationCloud,
 } from './phononElectronViz';
@@ -23,6 +30,9 @@ describe('phononElectronViz (schematic lattice motion + e⁻ flow)', () => {
     expect(PHONON_ELECTRON_FIDELITY).toBe('schematic');
     expect(PHONON_ELECTRON_SOURCE).toBe('schematic_visualization');
     expect(PHONON_CLAIM_TAG).toMatch(/contested/i);
+    expect(PHONON_STANDING_CHIP).toMatch(/acoustic\+optical standing \(contested\)/i);
+    expect(PHONON_WAVEGUIDE_CHIP).toMatch(/catalyst schematic/i);
+    expect(PHONON_MELT_CHIP).toMatch(/not f_L/i);
   });
 
   test('phononJitterAmplitude grows with phonon / T / compression but stays capped', () => {
@@ -48,6 +58,14 @@ describe('phononElectronViz (schematic lattice motion + e⁻ flow)', () => {
     expect(low.acousticWeight + low.opticalWeight).toBeCloseTo(1, 5);
   });
 
+  test('phononModeFrequencies keep acoustic below optical', () => {
+    const low = phononModeFrequencies({ phononFactor: 1 });
+    const high = phononModeFrequencies({ phononFactor: 100 });
+    expect(low.acousticFreq).toBeLessThan(low.opticalFreq);
+    expect(high.opticalFreq).toBeGreaterThan(low.opticalFreq);
+    expect(high.acousticFreq).toBeGreaterThanOrEqual(low.acousticFreq);
+  });
+
   test('meltProximityNorm never invents melt without T_m; softens near literature T_m', () => {
     expect(meltProximityNorm({ temperatureK: 1500 })).toBe(0);
     expect(meltProximityNorm({ temperatureK: 300, meltingPointK: 1828 })).toBe(0);
@@ -62,6 +80,34 @@ describe('phononElectronViz (schematic lattice motion + e⁻ flow)', () => {
     expect(high).toBeGreaterThan(low);
   });
 
+  test('resolvePhononStandingWaveParams binds engine samples without inventing f_L', () => {
+    const low = resolvePhononStandingWaveParams({
+      phononFactor: 1,
+      temperatureK: 300,
+      compressionRatio: 1,
+      loadingRatio: 0.4,
+      meltingPointK: 1828,
+    });
+    const high = resolvePhononStandingWaveParams({
+      phononFactor: 80,
+      temperatureK: 1700,
+      compressionRatio: 12,
+      loadingRatio: 0.95,
+      meltingPointK: 1828,
+      phononScale: 1.2,
+    });
+    expect(high.amplitude).toBeGreaterThan(low.amplitude);
+    expect(high.opticalWeight).toBeGreaterThan(low.opticalWeight);
+    expect(high.waveguideNorm).toBeGreaterThan(low.waveguideNorm);
+    expect(high.meltSoftening).toBeGreaterThan(low.meltSoftening);
+    expect(high.acousticFreq).toBeLessThan(high.opticalFreq);
+    expect(high.inventsLiquidFraction).toBe(false);
+    expect(high.fidelity).toBe('schematic');
+    expect(high.claimTag).toMatch(/contested/i);
+    // Amplitude floor keeps low samples readable on HSE.
+    expect(low.amplitude).toBeGreaterThanOrEqual(0.14);
+  });
+
   test('standing-wave displacements are spatially coherent (acoustic in-phase cue)', () => {
     const sites = [];
     for (let ix = 0; ix < 4; ix += 1) {
@@ -69,18 +115,52 @@ describe('phononElectronViz (schematic lattice motion + e⁻ flow)', () => {
         sites.push({ x: ix, y: iy, z: 0, ix, iy, iz: 0 });
       }
     }
-    const { displacements, modeEnergy } = buildPhononStandingWaveDisplacements(sites, {
-      time: 0.4,
-      amplitude: 0.1,
-      acousticWeight: 1,
-      opticalWeight: 0,
-    });
+    const { displacements, modeEnergy, acousticEnergy, opticalEnergy } =
+      buildPhononStandingWaveDisplacements(sites, {
+        time: 0.4,
+        amplitude: 0.1,
+        acousticWeight: 1,
+        opticalWeight: 0,
+      });
     expect(displacements).toHaveLength(16);
     expect(modeEnergy).toHaveLength(16);
+    expect(acousticEnergy).toHaveLength(16);
+    expect(opticalEnergy).toHaveLength(16);
     // Corner (0,0) acoustic sin(0)=0 → near-rest; mid-edge has larger |x|
     const corner = Math.abs(displacements[0].x);
     const mid = Math.abs(displacements[sites.findIndex((s) => s.ix === 2 && s.iy === 2)].x);
     expect(mid).toBeGreaterThan(corner);
+    // Pure acoustic → optical energy ~0
+    expect(Math.max(...opticalEnergy)).toBeLessThan(0.05);
+  });
+
+  test('acoustic neighbors share phase product; optical antiphase', () => {
+    const sites = [
+      { x: 0, y: 0, z: 0, ix: 1, iy: 1, iz: 0 },
+      { x: 1, y: 0, z: 0, ix: 2, iy: 1, iz: 0 },
+    ];
+    const acoustic = buildPhononStandingWaveDisplacements(sites, {
+      time: 0.35,
+      amplitude: 0.12,
+      acousticWeight: 1,
+      opticalWeight: 0,
+      acousticFreq: 2.6,
+    });
+    // Long-λ acoustic: adjacent interior sites share sin(kx) sign → product ≥ 0
+    expect(
+      neighborDisplacementPhaseProduct(acoustic.displacements[0], acoustic.displacements[1], 'x'),
+    ).toBeGreaterThanOrEqual(0);
+
+    const optical = buildPhononStandingWaveDisplacements(sites, {
+      time: 0.22,
+      amplitude: 0.12,
+      acousticWeight: 0,
+      opticalWeight: 1,
+      opticalFreq: 7.2,
+    });
+    expect(
+      neighborDisplacementPhaseProduct(optical.displacements[0], optical.displacements[1], 'x'),
+    ).toBeLessThan(0);
   });
 
   test('optical mode antiphases nearest neighbors', () => {
@@ -123,6 +203,15 @@ describe('phononElectronViz (schematic lattice motion + e⁻ flow)', () => {
     const base = occupancyTintRgb(0x8b8b8b, true);
     const tinted = phononModeTintRgb(base, 0.9, 0.7);
     expect(tinted.r).toBeGreaterThan(base.r);
+  });
+
+  test('phononDualModeTintRgb cools acoustic and warms optical', () => {
+    const base = { r: 0.5, g: 0.5, b: 0.5 };
+    const acoustic = phononDualModeTintRgb(base, 0.9, 0.05);
+    const optical = phononDualModeTintRgb(base, 0.05, 0.9);
+    // Optical-dominant → warmer red; acoustic-dominant → cooler blue
+    expect(optical.r).toBeGreaterThan(acoustic.r);
+    expect(acoustic.b).toBeGreaterThan(optical.b);
   });
 
   test('createPhononWaveguideRibbon tags schematic waveguide claim', () => {
