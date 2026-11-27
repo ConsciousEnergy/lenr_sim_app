@@ -1,12 +1,19 @@
 /**
  * Capture 11-* cascade / phase-map media from turbulent-torus-plasma-preview.html.
  * Seeks via patched performance.now (preview RAF uses it for elapsed).
+ * Requires rendered-preview ack before writing captures.
  */
 import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
+import { fileURLToPath } from 'url';
+import {
+  gotoPreview,
+  seekAndWaitForRender,
+} from './capture-preview-helpers.mjs';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIRS = [
   '/opt/cursor/artifacts',
   '/cursor/stores/bc-5b00a6aa-1b96-4ba5-8554-8c49079a113f/media/threejs-viz-preview',
@@ -35,12 +42,10 @@ await page.addInitScript(() => {
   };
 });
 
-await page.goto(URL, { waitUntil: 'networkidle', timeout: 60000 });
-await page.waitForTimeout(700);
+await gotoPreview(page, URL);
 
 async function seek(elapsedSec) {
-  await page.evaluate((sec) => window.__setElapsedSec(sec), elapsedSec);
-  await page.waitForTimeout(480);
+  await seekAndWaitForRender(page, elapsedSec);
 }
 
 async function shot(name) {
@@ -93,4 +98,4 @@ if (ff.status === 0 && fs.existsSync(tmpMp4)) {
   process.exitCode = 1;
 }
 
-console.log('done');
+console.log('done', __dirname);

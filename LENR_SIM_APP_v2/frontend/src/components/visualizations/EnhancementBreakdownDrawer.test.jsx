@@ -49,6 +49,13 @@ describe('EnhancementBreakdownDrawer', () => {
     expect(screen.getByTestId('ublv-enhancement-primary-label')).toHaveTextContent(
       /screening · phonon · loading/i,
     );
+    // Claim-tier chips beside primary factor values (governance reuse; no new scores)
+    expect(screen.getByTestId('ublv-enhancement-bar-tier-screening'))
+      .toHaveAttribute('data-claim-tier', 'speculative_exploratory');
+    expect(screen.getByTestId('ublv-enhancement-bar-tier-phonon'))
+      .toHaveAttribute('data-claim-tier', 'speculative_exploratory');
+    expect(screen.getByTestId('ublv-enhancement-bar-tier-loading'))
+      .toHaveAttribute('data-claim-tier', 'speculative_exploratory');
   });
 
   test('marks Local Calc when no engine samples', () => {

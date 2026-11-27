@@ -6,6 +6,11 @@
  * speculative / exploratory product; not LENR proof.
  */
 
+import {
+  BUBBLE_LATTICE_VIZ_CHANNELS,
+} from './vizChannelBindings';
+import { CLAIM_TIERS } from './theoryGovernance';
+
 export const ENHANCEMENT_BARS_FIDELITY = 'schematic';
 export const ENHANCEMENT_BARS_SOURCE = 'enhancement_breakdown';
 export const ENHANCEMENT_BARS_CLAIM_TAG = 'speculative / exploratory · engine-bound';
@@ -35,6 +40,21 @@ export const ENHANCEMENT_PRIMARY_BAR_META = Object.freeze({
     color: '#88aaff',
   },
 });
+
+/** Resolve existing channel governance (no new scores). */
+export function resolvePrimaryBarClaimTier(channelId, sampleSource = 'local_fallback') {
+  const binding = BUBBLE_LATTICE_VIZ_CHANNELS[channelId];
+  const baseTier = binding?.claim_tier || 'speculative_exploratory';
+  // Match resolveHudReadout: Local Calc must stay speculative / exploratory.
+  const claimTier =
+    sampleSource === 'local_fallback' ? 'speculative_exploratory' : baseTier;
+  const info = CLAIM_TIERS[claimTier] || CLAIM_TIERS.speculative_exploratory;
+  return {
+    claim_tier: claimTier,
+    claim_tier_label: info?.label || String(claimTier),
+    claim_tier_color: info?.color || 'default',
+  };
+}
 
 function clamp01(value) {
   return Math.min(1, Math.max(0, value));
@@ -71,6 +91,7 @@ export function buildPrimaryEnhancementBars(
     const raw = src[key];
     const value = typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
     const displayValue = value == null ? 1 : Math.max(1, value);
+    const governance = resolvePrimaryBarClaimTier(meta.channelId, sampleSource);
     return {
       key: meta.key,
       label: meta.label,
@@ -83,6 +104,9 @@ export function buildPrimaryEnhancementBars(
       isEngine,
       fidelity: ENHANCEMENT_BARS_FIDELITY,
       claimTag: ENHANCEMENT_BARS_CLAIM_TAG,
+      claim_tier: governance.claim_tier,
+      claim_tier_label: governance.claim_tier_label,
+      claim_tier_color: governance.claim_tier_color,
     };
   });
 }

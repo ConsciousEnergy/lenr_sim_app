@@ -132,17 +132,38 @@ function PrimaryEnhancementRadarStack({ bars }) {
               title={`${bar.label}: ${bar.missing ? 'gap' : bar.value?.toExponential?.(2) ?? bar.value} · log₁₀ fill ${Math.round(bar.norm * 100)}% · ${bar.claimTag}`}
             >
               <Box data-testid={`ublv-enhancement-bar-${bar.key}`}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.15 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 0.5, mb: 0.15 }}>
                   <Typography variant="caption" color="white" sx={{ fontSize: '0.58rem' }}>
                     {bar.label}
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ fontSize: '0.55rem', color: bar.color }}
-                    data-testid={`ublv-enhancement-bar-value-${bar.key}`}
-                  >
-                    {bar.missing ? '—' : (bar.value >= 100 ? bar.value.toExponential(1) : Number(bar.value).toPrecision(3))}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4, minWidth: 0 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontSize: '0.55rem', color: bar.color }}
+                      data-testid={`ublv-enhancement-bar-value-${bar.key}`}
+                    >
+                      {bar.missing ? '—' : (bar.value >= 100 ? bar.value.toExponential(1) : Number(bar.value).toPrecision(3))}
+                    </Typography>
+                    <Chip
+                      label={bar.claim_tier_label}
+                      size="small"
+                      variant="outlined"
+                      data-testid={`ublv-enhancement-bar-tier-${bar.key}`}
+                      data-claim-tier={bar.claim_tier}
+                      sx={{
+                        fontSize: '0.5rem',
+                        height: 15,
+                        maxWidth: 110,
+                        color: 'white',
+                        borderColor: 'rgba(255,255,255,0.35)',
+                        '& .MuiChip-label': {
+                          px: 0.5,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        },
+                      }}
+                    />
+                  </Box>
                 </Box>
                 <Box
                   sx={{
