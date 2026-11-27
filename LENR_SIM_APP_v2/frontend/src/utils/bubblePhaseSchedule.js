@@ -16,11 +16,15 @@
  * ``anchor_cycle_fraction``.
  */
 
+/**
+ * COLLAPSE = Diadon HSE torus scrub window 90.7% → 95.7% (turbulent plasma dwell).
+ * MINIMUM / REBOUND remain a short flash after the torus window.
+ */
 export const PHASE_SCHEDULE = [
-  { name: 'EXPANSION', start: 0.0, end: 0.90 },
-  { name: 'COLLAPSE', start: 0.90, end: 0.955 },
-  { name: 'MINIMUM', start: 0.955, end: 0.975 },
-  { name: 'REBOUND', start: 0.975, end: 1.0 },
+  { name: 'EXPANSION', start: 0.0, end: 0.907 },
+  { name: 'COLLAPSE', start: 0.907, end: 0.957 },
+  { name: 'MINIMUM', start: 0.957, end: 0.977 },
+  { name: 'REBOUND', start: 0.977, end: 1.0 },
 ];
 
 export const CANONICAL_PHASES = PHASE_SCHEDULE.map((entry) => entry.name);

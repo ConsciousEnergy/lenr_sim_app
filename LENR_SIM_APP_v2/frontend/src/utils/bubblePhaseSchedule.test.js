@@ -36,29 +36,31 @@ describe('bubblePhaseSchedule', () => {
 
   test('phase progress is within the active segment', () => {
     expect(phaseProgressInCycle(0.0)).toBeCloseTo(0, 5);
-    expect(phaseProgressInCycle(0.45)).toBeCloseTo(0.5, 5); // mid expansion (0–0.90)
-    expect(phaseFromCycleFraction(0.965)).toBe('MINIMUM');
+    expect(phaseProgressInCycle(0.4535)).toBeCloseTo(0.5, 5); // mid expansion (0–0.907)
+    expect(phaseFromCycleFraction(0.967)).toBe('MINIMUM');
   });
 
-  test('collapse+minimum are a flash fraction of the visual cycle', () => {
-    expect(phaseFromCycleFraction(0.89)).toBe('EXPANSION');
-    expect(phaseFromCycleFraction(0.92)).toBe('COLLAPSE');
-    expect(phaseFromCycleFraction(0.965)).toBe('MINIMUM');
+  test('collapse torus window is scrub 90.7% → 95.7%', () => {
+    expect(phaseFromCycleFraction(0.90)).toBe('EXPANSION');
+    expect(phaseFromCycleFraction(0.907)).toBe('COLLAPSE');
+    expect(phaseFromCycleFraction(0.93)).toBe('COLLAPSE');
+    expect(phaseFromCycleFraction(0.956)).toBe('COLLAPSE');
+    expect(phaseFromCycleFraction(0.967)).toBe('MINIMUM');
     expect(phaseFromCycleFraction(0.99)).toBe('REBOUND');
-    // COLLAPSE+MINIMUM ≈ 7.5% of cycle — ns–µs peer pacing, not long scrub burn
-    expect(MINIMUM_CENTER).toBeCloseTo(0.965, 5);
+    // COLLAPSE = 5% torus dwell; MINIMUM+REBOUND remain a short flash after
+    expect(MINIMUM_CENTER).toBeCloseTo(0.967, 5);
   });
 
   test('timeline progress uses the contiguous API phase segment', () => {
     const timeline = [
       { normalized_time: 0.0, phase: 'EXPANSION' },
       { normalized_time: 0.2, phase: 'EXPANSION' },
-      { normalized_time: 0.90, phase: 'COLLAPSE' },
-      { normalized_time: 0.93, phase: 'COLLAPSE' },
+      { normalized_time: 0.907, phase: 'COLLAPSE' },
+      { normalized_time: 0.932, phase: 'COLLAPSE' },
       { normalized_time: 0.96, phase: 'MINIMUM' },
     ];
     expect(phaseProgressFromTimeline(timeline, 0.1, 'EXPANSION')).toBeCloseTo(0.5, 5);
-    expect(phaseProgressFromTimeline(timeline, 0.915, 'COLLAPSE')).toBeCloseTo(0.5, 5);
+    expect(phaseProgressFromTimeline(timeline, 0.9195, 'COLLAPSE')).toBeCloseTo(0.5, 5);
     expect(CANONICAL_PHASES).toContain('REBOUND');
   });
 
@@ -102,8 +104,8 @@ describe('bubblePhaseSchedule', () => {
     };
 
     expect(phaseFromCycleFraction(0.20)).toBe('EXPANSION');
-    expect(phaseFromCycleFraction(0.92)).toBe('COLLAPSE');
-    expect(phaseFromCycleFraction(0.965)).toBe('MINIMUM');
+    expect(phaseFromCycleFraction(0.93)).toBe('COLLAPSE');
+    expect(phaseFromCycleFraction(0.967)).toBe('MINIMUM');
     expect(phaseFromCycleFraction(0.99)).toBe('REBOUND');
     expect(radiusAt(MINIMUM_CENTER)).toBeLessThan(radiusAt(0.20));
     expect(radiusAt(MINIMUM_CENTER)).toBeLessThan(radiusAt(0.99));
