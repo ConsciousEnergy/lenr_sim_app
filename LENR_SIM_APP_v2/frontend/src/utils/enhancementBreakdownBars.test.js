@@ -39,6 +39,8 @@ describe('enhancementBreakdownBars', () => {
     expect(bars.every((b) => b.isEngine)).toBe(true);
     expect(bars.every((b) => b.inventsLiquidFraction !== true)).toBe(true);
     expect(bars[0].claimTag).toMatch(/engine-bound/i);
+    expect(bars.every((b) => b.claim_tier === 'speculative_exploratory')).toBe(true);
+    expect(bars.every((b) => /speculative/i.test(b.claim_tier_label))).toBe(true);
   });
 
   test('missing factors stay at floor without inventing values', () => {

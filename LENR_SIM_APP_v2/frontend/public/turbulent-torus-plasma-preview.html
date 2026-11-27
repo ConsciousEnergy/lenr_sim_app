@@ -745,6 +745,14 @@
     const CYCLE = 10.0;
     const keys = Object.keys(SPECTRA);
 
+    // Capture scripts wait on this after seek — not networkidle / elapsed hook alone.
+    window.__previewRenderState = {
+      ready: false,
+      frameId: 0,
+      elapsedSec: 0,
+      phase: '',
+    };
+
     function updateCloud(t, strength, R = 1.15, tube = 0.42) {
       const base = new THREE.Color(spectrum.primary);
       for (let i = 0; i < N; i++) {
@@ -919,6 +927,13 @@
       phaseEl.textContent = `${phase} · scrub ${scrubPct.toFixed(1)}% · Local Calc (schematic)`;
       controls.update();
       renderer.render(scene, camera);
+      const prev = window.__previewRenderState || { frameId: 0 };
+      window.__previewRenderState = {
+        ready: true,
+        frameId: (prev.frameId || 0) + 1,
+        elapsedSec: elapsed,
+        phase,
+      };
       requestAnimationFrame(frame);
     }
     applySpectrum();

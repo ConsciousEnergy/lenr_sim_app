@@ -1,6 +1,7 @@
 /**
  * Capture 12-* long collapse scrub: full COLLAPSE window 90.7% → 95.7%.
  * Non-linear slow seek — dwell on fold-in / walls-meet / puncture→torus / jet onset.
+ * Requires rendered-preview ack before writing captures.
  *
  * Preview mapping (CYCLE=10s): u∈[0.50, 0.78] → elapsed 5.0–7.8s → scrub 90.7–95.7%.
  */
@@ -8,6 +9,10 @@ import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
+import {
+  gotoPreview,
+  seekAndWaitForRender,
+} from './capture-preview-helpers.mjs';
 
 const STORE_MEDIA =
   '/cursor/stores/bc-5b00a6aa-1b96-4ba5-8554-8c49079a113f/media/threejs-viz-preview';
@@ -68,8 +73,7 @@ await page.addInitScript(() => {
   };
 });
 
-await page.goto(URL, { waitUntil: 'networkidle', timeout: 60000 });
-await page.waitForTimeout(800);
+await gotoPreview(page, URL);
 
 await page.evaluate(() => {
   const chips = document.getElementById('chips');
@@ -78,8 +82,7 @@ await page.evaluate(() => {
   if (badge) badge.style.opacity = '0.5';
 });
 
-await page.evaluate((sec) => window.__setElapsedSec(sec), COLLAPSE_START_S);
-await page.waitForTimeout(500);
+await seekAndWaitForRender(page, COLLAPSE_START_S);
 
 // Side angle so rear dimple / pin depth reads
 const box = page.viewportSize();
@@ -91,11 +94,10 @@ await page.mouse.move(cx - 200, cy + 55, { steps: 20 });
 await page.mouse.up();
 await page.waitForTimeout(200);
 await page.mouse.wheel(0, -480);
-await page.waitForTimeout(280);
+await seekAndWaitForRender(page, COLLAPSE_START_S);
 
 async function seek(elapsedSec) {
-  await page.evaluate((sec) => window.__setElapsedSec(sec), elapsedSec);
-  await page.waitForTimeout(110);
+  await seekAndWaitForRender(page, elapsedSec);
 }
 
 async function shot(name) {
@@ -116,7 +118,6 @@ const stills = [
 
 for (const [name, t] of stills) {
   await seek(t);
-  await page.waitForTimeout(380);
   await shot(name);
 }
 
